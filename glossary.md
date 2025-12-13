@@ -1,0 +1,12 @@
+# Глоссарий
+
+| Термин | Определение | Формула или как измеряется | Владелец (отдел) | Где используется (ссылки) |
+| --- | --- | --- | --- | --- |
+| P95 (95-й перцентиль времени выдачи) | Скорость обслуживания «для почти всех»: у 95 из 100 заказов время «от оплаты до готово» не больше целевого. | Отсортировать времена «оплата → готово» и взять значение, ниже которого 95% заказов; цели: напитки утром ≤ 4:00, холодные блюда ≤ 7:00, горячее ≤ 15:00. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md), [franchise/presentation.md](franchise/presentation.md), [training/barista-system-description.md](training/barista-system-description.md) |
+| AOV (Average Order Value, средний чек) | Средняя сумма покупки одного гостя. | Выручка / количество чеков. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md), [franchise/presentation.md](franchise/presentation.md) |
+| CRR (Customer Repeat Rate, повторные визиты) | Доля гостей, которые возвращаются. | Повторные чеки / все чеки за период. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md), [franchise/presentation.md](franchise/presentation.md) |
+| Конверсия | Отношение количества чеков к посетителям (или к оплатившим в очереди). | Чеки / посетители (или / оплатившие в очереди). | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md) |
+| Фудкост % | Себестоимость продуктов в доле от выручки. | Себестоимость продуктов / выручка × 100. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md), [franchise/presentation.md](franchise/presentation.md) |
+| Списания % | Доля списанных продуктов. | (Списано по учёту / поступило) × 100. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md), [franchise/presentation.md](franchise/presentation.md) |
+| Часы/₽ | Трудоёмкость: сколько часов персонала затрачено на единицу выручки. | Отработанные часы персонала / выручка. | нужно уточнение | [system/system-description-vkusnyi-kofe.md](system/system-description-vkusnyi-kofe.md) |
+| NPS (Net Promoter Score) | нужно уточнение | нужно уточнение | нужно уточнение | [training/barista-system-description.md](training/barista-system-description.md) |
