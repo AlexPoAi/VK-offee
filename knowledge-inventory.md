@@ -1,83 +1,79 @@
 # Knowledge Inventory — «Вкусный Кофе»
 
 ## Дерево разделов
-- system/ — системные описания и архитектура сети.
-- training/ — обучение и стандарты для команды и бариста.
+- system/ — системные описания, глоссарий и культура.
+- training/ — обучение и практические материалы для команды.
 - franchise/ — материалы для партнёров и франчайзи.
-- barista-class/ — проект углублённого обучения «Бариста Класс».
-- ops/roles/ — должностные инструкции, регламенты и адаптация сотрудников.
-- ops/checklists/ — чек-листы смен и справочники по продукции.
-- vendors/ — поставщики, каталоги и прайс-листы.
+- ops/ — операции: роли и чек-листы.
+- vendors/ — поставщики, каталоги и прайсы.
 - finance/ — расчёты себестоимости и калькуляции.
 - assets/menus/ — визуалы меню для залов.
 - assets/job-aids/ — фото-подсказки и памятки по выкладке.
-- system/culture/ — материалы по ценностям и культуре.
+- ru/ — русская навигация по базе.
 
-## Новые документы (интегрировано)
-| Путь | Раздел | Роль | Тип | Краткое описание | Ссылка |
+## Последние добавления (интегрировано)
+- Нормализованы пути всех файлов в латинице и kebab-case для автоматизации.
+- Создана витрина `/ru/` с русскими оглавлениями разделов.
+- Прайсы и контактные файлы поставщиков собраны в `vendors/suppliers/`.
+- Фото-подсказки сгруппированы в `assets/job-aids/barista-helper/` и связаны с чек-листами.
+
+## Реестр документов
+| Русское название | Раздел | Роль | Тип | Путь (латиницей) | Ссылка |
 | --- | --- | --- | --- | --- | --- |
-| ops/roles/Должностная инструкция Официанта.docx | operations | официант | инструкция | Основные обязанности официанта и требования к сервису. | [файл](ops/roles/%D0%94%D0%BE%D0%BB%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%BD%D0%B0%D1%8F%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%9E%D1%84%D0%B8%D1%86%D0%B8%D0%B0%D0%BD%D1%82%D0%B0.docx) |
-| ops/roles/Должностная инструкция Раннера.docx | operations | раннер | инструкция | Зоны ответственности и порядок работы раннера. | [файл](ops/roles/%D0%94%D0%BE%D0%BB%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%BD%D0%B0%D1%8F%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%A0%D0%B0%D0%BD%D0%BD%D0%B5%D1%80%D0%B0.docx) |
-| ops/roles/Регламент по работе с кассой.docx | operations | официант | инструкция | Правила работы с кассой и расчётами с гостями. | [файл](ops/roles/%D0%A0%D0%B5%D0%B3%D0%BB%D0%B0%D0%BC%D0%B5%D0%BD%D1%82%20%D0%BF%D0%BE%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B5%20%D1%81%20%D0%BA%D0%B0%D1%81%D1%81%D0%BE%D0%B9.docx) |
-| ops/roles/Вопросы к ДИ Официанта.docx | operations | официант | инструкция | Контрольные вопросы по обязанностям официанта. | [файл](ops/roles/%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%D1%8B%20%D0%BA%20%D0%94%D0%98%20%D0%9E%D1%84%D0%B8%D1%86%D0%B8%D0%B0%D0%BD%D1%82%D0%B0.docx) |
-| ops/roles/Тестирование на знание Должностной инструкции Официанта (Ответы).xlsx | operations | официант | инструкция | Ответы для тестирования знания должностной инструкции официанта. | [файл](ops/roles/%D0%A2%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B5%20%D0%94%D0%BE%D0%BB%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%BD%D0%BE%D0%B9%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8%20%D0%9E%D1%84%D0%B8%D1%86%D0%B8%D0%B0%D0%BD%D1%82%D0%B0%20%28%D0%9E%D1%82%D0%B2%D0%B5%D1%82%D1%8B%29.xlsx) |
-| ops/roles/План адаптации Стажера Официанта.xlsx | training | официант | инструкция | План онбординга и контрольные шаги стажера официанта. | [файл](ops/roles/%D0%9F%D0%BB%D0%B0%D0%BD%20%D0%B0%D0%B4%D0%B0%D0%BF%D1%82%D0%B0%D1%86%D0%B8%D0%B8%20%D0%A1%D1%82%D0%B0%D0%B6%D0%B5%D1%80%D0%B0%20%D0%9E%D1%84%D0%B8%D1%86%D0%B8%D0%B0%D0%BD%D1%82%D0%B0.xlsx) |
-| ops/roles/Список чатов кофейни.xlsx | operations | официант | контакты | Сводка рабочих чатов и каналов связи кофейни. | [файл](ops/roles/%D0%A1%D0%BF%D0%B8%D1%81%D0%BE%D0%BA%20%D1%87%D0%B0%D1%82%D0%BE%D0%B2%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B9%D0%BD%D0%B8.xlsx) |
-| ops/checklists/Срок продукции.xlsx | operations | бариста | чек-лист | Сроки годности и хранения ингредиентов. | [файл](ops/checklists/%D0%A1%D1%80%D0%BE%D0%BA%20%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%86%D0%B8%D0%B8.xlsx) |
-| ops/checklists/Составы продукции.xlsx | operations | бариста | чек-лист | Справочник составов напитков и блюд. | [файл](ops/checklists/%D0%A1%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%8B%20%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%86%D0%B8%D0%B8.xlsx) |
-| ops/checklists/Чек-лист Раннера _ ЛУГОВАЯ_.xlsx | operations | раннер | чек-лист | Контрольные задачи раннера для точки на ЛУГОВОЙ. | [файл](ops/checklists/%D0%A7%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%A0%D0%B0%D0%BD%D0%BD%D0%B5%D1%80%D0%B0%20_%20%D0%9B%D0%A3%D0%93%D0%9E%D0%92%D0%90%D0%AF_.xlsx) |
-| ops/checklists/Чек-лист Раннера _ САМОКИША.xlsx | operations | раннер | чек-лист | Контрольные задачи раннера для точки на САМОКИША. | [файл](ops/checklists/%D0%A7%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%A0%D0%B0%D0%BD%D0%BD%D0%B5%D1%80%D0%B0%20_%20%D0%A1%D0%90%D0%9C%D0%9E%D0%9A%D0%98%D0%A8%D0%90.xlsx) |
-| ops/checklists/Чек-лист Раннера _ ТУРГЕНЕВА.xlsx | operations | раннер | чек-лист | Контрольные задачи раннера для точки на ТУРГЕНЕВА. | [файл](ops/checklists/%D0%A7%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%A0%D0%B0%D0%BD%D0%BD%D0%B5%D1%80%D0%B0%20_%20%D0%A2%D0%A3%D0%A0%D0%93%D0%95%D0%9D%D0%95%D0%92%D0%90.xlsx) |
-| ops/checklists/чек-лист ЛУГОВАЯ_.xlsx | operations | бариста | чек-лист | Чек-лист бара для точки Луговая. | [файл](ops/checklists/%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%9B%D0%A3%D0%93%D0%9E%D0%92%D0%90%D0%AF_.xlsx) |
-| ops/checklists/чек-лист САМОКИША.xlsx | operations | бариста | чек-лист | Чек-лист бара для точки Самокиша. | [файл](ops/checklists/%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%A1%D0%90%D0%9C%D0%9E%D0%9A%D0%98%D0%A8%D0%90.xlsx) |
-| ops/checklists/чек-лист ТУРГЕНЕВА.xlsx | operations | бариста | чек-лист | Чек-лист бара для точки Тургенева. | [файл](ops/checklists/%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%A2%D0%A3%D0%A0%D0%93%D0%95%D0%9D%D0%95%D0%92%D0%90.xlsx) |
-| finance/Себестоимость напитков.xlsx | finance | управляющий | финансы | Расчёт себестоимости напитков. | [файл](finance/%D0%A1%D0%B5%D0%B1%D0%B5%D1%81%D1%82%D0%BE%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C%20%D0%BD%D0%B0%D0%BF%D0%B8%D1%82%D0%BA%D0%BE%D0%B2.xlsx) |
-| finance/Калькуляции_ напитки.xlsx | finance | управляющий | финансы | Калькуляции напитков и расчёты ингредиентов. | [файл](finance/%D0%9A%D0%B0%D0%BB%D1%8C%D0%BA%D1%83%D0%BB%D1%8F%D1%86%D0%B8%D0%B8_%20%D0%BD%D0%B0%D0%BF%D0%B8%D1%82%D0%BA%D0%B8.xlsx) |
-| assets/menus/Меню _Еда_ в формате PNG.png | assets | бариста | меню | Меню еды в формате PNG. | [файл](assets/menus/%D0%9C%D0%B5%D0%BD%D1%8E%20_%D0%95%D0%B4%D0%B0_%20%D0%B2%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82%D0%B5%20PNG.png) |
-| assets/menus/Меню _Еда_ в формате TIFF.tif | assets | бариста | меню | Меню еды в формате TIFF. | [файл](assets/menus/%D0%9C%D0%B5%D0%BD%D1%8E%20_%D0%95%D0%B4%D0%B0_%20%D0%B2%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82%D0%B5%20TIFF.tif) |
-| assets/menus/Меню _Холодные напитки_ для Самокиша.tif | assets | бариста | меню | Меню холодных напитков для точки Самокиша. | [файл](assets/menus/%D0%9C%D0%B5%D0%BD%D1%8E%20_%D0%A5%D0%BE%D0%BB%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5%20%D0%BD%D0%B0%D0%BF%D0%B8%D1%82%D0%BA%D0%B8_%20%D0%B4%D0%BB%D1%8F%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0.tif) |
-| assets/menus/Меню _Холодные напитки_ для Тургенева.tif | assets | бариста | меню | Меню холодных напитков для точки Тургенева. | [файл](assets/menus/%D0%9C%D0%B5%D0%BD%D1%8E%20_%D0%A5%D0%BE%D0%BB%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5%20%D0%BD%D0%B0%D0%BF%D0%B8%D1%82%D0%BA%D0%B8_%20%D0%B4%D0%BB%D1%8F%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.tif) |
-| assets/menus/Смузи.png | assets | бариста | меню | Страница меню с напитками смузи (PNG). | [файл](assets/menus/%D0%A1%D0%BC%D1%83%D0%B7%D0%B8.png) |
-| assets/menus/Смузи.tiff | assets | бариста | меню | Страница меню с напитками смузи (TIFF). | [файл](assets/menus/%D0%A1%D0%BC%D1%83%D0%B7%D0%B8.tiff) |
-| assets/job-aids/Подсказка по Моти_Макарунс.png | assets | бариста | чек-лист | Визуальная подсказка по выкладке десертов. | [файл](assets/job-aids/%D0%9F%D0%BE%D0%B4%D1%81%D0%BA%D0%B0%D0%B7%D0%BA%D0%B0%20%D0%BF%D0%BE%20%D0%9C%D0%BE%D1%82%D0%B8_%D0%9C%D0%B0%D0%BA%D0%B0%D1%80%D1%83%D0%BD%D1%81.png) |
-| assets/job-aids/Подсказка по Моти_Макарунс.tiff | assets | бариста | чек-лист | Визуальная подсказка по выкладке десертов (TIFF). | [файл](assets/job-aids/%D0%9F%D0%BE%D0%B4%D1%81%D0%BA%D0%B0%D0%B7%D0%BA%D0%B0%20%D0%BF%D0%BE%20%D0%9C%D0%BE%D1%82%D0%B8_%D0%9C%D0%B0%D0%BA%D0%B0%D1%80%D1%83%D0%BD%D1%81.tiff) |
-| assets/job-aids/IMAGE 2025-07-09 10_19_27.jpg | assets | бариста | чек-лист | Общий пример выкладки зоны. | [файл](assets/job-aids/IMAGE%202025-07-09%2010_19_27.jpg) |
-| assets/job-aids/Витрина _ Луговая.jpg | assets | бариста | чек-лист | Фото эталонной витрины (Луговая). | [файл](assets/job-aids/%D0%92%D0%B8%D1%82%D1%80%D0%B8%D0%BD%D0%B0%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Витрина _ Самокиша.jpg | assets | бариста | чек-лист | Фото эталонной витрины (Самокиша). | [файл](assets/job-aids/%D0%92%D0%B8%D1%82%D1%80%D0%B8%D0%BD%D0%B0%20_%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0.jpg) |
-| assets/job-aids/Витрина _ Тургенева.jpg | assets | бариста | чек-лист | Фото эталонной витрины (Тургенева). | [файл](assets/job-aids/%D0%92%D0%B8%D1%82%D1%80%D0%B8%D0%BD%D0%B0%20_%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg) |
-| assets/job-aids/Дверь склад _ Луговая.jpg | assets | бариста | чек-лист | Фото зоны склада (Луговая). | [файл](assets/job-aids/%D0%94%D0%B2%D0%B5%D1%80%D1%8C%20%D1%81%D0%BA%D0%BB%D0%B0%D0%B4%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Кресло под лестницей, подушки _ Луговая.jpg | assets | бариста | чек-лист | Оформление зоны отдыха (Луговая). | [файл](assets/job-aids/%D0%9A%D1%80%D0%B5%D1%81%D0%BB%D0%BE%20%D0%BF%D0%BE%D0%B4%20%D0%BB%D0%B5%D1%81%D1%82%D0%BD%D0%B8%D1%86%D0%B5%D0%B8%CC%86%2C%20%D0%BF%D0%BE%D0%B4%D1%83%D1%88%D0%BA%D0%B8%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Подушки (взбитые) ВАРИАНТ 1 _ Луговая.jpg | assets | бариста | чек-лист | Вариант выкладки подушек на посадке (Луговая). | [файл](assets/job-aids/%D0%9F%D0%BE%D0%B4%D1%83%D1%88%D0%BA%D0%B8%20%28%D0%B2%D0%B7%D0%B1%D0%B8%D1%82%D1%8B%D0%B5%29%20%D0%92%D0%90%D0%A0%D0%98%D0%90%D0%9D%D0%A2%201%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Стеллаж _ Луговая.jpg | assets | бариста | чек-лист | Оформление стеллажа (Луговая). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Стеллаж _ Луговая_.jpg | assets | бариста | чек-лист | Альтернативное оформление стеллажа (Луговая). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F_.jpg) |
-| assets/job-aids/Стеллаж 1 _ Самокиша.jpg | assets | бариста | чек-лист | Оформление стеллажа 1 (Самокиша). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%201%20_%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0.jpg) |
-| assets/job-aids/Стеллаж 1 _ Тургенева.jpg | assets | бариста | чек-лист | Оформление стеллажа 1 (Тургенева). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%201%20_%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg) |
-| assets/job-aids/Стеллаж 2 _ Луговая.jpg | assets | бариста | чек-лист | Оформление стеллажа 2 (Луговая). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%202%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Стеллаж 2 _ Самокиша.jpg | assets | бариста | чек-лист | Оформление стеллажа 2 (Самокиша). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%202%20_%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0.jpg) |
-| assets/job-aids/Стеллаж 2 _ Тургенева.jpg | assets | бариста | чек-лист | Оформление стеллажа 2 (Тургенева). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%202%20_%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg) |
-| assets/job-aids/Стеллаж 3 _ Луговая.jpg | assets | бариста | чек-лист | Оформление стеллажа 3 (Луговая). | [файл](assets/job-aids/%D0%A1%D1%82%D0%B5%D0%BB%D0%BB%D0%B0%D0%B6%203%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| assets/job-aids/Стол №2, диван, подушки _ Луговая.jpg | assets | бариста | чек-лист | Оформление зоны стол №2 и диван (Луговая). | [файл](assets/job-aids/%D0%A1%D1%82%D0%BE%D0%BB%20%E2%84%962%2C%20%D0%B4%D0%B8%D0%B2%D0%B0%D0%BD%2C%20%D0%BF%D0%BE%D0%B4%D1%83%D1%88%D0%BA%D0%B8%20_%20%D0%9B%D1%83%D0%B3%D0%BE%D0%B2%D0%B0%D1%8F.jpg) |
-| vendors/ГОРЯЧИЕ СЛОЕЧКИ  прайс Клиент Крым ИП Субботин 01.01.2025 мини кулебяки кекс.xls | vendors | управляющий | контакты | Прайс-лист выпечки (мини кулебяки, кексы). | [файл](vendors/%D0%93%D0%9E%D0%A0%D0%AF%D0%A7%D0%98%D0%95%20%D0%A1%D0%9B%D0%9E%D0%95%D0%A7%D0%9A%D0%98%20%20%D0%BF%D1%80%D0%B0%D0%B8%CC%86%D1%81%20%D0%9A%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%20%D0%9A%D1%80%D1%8B%D0%BC%20%D0%98%D0%9F%20%D0%A1%D1%83%D0%B1%D0%B1%D0%BE%D1%82%D0%B8%D0%BD%2001.01.2025%20%D0%BC%D0%B8%D0%BD%D0%B8%20%D0%BA%D1%83%D0%BB%D0%B5%D0%B1%D1%8F%D0%BA%D0%B8%20%D0%BA%D0%B5%D0%BA%D1%81.xls) |
-| vendors/ГОРЯЧИЕ СЛОЕЧКИ прайс Клиент Крым ИП Субботин 01.01.2025.xls | vendors | управляющий | контакты | Прайс-лист выпечки (основной). | [файл](vendors/%D0%93%D0%9E%D0%A0%D0%AF%D0%A7%D0%98%D0%95%20%D0%A1%D0%9B%D0%9E%D0%95%D0%A7%D0%9A%D0%98%20%D0%BF%D1%80%D0%B0%D0%B8%CC%86%D1%81%20%D0%9A%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%20%D0%9A%D1%80%D1%8B%D0%BC%20%D0%98%D0%9F%20%D0%A1%D1%83%D0%B1%D0%B1%D0%BE%D1%82%D0%B8%D0%BD%2001.01.2025.xls) |
-| vendors/ГОРЯЧИЕ СЛОЕЧКИ памятка пекарю.doc | vendors | управляющий | контакты | Памятка по работе с выпечкой от поставщика. | [файл](vendors/%D0%93%D0%9E%D0%A0%D0%AF%D0%A7%D0%98%D0%95%20%D0%A1%D0%9B%D0%9E%D0%95%D0%A7%D0%9A%D0%98%20%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BA%D0%B0%20%D0%BF%D0%B5%D0%BA%D0%B0%D1%80%D1%8E.doc) |
-| vendors/МЕЛЬНИЦА Каталог.pdf | vendors | управляющий | контакты | Каталог продукции «Мельница». | [файл](vendors/%D0%9C%D0%95%D0%9B%D0%AC%D0%9D%D0%98%D0%A6%D0%90%20%D0%9A%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3.pdf) |
-| vendors/МЕЛЬНИЦА Прайс действующий с 10.03.25.pdf | vendors | управляющий | контакты | Актуальный прайс «Мельница». | [файл](vendors/%D0%9C%D0%95%D0%9B%D0%AC%D0%9D%D0%98%D0%A6%D0%90%20%D0%9F%D1%80%D0%B0%D0%B8%CC%86%D1%81%20%D0%B4%D0%B5%D0%B8%CC%86%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B8%D0%B8%CC%86%20%D1%81%2010.03.25.pdf) |
-| vendors/На печать поставщики.xlsx | vendors | управляющий | контакты | Сводная таблица поставщиков для печати. | [файл](vendors/%D0%9D%D0%B0%20%D0%BF%D0%B5%D1%87%D0%B0%D1%82%D1%8C%20%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B8.xlsx) |
-| vendors/Прайс общий 01.08 Севслойки.pdf | vendors | управляющий | контакты | Общий прайс по ассортименту. | [файл](vendors/%D0%9F%D1%80%D0%B0%D0%B8%CC%86%D1%81%20%D0%BE%D0%B1%D1%89%D0%B8%D0%B8%CC%86%2001.08%20%D0%A1%D0%B5%D0%B2%D1%81%D0%BB%D0%BE%D0%B8%CC%86%D0%BA%D0%B8.pdf) |
-| vendors/Прайс-лист с 04.11.2023.docx | vendors | управляющий | контакты | Прайс-лист на поставки с 04.11.2023. | [файл](vendors/%D0%9F%D1%80%D0%B0%D0%B8%CC%86%D1%81-%D0%BB%D0%B8%D1%81%D1%82%20%D1%81%2004.11.2023.docx) |
-| vendors/Поставщики Информация.xlsx | vendors | управляющий | контакты | Контактные данные поставщиков. | [файл](vendors/%D0%9F%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B8%20%D0%98%D0%BD%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%86%D0%B8%D1%8F.xlsx) |
-| vendors/Поставщики информация 2.0.xlsx | vendors | управляющий | контакты | Расширенная таблица контактов поставщиков. | [файл](vendors/%D0%9F%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B8%20%D0%B8%D0%BD%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%86%D0%B8%D1%8F%202.0.xlsx) |
-| system/culture/Ценности кофейни «ВКУСНЫЙ КОФЕ».docx | system | управляющий | культура | Описание ценностей кофейни «ВКУСНЫЙ КОФЕ». | [файл](system/culture/%D0%A6%D0%B5%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B8%CC%86%D0%BD%D0%B8%20%C2%AB%D0%92%D0%9A%D0%A3%D0%A1%D0%9D%D0%AB%D0%98%CC%86%20%D0%9A%D0%9E%D0%A4%D0%95%C2%BB.docx) |
-
-## Документы по разделам
-### system
-- system/system-description-vkusnyi-kofe.md — системное описание сети «Вкусный Кофе»: видение целевой системы «удовлетворённый гость», архитектура сети, подсистемы кофеен, процессы обслуживания и метрики P95/AOV/CRR, сценарии реакции на отклонения; статус: основной.
-
-### training
-- training/barista-system-description.md — системное описание работы бариста: целевая система «удовлетворённый гость», ключевые процессы (приём заказов, приготовление, сервис, чистота), метрики скорости и ремейков, чек-листы mise-en-place и контрольные сигналы; статус: основной.
-
-### franchise
-- franchise/presentation.md — презентация подхода для партнёров и франчайзи: семь столпов (локация, меню, ресурсы, заказ, производство, сервис, обратная связь), ключевые метрики сети (P95, AOV, CRR, фудкост), сценарии реакции на отклонения и глоссарий; статус: основной.
-
-### barista-class
-- barista-class/README.md — краткое описание проекта обучения «Бариста Класс» (заготовка для методичек и расписаний); статус: вспомогательный.
+| Должностная инструкция официанта | operations | официант | инструкция | ops/roles/job-descriptions/waiter-job-description.docx | [открыть](ops/roles/job-descriptions/waiter-job-description.docx) |
+| Должностная инструкция раннера | operations | раннер | инструкция | ops/roles/job-descriptions/runner-job-description.docx | [открыть](ops/roles/job-descriptions/runner-job-description.docx) |
+| Регламент по работе с кассой | operations | официант | инструкция | ops/roles/job-descriptions/cash-register-guidelines.docx | [открыть](ops/roles/job-descriptions/cash-register-guidelines.docx) |
+| Вопросы к инструкции официанта | operations | наставник | контроль | ops/roles/job-descriptions/questions-waiter-job-description.docx | [открыть](ops/roles/job-descriptions/questions-waiter-job-description.docx) |
+| Тест: инструкция официанта (ответы) | operations | наставник | тест | ops/roles/job-descriptions/waiter-job-description-test-answers.xlsx | [открыть](ops/roles/job-descriptions/waiter-job-description-test-answers.xlsx) |
+| План адаптации стажера официанта | operations | наставник | план | ops/roles/job-descriptions/waiter-trainee-adaptation-plan.xlsx | [открыть](ops/roles/job-descriptions/waiter-trainee-adaptation-plan.xlsx) |
+| Список чатов кофейни | operations | вся команда | контакты | ops/roles/job-descriptions/cafe-chat-list.xlsx | [открыть](ops/roles/job-descriptions/cafe-chat-list.xlsx) |
+| Срок продукции | operations | бариста | чек-лист | ops/checklists/product-shelf-life.xlsx | [открыть](ops/checklists/product-shelf-life.xlsx) |
+| Составы продукции | operations | бариста | справочник | ops/checklists/product-compositions.xlsx | [открыть](ops/checklists/product-compositions.xlsx) |
+| Чек-лист раннера — Луговая | operations | раннер | чек-лист | ops/checklists/runner-checklist-lugovaya.xlsx | [открыть](ops/checklists/runner-checklist-lugovaya.xlsx) |
+| Чек-лист раннера — Самокиша | operations | раннер | чек-лист | ops/checklists/runner-checklist-samokisha.xlsx | [открыть](ops/checklists/runner-checklist-samokisha.xlsx) |
+| Чек-лист раннера — Тургенева | operations | раннер | чек-лист | ops/checklists/runner-checklist-turgeneva.xlsx | [открыть](ops/checklists/runner-checklist-turgeneva.xlsx) |
+| Локационный чек-лист — Луговая | operations | бариста | чек-лист | ops/checklists/location-checklist-lugovaya.xlsx | [открыть](ops/checklists/location-checklist-lugovaya.xlsx) |
+| Локационный чек-лист — Самокиша | operations | бариста | чек-лист | ops/checklists/location-checklist-samokisha.xlsx | [открыть](ops/checklists/location-checklist-samokisha.xlsx) |
+| Локационный чек-лист — Тургенева | operations | бариста | чек-лист | ops/checklists/location-checklist-turgeneva.xlsx | [открыть](ops/checklists/location-checklist-turgeneva.xlsx) |
+| Описание системы бариста | training | бариста | методология | training/barista-system-description.md | [открыть](training/barista-system-description.md) |
+| Рабочие документы персонала | training | наставник | обзор | training/staff-docs/README.md | [открыть](training/staff-docs/README.md) |
+| Barista Class — конспекты | training | бариста | учебные материалы | training/staff-docs/barista-class/README.md | [открыть](training/staff-docs/barista-class/README.md) |
+| Себестоимость напитков | finance | управляющий | финансы | finance/drink-costing.xlsx | [открыть](finance/drink-costing.xlsx) |
+| Калькуляции напитков | finance | управляющий | финансы | finance/drink-calculations.xlsx | [открыть](finance/drink-calculations.xlsx) |
+| Меню — еда (PNG) | assets | бариста | меню | assets/menus/menu-food.png | [открыть](assets/menus/menu-food.png) |
+| Меню — еда (TIFF) | assets | бариста | меню | assets/menus/menu-food.tif | [открыть](assets/menus/menu-food.tif) |
+| Меню — холодные напитки (Самокиша) | assets | бариста | меню | assets/menus/menu-cold-drinks-samokisha.tif | [открыть](assets/menus/menu-cold-drinks-samokisha.tif) |
+| Меню — холодные напитки (Тургенева) | assets | бариста | меню | assets/menus/menu-cold-drinks-turgeneva.tif | [открыть](assets/menus/menu-cold-drinks-turgeneva.tif) |
+| Смузи (PNG) | assets | бариста | меню | assets/menus/menu-smoothies.png | [открыть](assets/menus/menu-smoothies.png) |
+| Смузи (TIFF) | assets | бариста | меню | assets/menus/menu-smoothies.tiff | [открыть](assets/menus/menu-smoothies.tiff) |
+| Фото выкладки — общий кадр | assets | бариста | фото | assets/job-aids/barista-helper/image-2025-07-09-10-19-27.jpg | [открыть](assets/job-aids/barista-helper/image-2025-07-09-10-19-27.jpg) |
+| Витрина — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/display-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/display-lugovaya.jpg) |
+| Витрина — Самокиша | assets | бариста | фото | assets/job-aids/barista-helper/display-samokisha.jpg | [открыть](assets/job-aids/barista-helper/display-samokisha.jpg) |
+| Витрина — Тургенева | assets | бариста | фото | assets/job-aids/barista-helper/display-turgeneva.jpg | [открыть](assets/job-aids/barista-helper/display-turgeneva.jpg) |
+| Дверь склада — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/storage-door-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/storage-door-lugovaya.jpg) |
+| Кресло под лестницей — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/staircase-armchair-cushions-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/staircase-armchair-cushions-lugovaya.jpg) |
+| Подушки (вариант 1) — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/fluffed-cushions-variant-1-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/fluffed-cushions-variant-1-lugovaya.jpg) |
+| Стеллаж — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/shelving-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/shelving-lugovaya.jpg) |
+| Стеллаж — Луговая (вариант) | assets | бариста | фото | assets/job-aids/barista-helper/shelving-lugovaya-alt.jpg | [открыть](assets/job-aids/barista-helper/shelving-lugovaya-alt.jpg) |
+| Стеллаж 1 — Самокиша | assets | бариста | фото | assets/job-aids/barista-helper/shelving-1-samokisha.jpg | [открыть](assets/job-aids/barista-helper/shelving-1-samokisha.jpg) |
+| Стеллаж 1 — Тургенева | assets | бариста | фото | assets/job-aids/barista-helper/shelving-1-turgeneva.jpg | [открыть](assets/job-aids/barista-helper/shelving-1-turgeneva.jpg) |
+| Стеллаж 2 — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/shelving-2-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/shelving-2-lugovaya.jpg) |
+| Стеллаж 2 — Самокиша | assets | бариста | фото | assets/job-aids/barista-helper/shelving-2-samokisha.jpg | [открыть](assets/job-aids/barista-helper/shelving-2-samokisha.jpg) |
+| Стеллаж 2 — Тургенева | assets | бариста | фото | assets/job-aids/barista-helper/shelving-2-turgeneva.jpg | [открыть](assets/job-aids/barista-helper/shelving-2-turgeneva.jpg) |
+| Стеллаж 3 — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/shelving-3-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/shelving-3-lugovaya.jpg) |
+| Стол №2, диван, подушки — Луговая | assets | бариста | фото | assets/job-aids/barista-helper/table-2-sofa-cushions-lugovaya.jpg | [открыть](assets/job-aids/barista-helper/table-2-sofa-cushions-lugovaya.jpg) |
+| Подсказка по Моти / Макарунс (PNG) | assets | бариста | фото-подсказка | assets/job-aids/barista-helper/moti-macarons-guide.png | [открыть](assets/job-aids/barista-helper/moti-macarons-guide.png) |
+| Подсказка по Моти / Макарунс (TIFF) | assets | бариста | фото-подсказка | assets/job-aids/barista-helper/moti-macarons-guide.tiff | [открыть](assets/job-aids/barista-helper/moti-macarons-guide.tiff) |
+| Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс) | vendors | управляющий | прайс | vendors/suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.xls | [открыть](vendors/suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.xls) |
+| Goryachie Sloechki — прайс 01.01.2025 | vendors | управляющий | прайс | vendors/suppliers/goryachie-sloechki-price-2025-01-01.xls | [открыть](vendors/suppliers/goryachie-sloechki-price-2025-01-01.xls) |
+| Goryachie Sloechki — памятка пекарю | vendors | управляющий | инструкция | vendors/suppliers/goryachie-sloechki-baker-guide.doc | [открыть](vendors/suppliers/goryachie-sloechki-baker-guide.doc) |
+| Melnitsa — каталог | vendors | управляющий | каталог | vendors/suppliers/melnitsa-catalog.pdf | [открыть](vendors/suppliers/melnitsa-catalog.pdf) |
+| Melnitsa — прайс с 10.03.25 | vendors | управляющий | прайс | vendors/suppliers/melnitsa-price-2025-03-10.pdf | [открыть](vendors/suppliers/melnitsa-price-2025-03-10.pdf) |
+| Прайс-лист с 04.11.2023 | vendors | управляющий | прайс | vendors/suppliers/price-list-2023-11-04.docx | [открыть](vendors/suppliers/price-list-2023-11-04.docx) |
+| Прайс общий 01.08 Севслойки | vendors | управляющий | прайс | vendors/suppliers/sev-sloyki-price-01-08.pdf | [открыть](vendors/suppliers/sev-sloyki-price-01-08.pdf) |
+| Поставщики для печати | vendors | управляющий | контакты | vendors/suppliers/supplier-print-list.xlsx | [открыть](vendors/suppliers/supplier-print-list.xlsx) |
+| Поставщики — информация | vendors | управляющий | контакты | vendors/suppliers/suppliers-info.xlsx | [открыть](vendors/suppliers/suppliers-info.xlsx) |
+| Поставщики — информация 2.0 | vendors | управляющий | контакты | vendors/suppliers/suppliers-info-2-0.xlsx | [открыть](vendors/suppliers/suppliers-info-2-0.xlsx) |
+| Ценности кофейни «ВКУСНЫЙ КОФЕ» | system | управляющий | культура | system/culture/cafe-values.docx | [открыть](system/culture/cafe-values.docx) |
+| Глоссарий терминов | system | вся команда | глоссарий | system/glossary.md | [открыть](system/glossary.md) |
+| Презентация для франчайзи | franchise | партнёры | презентация | franchise/presentation.md | [открыть](franchise/presentation.md) |
