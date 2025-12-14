@@ -4,6 +4,9 @@
 > 
 > Источник: https://drive.google.com/drive/folders/120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC
 
+- [Навигация по базе проекта](/ru/README.md)
+- [Контроль качества (светофор)](/ru/kontrol-kachestva/README.md)
+
 ---
 
 ## Структура

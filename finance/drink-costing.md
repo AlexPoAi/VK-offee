@@ -1,4 +1,15 @@
 ---
+title: "Себестоимость напитков"
+section: "finance"
+role: ["управляющий"]
+status: "yellow"
+owner: "Управляющий сети Александр"
+last_reviewed: "2025-12-14"
+next_review: "2026-03-14"
+source: "finance/drink-costing.xlsx"
+---
+
+---
 Источник: [drink-costing.xlsx](drink-costing.xlsx)
 Формат источника: xlsx
 Статус: Markdown-версия для чтения
