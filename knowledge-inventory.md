@@ -1,5 +1,13 @@
 # Knowledge Inventory — «Вкусный Кофе»
 
+## Стартовая навигация
+- [Главная страница базы](/README.md)
+- [Меню на русском](/ru/README.md)
+- [По ролям](/ru/po-rolyam/README.md)
+- [По процессам](/ru/po-protsessam/README.md)
+- [По разделам](/ru/po-razdelam/README.md)
+- [Светофор качества](/ru/kontrol-kachestva/README.md)
+
 ## Дерево разделов
 - system/ — системные описания, глоссарий и культура.
 - training/ — обучение и практические материалы для команды.
