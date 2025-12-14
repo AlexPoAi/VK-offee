@@ -13,6 +13,24 @@ source: ""
 
 Контакты и прайсы поставщиков. Все файлы собраны в подкаталоге `suppliers`. Markdown-версии перечислены первыми, оригиналы отмечены как источники.
 
+## Что внутри
+Каталоги, прайсы и памятки поставщиков в Markdown и исходных форматах.
+
+## Кому нужно
+- Управляющему и операционному менеджеру.
+- Закупщику и старшему бариста при заказах.
+
+## Основные документы
+- [Сводный каталог поставщиков](./suppliers/suppliers-info.md)
+- [Поставщики для печати (XLSX, источник)](./suppliers/supplier-print-list.xlsx)
+- [Прайсы Goryachie Sloechki](./suppliers/goryachie-sloechki-price-2025-01-01.md)
+- [Каталог Melnitsa](./suppliers/melnitsa-catalog.md)
+
+## Частые задачи
+- Скачать и распечатать актуальный прайс: смотрите [suppliers](./suppliers/).
+- Подготовить заказ по конкретному поставщику: откройте [сводный каталог](./suppliers/suppliers-info.md).
+- Обновить цены и сроки: замените файлы в [прайсах](./suppliers/).
+
 ## Документы
 - [Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс, MD)](./suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.md)
 - [Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс, XLS)](./suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.xls)
