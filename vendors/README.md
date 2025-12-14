@@ -1,15 +1,25 @@
 # Поставщики и прайс-листы
 
-Контакты и прайсы поставщиков. Все файлы собраны в подкаталоге `suppliers`.
+Контакты и прайсы поставщиков. Все файлы собраны в подкаталоге `suppliers`. Markdown-версии перечислены первыми, оригиналы отмечены как источники.
 
 ## Документы
-- [Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс)](./suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.xls) — расширенный прайс-лист.
-- [Goryachie Sloechki — прайс 01.01.2025](./suppliers/goryachie-sloechki-price-2025-01-01.xls) — прайс-лист на выпечку.
-- [Goryachie Sloechki — памятка пекарю](./suppliers/goryachie-sloechki-baker-guide.doc) — требования к подготовке изделий.
-- [Melnitsa — каталог](./suppliers/melnitsa-catalog.pdf) — ассортимент продукции.
-- [Melnitsa — прайс с 10.03.25](./suppliers/melnitsa-price-2025-03-10.pdf) — актуальные цены.
-- [Прайс-лист с 04.11.2023](./suppliers/price-list-2023-11-04.docx) — архивный прайс на поставки.
-- [Прайс общий 01.08 Севслойки](./suppliers/sev-sloyki-price-01-08.pdf) — общий прайс на продукцию.
-- [Поставщики для печати](./suppliers/supplier-print-list.xlsx) — контактные данные в удобном формате печати.
-- [Поставщики — информация](./suppliers/suppliers-info.xlsx) — основная таблица контактов и условий.
-- [Поставщики — информация 2.0](./suppliers/suppliers-info-2-0.xlsx) — обновленная версия списка.
+- [Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс, MD)](./suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.md)
+- [Goryachie Sloechki — прайс 01.01.2025 (мини кулебяки, кекс, XLS)](./suppliers/goryachie-sloechki-price-2025-01-01-mini-kulebyaki-keks.xls)
+- [Goryachie Sloechki — прайс 01.01.2025 (MD)](./suppliers/goryachie-sloechki-price-2025-01-01.md)
+- [Goryachie Sloechki — прайс 01.01.2025 (XLS, источник)](./suppliers/goryachie-sloechki-price-2025-01-01.xls)
+- [Goryachie Sloechki — памятка пекарю (MD)](./suppliers/goryachie-sloechki-baker-guide.md)
+- [Goryachie Sloechki — памятка пекарю (DOC, источник)](./suppliers/goryachie-sloechki-baker-guide.doc)
+- [Melnitsa — каталог (MD)](./suppliers/melnitsa-catalog.md)
+- [Melnitsa — каталог (PDF, источник)](./suppliers/melnitsa-catalog.pdf)
+- [Melnitsa — прайс с 10.03.25 (MD)](./suppliers/melnitsa-price-2025-03-10.md)
+- [Melnitsa — прайс с 10.03.25 (PDF, источник)](./suppliers/melnitsa-price-2025-03-10.pdf)
+- [Прайс-лист с 04.11.2023 (MD)](./suppliers/price-list-2023-11-04.md)
+- [Прайс-лист с 04.11.2023 (DOCX, источник)](./suppliers/price-list-2023-11-04.docx)
+- [Прайс общий 01.08 Севслойки (MD)](./suppliers/sev-sloyki-price-01-08.md)
+- [Прайс общий 01.08 Севслойки (PDF, источник)](./suppliers/sev-sloyki-price-01-08.pdf)
+- [Поставщики для печати (MD)](./suppliers/supplier-print-list.md)
+- [Поставщики для печати (XLSX, источник)](./suppliers/supplier-print-list.xlsx)
+- [Поставщики — информация (MD)](./suppliers/suppliers-info.md)
+- [Поставщики — информация (XLSX, источник)](./suppliers/suppliers-info.xlsx)
+- [Поставщики — информация 2.0 (MD)](./suppliers/suppliers-info-2-0.md)
+- [Поставщики — информация 2.0 (XLSX, источник)](./suppliers/suppliers-info-2-0.xlsx)
