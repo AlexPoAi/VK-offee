@@ -1,4 +1,15 @@
 ---
+title: "Ценности кофейни «Вкусный Кофе»"
+section: "system"
+role: ["управляющий","бариста"]
+status: "green"
+owner: "Управляющий сети Александр"
+last_reviewed: "2025-12-14"
+next_review: "2026-03-14"
+source: "system/culture/cafe-values.docx"
+---
+
+---
 Источник: [cafe-values.docx](cafe-values.docx)
 Формат источника: docx
 Статус: Markdown-версия для чтения
