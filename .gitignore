@@ -1,0 +1,5 @@
+# Quint Code dynamic data (recommended by quint-code repo)
+.quint/
+
+# Cloned dependencies
+quint-code/
