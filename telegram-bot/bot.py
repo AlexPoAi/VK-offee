@@ -11,6 +11,7 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import pandas as pd
+from openai import OpenAI
 
 # Настройка логирования
 logging.basicConfig(
@@ -25,7 +26,11 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '7978142264:AAFr3oSP_ZNz18X_Z9ADCNAs3_lhwIZrfmU')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 REPO_PATH = Path(__file__).parent.parent  # Путь к репозиторию VK-offee
+
+# Инициализация OpenAI клиента
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Вспомогательная функция поиска
 def search_knowledge_base(query: str, max_results: int = 5):
@@ -113,6 +118,56 @@ def search_knowledge_base(query: str, max_results: int = 5):
             break
 
     return results
+
+def generate_ai_response(user_question: str, search_results: list) -> str:
+    """Генерация умного ответа с помощью GPT на основе найденной информации"""
+
+    if not openai_client:
+        return "⚠️ AI-функции недоступны. Проверьте настройки API ключа."
+
+    # Формируем контекст из результатов поиска
+    context_parts = []
+    for result in search_results[:5]:  # Берем первые 5 результатов
+        context_parts.append(f"Файл: {result['file']}\nИнформация: {result['context']}")
+
+    context = "\n\n".join(context_parts) if context_parts else "Информация не найдена в базе знаний."
+
+    # Формируем промпт для GPT
+    system_prompt = """Ты - AI-ассистент сети кофеен «Вкусный Кофе».
+Твоя задача - отвечать на вопросы сотрудников и менеджеров на основе информации из базы знаний.
+
+Правила:
+- Отвечай кратко и по делу
+- Используй только информацию из предоставленного контекста
+- Если информации нет в контексте, честно скажи об этом
+- Форматируй ответ понятно (используй списки, если нужно)
+- Говори на русском языке
+- Будь дружелюбным и профессиональным"""
+
+    user_prompt = f"""Вопрос пользователя: {user_question}
+
+Информация из базы знаний:
+{context}
+
+Ответь на вопрос пользователя на основе этой информации."""
+
+    try:
+        # Вызываем OpenAI API
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        logger.error(f"OpenAI API error: {e}")
+        return f"❌ Ошибка при генерации ответа: {str(e)}"
 
 # Команды бота
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -267,16 +322,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         all_results.extend(results)
 
     # Убираем дубликаты
-    unique_results = {r['file']: r for r in all_results}.values()
+    unique_results = list({r['file']: r for r in all_results}.values())
 
-    if unique_results:
-        response = "✅ Нашёл информацию:\n\n"
-        for r in list(unique_results)[:5]:
-            response += f"📄 {r['file']}\n💬 {r['context']}\n\n"
-    else:
-        response = "❌ К сожалению, не нашёл информацию по вашему вопросу.\nПопробуйте переформулировать или используйте /help"
+    # Генерируем умный ответ с помощью GPT
+    ai_response = generate_ai_response(text, unique_results)
 
-    await update.message.reply_text(response)
+    await update.message.reply_text(ai_response)
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка ошибок"""
