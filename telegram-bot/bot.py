@@ -34,16 +34,22 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Вспомогательная функция поиска
 def search_knowledge_base(query: str, max_results: int = 5):
-    """Поиск в базе знаний по запросу с поддержкой таблиц"""
+    """Поиск в базе знаний по запр��су с поддержкой таблиц"""
     knowledge_base = REPO_PATH / "knowledge-base"
     results = []
 
     if not knowledge_base.exists():
+        logger.warning(f"Knowledge base not found at: {knowledge_base}")
         return []
+
+    logger.info(f"Searching for: '{query}' in {knowledge_base}")
+    files_checked = 0
 
     for file_path in knowledge_base.rglob("*"):
         if not file_path.is_file():
             continue
+
+        files_checked += 1
 
         # Исключаем служебные и неактуальные файлы
         path_str = str(file_path).lower()
@@ -123,10 +129,13 @@ def search_knowledge_base(query: str, max_results: int = 5):
         if len(results) >= max_results:
             break
 
+    logger.info(f"Search completed. Files checked: {files_checked}, Results found: {len(results)}")
     return results
 
 def generate_ai_response(user_question: str, search_results: list) -> str:
     """Генерация умного ответа с помощью GPT на основе найденной информации"""
+
+    logger.info(f"Generating AI response for question: '{user_question}' with {len(search_results)} search results")
 
     if not openai_client:
         return "⚠️ AI-функции недоступны. Проверьте настройки API ключа."
