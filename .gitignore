@@ -3,3 +3,15 @@
 
 # Cloned dependencies
 quint-code/
+
+# Telegram bot
+telegram-bot/.env
+telegram-bot/venv/
+telegram-bot/*.log
+telegram-bot/token.pickle
+
+# Google Drive sync
+.github/scripts/venv/
+.github/scripts/credentials.json
+.github/scripts/token.pickle
+.github/scripts/*.log
