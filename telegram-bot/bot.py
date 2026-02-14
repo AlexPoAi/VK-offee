@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+import pandas as pd
 
 # Настройка логирования
 logging.basicConfig(
@@ -28,7 +29,7 @@ REPO_PATH = Path(__file__).parent.parent  # Путь к репозиторию V
 
 # Вспомогательная функция поиска
 def search_knowledge_base(query: str, max_results: int = 5):
-    """Поиск в базе знаний по запросу"""
+    """Поиск в базе знаний по запросу с поддержкой таблиц"""
     knowledge_base = REPO_PATH / "knowledge-base"
     results = []
 
@@ -36,22 +37,69 @@ def search_knowledge_base(query: str, max_results: int = 5):
         return []
 
     for file_path in knowledge_base.rglob("*"):
-        if file_path.is_file() and file_path.suffix in ['.md', '.csv', '.txt']:
-            # Поиск в названии файла
-            if query.lower() in file_path.name.lower():
-                results.append({
-                    'file': str(file_path.relative_to(REPO_PATH)),
-                    'context': f"Найдено в названии файла"
-                })
-                continue
+        if not file_path.is_file():
+            continue
 
-            # Поиск в содержимом файла
+        # Поиск в названии файла
+        if query.lower() in file_path.name.lower():
+            results.append({
+                'file': str(file_path.relative_to(REPO_PATH)),
+                'context': f"Найдено в названии файла"
+            })
+            if len(results) >= max_results:
+                break
+            continue
+
+        # Обработка таблиц (CSV, Excel)
+        if file_path.suffix in ['.csv', '.xlsx', '.xls']:
+            try:
+                # Читаем таблицу
+                if file_path.suffix == '.csv':
+                    df = pd.read_csv(file_path, encoding='utf-8', on_bad_lines='skip')
+                else:
+                    df = pd.read_excel(file_path)
+
+                # Ищем во всех ячейках таблицы
+                found = False
+                for col in df.columns:
+                    for idx, value in df[col].items():
+                        if pd.notna(value) and query.lower() in str(value).lower():
+                            # Формируем контекст: показываем строку с найденным значением
+                            row_data = df.iloc[idx].to_dict()
+                            context_parts = [f"{k}: {v}" for k, v in row_data.items() if pd.notna(v)]
+                            context = " | ".join(context_parts[:3])  # Первые 3 колонки
+
+                            results.append({
+                                'file': str(file_path.relative_to(REPO_PATH)),
+                                'context': context[:200]
+                            })
+                            found = True
+                            break
+                    if found:
+                        break
+            except Exception:
+                # Если не удалось прочитать таблицу, пробуем как текст
+                try:
+                    content = file_path.read_text(encoding='utf-8', errors='ignore')
+                    if query.lower() in content.lower():
+                        lines = content.split('\n')
+                        for line in lines:
+                            if query.lower() in line.lower():
+                                results.append({
+                                    'file': str(file_path.relative_to(REPO_PATH)),
+                                    'context': line.strip()[:200]
+                                })
+                                break
+                except Exception:
+                    pass
+
+        # Обработка текстовых файлов (MD, TXT)
+        elif file_path.suffix in ['.md', '.txt']:
             try:
                 content = file_path.read_text(encoding='utf-8', errors='ignore')
                 if query.lower() in content.lower():
-                    # Найти контекст вокруг запроса
                     lines = content.split('\n')
-                    for i, line in enumerate(lines):
+                    for line in lines:
                         if query.lower() in line.lower():
                             results.append({
                                 'file': str(file_path.relative_to(REPO_PATH)),
@@ -61,8 +109,8 @@ def search_knowledge_base(query: str, max_results: int = 5):
             except Exception:
                 pass
 
-            if len(results) >= max_results:
-                break
+        if len(results) >= max_results:
+            break
 
     return results
 
