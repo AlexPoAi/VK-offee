@@ -20,7 +20,7 @@ import io
 # Настройки
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
-REPO_PATH = Path(__file__).parent.parent
+REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
 REPORT_PATH = KNOWLEDGE_BASE_PATH / f"Отчет синхронизации {datetime.now().strftime('%d.%m.%Y')}.md"
 
@@ -171,22 +171,28 @@ def generate_report():
 
 def main():
     """Основная функция"""
-    print("🔄 Синхронизация Google Drive → GitHub")
-    print(f"📁 Папка Drive: {DRIVE_FOLDER_ID}")
-    print(f"📂 Локальный путь: {KNOWLEDGE_BASE_PATH}\n")
+    print("🔄 Синхронизация Google Drive → GitHub", flush=True)
+    print(f"📁 Папка Drive: {DRIVE_FOLDER_ID}", flush=True)
+    print(f"📂 Локальный путь: {KNOWLEDGE_BASE_PATH}\n", flush=True)
 
     # Получение учетных данных
+    print("🔑 Получение учетных данных...", flush=True)
     creds = get_credentials()
+    print("✅ Учетные данные получены", flush=True)
+
+    print("🔌 Подключение к Google Drive API...", flush=True)
     service = build('drive', 'v3', credentials=creds)
+    print("✅ Подключение установлено", flush=True)
 
     # Получение списка файлов
-    print("📋 Получение списка файлов...")
+    print("📋 Получение списка файлов...", flush=True)
     files = list_files(service, DRIVE_FOLDER_ID)
-    print(f"Найдено файлов: {len(files)}\n")
+    print(f"Найдено файлов: {len(files)}\n", flush=True)
 
     # Скачивание файлов
-    print("⬇️  Скачивание файлов...\n")
-    for file in files:
+    print("⬇️  Скачивание файлов...\n", flush=True)
+    for i, file in enumerate(files, 1):
+        print(f"[{i}/{len(files)}] {file['path']}", flush=True)
         file_path = KNOWLEDGE_BASE_PATH / file['path']
         download_file(service, file['id'], file_path, file['mimeType'])
 
