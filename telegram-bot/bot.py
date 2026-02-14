@@ -45,6 +45,12 @@ def search_knowledge_base(query: str, max_results: int = 5):
         if not file_path.is_file():
             continue
 
+        # Исключаем служебные и неактуальные файлы
+        path_str = str(file_path).lower()
+        exclude_patterns = ['sync-report', 'отчет синхронизации', 'неактуально', 'неактуальн']
+        if any(pattern in path_str for pattern in exclude_patterns):
+            continue
+
         # Поиск в названии файла
         if query.lower() in file_path.name.lower():
             results.append({
