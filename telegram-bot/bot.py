@@ -80,10 +80,42 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    await update.message.reply_text(
-        f"🔍 Ищу информацию по запросу: {query}\n\n"
-        "⚠️ Функция поиска в разработке. Скоро будет доступна!"
-    )
+    await update.message.reply_text(f"🔍 Ищу информацию по запросу: {query}...")
+
+    # Поиск в knowledge-base
+    knowledge_base = REPO_PATH / "knowledge-base"
+    results = []
+
+    if knowledge_base.exists():
+        for file_path in knowledge_base.rglob("*"):
+            if file_path.is_file() and file_path.suffix in ['.md', '.csv', '.txt']:
+                # Поиск в названии файла
+                if query.lower() in file_path.name.lower():
+                    results.append(f"📄 {file_path.relative_to(REPO_PATH)}")
+                    continue
+
+                # Поиск в содержимом файла
+                try:
+                    content = file_path.read_text(encoding='utf-8', errors='ignore')
+                    if query.lower() in content.lower():
+                        # Найти контекст вокруг запроса
+                        lines = content.split('\n')
+                        for i, line in enumerate(lines):
+                            if query.lower() in line.lower():
+                                results.append(f"📄 {file_path.relative_to(REPO_PATH)}\n💬 {line.strip()[:200]}")
+                                break
+                except Exception:
+                    pass
+
+                if len(results) >= 5:
+                    break
+
+    if results:
+        response = f"✅ Найдено результатов: {len(results)}\n\n" + "\n\n".join(results[:5])
+    else:
+        response = f"❌ По запросу '{query}' ничего не найдено.\nПопробуйте другие ключевые слова."
+
+    await update.message.reply_text(response)
 
 async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /menu"""
