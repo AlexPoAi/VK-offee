@@ -26,6 +26,46 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '7978142264:AAFr3oSP_ZNz18X_Z9ADCNAs3_lhwIZrfmU')
 REPO_PATH = Path(__file__).parent.parent  # Путь к репозиторию VK-offee
 
+# Вспомогательная функция поиска
+def search_knowledge_base(query: str, max_results: int = 5):
+    """Поиск в базе знаний по запросу"""
+    knowledge_base = REPO_PATH / "knowledge-base"
+    results = []
+
+    if not knowledge_base.exists():
+        return []
+
+    for file_path in knowledge_base.rglob("*"):
+        if file_path.is_file() and file_path.suffix in ['.md', '.csv', '.txt']:
+            # Поиск в названии файла
+            if query.lower() in file_path.name.lower():
+                results.append({
+                    'file': str(file_path.relative_to(REPO_PATH)),
+                    'context': f"Найдено в названии файла"
+                })
+                continue
+
+            # Поиск в содержимом файла
+            try:
+                content = file_path.read_text(encoding='utf-8', errors='ignore')
+                if query.lower() in content.lower():
+                    # Найти контекст вокруг запроса
+                    lines = content.split('\n')
+                    for i, line in enumerate(lines):
+                        if query.lower() in line.lower():
+                            results.append({
+                                'file': str(file_path.relative_to(REPO_PATH)),
+                                'context': line.strip()[:200]
+                            })
+                            break
+            except Exception:
+                pass
+
+            if len(results) >= max_results:
+                break
+
+    return results
+
 # Команды бота
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /start"""
@@ -82,36 +122,12 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"🔍 Ищу информацию по запросу: {query}...")
 
-    # Поиск в knowledge-base
-    knowledge_base = REPO_PATH / "knowledge-base"
-    results = []
-
-    if knowledge_base.exists():
-        for file_path in knowledge_base.rglob("*"):
-            if file_path.is_file() and file_path.suffix in ['.md', '.csv', '.txt']:
-                # Поиск в названии файла
-                if query.lower() in file_path.name.lower():
-                    results.append(f"📄 {file_path.relative_to(REPO_PATH)}")
-                    continue
-
-                # Поиск в содержимом файла
-                try:
-                    content = file_path.read_text(encoding='utf-8', errors='ignore')
-                    if query.lower() in content.lower():
-                        # Найти контекст вокруг запроса
-                        lines = content.split('\n')
-                        for i, line in enumerate(lines):
-                            if query.lower() in line.lower():
-                                results.append(f"📄 {file_path.relative_to(REPO_PATH)}\n💬 {line.strip()[:200]}")
-                                break
-                except Exception:
-                    pass
-
-                if len(results) >= 5:
-                    break
+    results = search_knowledge_base(query)
 
     if results:
-        response = f"✅ Найдено результатов: {len(results)}\n\n" + "\n\n".join(results[:5])
+        response = f"✅ Найдено результатов: {len(results)}\n\n"
+        for r in results:
+            response += f"📄 {r['file']}\n💬 {r['context']}\n\n"
     else:
         response = f"❌ По запросу '{query}' ничего не найдено.\nПопробуйте другие ключевые слова."
 
@@ -153,25 +169,41 @@ async def roles_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка текстовых сообщений"""
-    text = update.message.text.lower()
+    text = update.message.text
+    text_lower = text.lower()
 
-    # Простые ответы на ключевые слова
-    if any(word in text for word in ['привет', 'здравствуй', 'hi', 'hello']):
+    # Обработка приветствий
+    if any(word in text_lower for word in ['привет', 'здравствуй', 'hi', 'hello']):
         await update.message.reply_text(
             "Привет! 👋\n"
             "Я бот базы знаний VK-offee.\n"
-            "Используй /help для списка команд."
+            "Задавайте любые вопросы!"
         )
-    elif any(word in text for word in ['кофе', 'coffee', 'эспрессо', 'латте']):
-        await update.message.reply_text(
-            "☕ Вопрос о кофе!\n\n"
-            "Используй /menu для просмотра меню или /search для поиска информации."
-        )
+        return
+
+    # Для всех остальных сообщений - поиск в базе знаний
+    await update.message.reply_text("🔍 Ищу информацию...")
+
+    # Извлекаем ключевые слова (слова длиннее 3 символов)
+    keywords = [word for word in text_lower.split() if len(word) > 3]
+
+    # Поиск по каждому ключевому слову
+    all_results = []
+    for keyword in keywords[:3]:  # Ограничиваем первыми 3 ключевыми словами
+        results = search_knowledge_base(keyword, max_results=3)
+        all_results.extend(results)
+
+    # Убираем дубликаты
+    unique_results = {r['file']: r for r in all_results}.values()
+
+    if unique_results:
+        response = "✅ Нашёл информацию:\n\n"
+        for r in list(unique_results)[:5]:
+            response += f"📄 {r['file']}\n💬 {r['context']}\n\n"
     else:
-        await update.message.reply_text(
-            "Я получил ваше сообщение, но пока не могу его обработать.\n"
-            "Используйте /help для списка доступных команд."
-        )
+        response = "❌ К сожалению, не нашёл информацию по вашему вопросу.\nПопробуйте переформулировать или используйте /help"
+
+    await update.message.reply_text(response)
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка ошибок"""
