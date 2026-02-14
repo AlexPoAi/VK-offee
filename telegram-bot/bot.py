@@ -232,12 +232,37 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Для всех остальных сообщений - поиск в базе знаний
     await update.message.reply_text("🔍 Ищу информацию...")
 
-    # Извлекаем ключевые слова (слова длиннее 3 символов)
-    keywords = [word for word in text_lower.split() if len(word) > 3]
+    # Стоп-слова для фильтрации
+    stop_words = {'какая', 'какой', 'какие', 'где', 'как', 'что', 'это', 'есть',
+                  'был', 'была', 'были', 'будет', 'для', 'или', 'при', 'так',
+                  'вот', 'мой', 'твой', 'его', 'её', 'чем', 'том', 'тот'}
+
+    # Извлекаем ключевые слова (слова длиннее 3 символов, исключая стоп-слова)
+    keywords = [word for word in text_lower.split() if len(word) > 3 and word not in stop_words]
+
+    # Добавляем синонимы для популярных запросов
+    synonyms = {
+        'зарплата': ['з/п', 'оплата', 'зарплат'],
+        'зарплат': ['з/п', 'оплата'],
+        'себестоимость': ['себестоим', 'стоимость'],
+        'рецепт': ['приготовление', 'готовить'],
+        'повар': ['повар', 'кухня'],
+        'официант': ['официант', 'раннер'],
+    }
+
+    # Расширяем список ключевых с��ов синонимами
+    expanded_keywords = []
+    for keyword in keywords:
+        expanded_keywords.append(keyword)
+        # Проверяем, есть ли синонимы для этого слова
+        for main_word, syns in synonyms.items():
+            if keyword in main_word or main_word in keyword:
+                expanded_keywords.extend(syns)
+                break
 
     # Поиск по каждому ключевому слову
     all_results = []
-    for keyword in keywords[:3]:  # Ограничиваем первыми 3 ключевыми словами
+    for keyword in expanded_keywords[:6]:  # Ограничиваем первыми 6 ключевыми словами
         results = search_knowledge_base(keyword, max_results=3)
         all_results.extend(results)
 
