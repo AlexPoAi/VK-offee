@@ -1,0 +1,23 @@
+# Игнорировать виртуальное окружение
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Игнорировать конфигурацию
+.env
+*.log
+*.error.log
+
+# Игнорировать временные файлы
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Игнорировать IDE
+.vscode/
+.idea/
+*.sublime-*
