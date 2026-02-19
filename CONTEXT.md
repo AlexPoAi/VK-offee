@@ -206,7 +206,7 @@ python3 sync_google_drive_v2.py
 
 ### Статус: ⏳ Готов к запуску
 
-**Токен:** `7978142264:AAFr3oSP_ZNz18X_Z9ADCNAs3_lhwIZrfmU`
+**Токен:** `[УДАЛЕНО - см. .env]`
 
 **Что умеет:**
 - Поиск в базе знаний (content/ + knowledge-base/)
