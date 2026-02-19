@@ -8,7 +8,7 @@ Telegram бот с доступом к базе знаний GitHub
 import os
 import logging
 from pathlib import Path
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import pandas as pd
 from openai import OpenAI
@@ -191,16 +191,19 @@ def generate_ai_response(user_question: str, search_results: list) -> str:
 # Команды бота
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /start"""
+    # Создаём кнопки меню
+    keyboard = [
+        [KeyboardButton("🔍 Поиск"), KeyboardButton("📋 Меню")],
+        [KeyboardButton("👥 Роли"), KeyboardButton("📊 Статус")],
+        [KeyboardButton("❓ Помощь")]
+    ]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
     await update.message.reply_text(
         "🤖 VK-offee AI Bot v2.0\n\n"
         "Я помогу вам работать с базой знаний сети кофеен «Вкусный Кофе».\n\n"
-        "Доступные команды:\n"
-        "/start - Начать работу\n"
-        "/help - Помощь\n"
-        "/search <запрос> - Поиск в базе знаний\n"
-        "/status - Статус бота\n"
-        "/menu - Показать меню кофейни\n"
-        "/roles - Список ролей (F1-F9)"
+        "Используйте кнопки ниже или просто напишите вопрос! 👇",
+        reply_markup=reply_markup
     )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -293,6 +296,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка текстовых сообщений"""
     text = update.message.text
     text_lower = text.lower()
+
+    # Обработка кнопок меню
+    if text == "🔍 Поиск":
+        await update.message.reply_text(
+            "Введите запрос для поиска в базе знаний.\n\n"
+            "Например:\n"
+            "• кофе\n"
+            "• боул с индейкой\n"
+            "• калькуляция"
+        )
+        return
+    elif text == "📋 Меню":
+        await menu_command(update, context)
+        return
+    elif text == "👥 Роли":
+        await roles_command(update, context)
+        return
+    elif text == "📊 Статус":
+        await status(update, context)
+        return
+    elif text == "❓ Помощь":
+        await help_command(update, context)
+        return
 
     # Обработка приветствий
     if any(word in text_lower for word in ['привет', 'здравствуй', 'hi', 'hello']):
