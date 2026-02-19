@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Конфигурация
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '7978142264:AAFr3oSP_ZNz18X_Z9ADCNAs3_lhwIZrfmU')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 REPO_PATH = Path(__file__).parent.parent  # Путь к репозиторию VK-offee
 
