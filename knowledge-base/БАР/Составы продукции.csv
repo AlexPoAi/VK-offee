@@ -1,18 +1,113 @@
-<!DOCTYPE html><style nonce="cAYS2Xiti422u49LOpmjrg">body{height:100%;margin:0;width:100%}@media (max-height:350px){.button{font-size:10px}.button-container{margin-top:16px}.button.primary-button,.button.primary-button:active,.button.primary-button:focus,.button.primary-button:hover{padding:4px 12px}.title-text{font-size:22px;line-height:24px}.subtitle-text{font-size:12px;line-height:18px}}@media (min-height:350px){.button{font-size:14px}.button-container{margin-top:16px}.button.primary-button,.button.primary-button:active,.button.primary-button:focus,.button.primary-button:hover{padding:12px 24px}.title-text{font-size:28px;line-height:36px}.subtitle-text{font-size:16px;line-height:24px}}.document-root{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;inset:0;position:absolute}.error,.login,.request-storage-access{display:none}.error,.login,.request-storage-access,.too-many-login-redirects{margin:auto;padding:36px}.document-root.show-error .error,.document-root.show-login-page .login,.document-root.show-storage-access .request-storage-access,.too-many-login-redirects{-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-orient:vertical;-webkit-box-direction:normal;-webkit-flex-direction:column;-moz-box-orient:vertical;-moz-box-direction:normal;-ms-flex-direction:column;flex-direction:column}.button-container{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;-webkit-box-pack:center;-webkit-justify-content:center;-moz-box-pack:center;-ms-flex-pack:center;justify-content:center}.button{border:none;cursor:pointer;color:#0b57d0;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;font-family:Google Sans Text,Roboto,sans-serif;border-radius:100px;padding:12px;margin:0 8px;text-decoration:none}.button:hover{background-color:rgba(11,87,208,.078)}.button:active,.button:focus{background-color:rgba(11,87,208,.122)}.button.primary-button,.button.primary-button:active,.button.primary-button:focus,.button.primary-button:hover{background-color:#0b57d0;color:#fff}.button.primary-button:hover{box-shadow:0 1px 3px 1px rgba(0,0,0,.149),0 1px 2px 0 rgba(0,0,0,.302)}.icon{height:48px;margin-bottom:16px}.title-text{font-family:Google Sans,Roboto,sans-serif;text-align:center}.subtitle-text{font-family:Google Sans Text,Roboto,sans-serif;margin-top:16px;text-align:center}
-/*# sourceMappingURL=style.css.map */</style><script nonce="813aAdkCqz6uKxvs52yNHA">'use strict';function h(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}}function k(a){var b=typeof Symbol!="undefined"&&Symbol.iterator&&a[Symbol.iterator];if(b)return b.call(a);if(typeof a.length=="number")return{next:h(a)};throw Error(String(a)+" is not an iterable or ArrayLike");};var l=["storage_access_granted","not_in_iframe","login_counter"];function m(a,b,c){c=c===void 0?"true":c;a=new URL(a);for(var d=0;d<l.length;d++)a.searchParams.delete(l[d]);a.searchParams.set(b,c);return a.toString()};/*
+у,Наименование позиции,Состав,Цена,
+,,,Розничная,Себестоим. / скидка на кассе для персонала
+Кексы,Кекс Творожный ,"Творожная масса, вишневое повидло",120₽,"45,00 / 62,5%"
+,"Шоколадный маффин
+(пробивается как позиция Кекс творожный)",,100₽,"45,00 / 55%"
+,,,,
+"Шеф умами (гречка, соба, рис, удон)",Гречка курица су-вид пять Грибов ,"Гречка, куриное филе, белый гриб, лисички, шиитаке, подосиновики, маслята, ореховый соус, грибной соус, лук фри, трюфельное масло, укроп, сушеный чеснок",375₽,"290,00 / 22,6%"
+,Соба курица су-вид помидор,"Соба, куриное филе, помидор, зеленый базилик
+Соус (соевый / ореховый / грибной / анчоусный / устричный / вочестер, хойсин, арахисовая паста, масло соевое / кунжутное, кунжут белый / черный, сушеный чеснок, красный рисовый уксус, сахар тростниковый, сок лайм / лимон / апельсин)",,
+,Рис курица су-вид вакаме ,"Рис басмати, куриное филе, вакаме, зеленый базилик
+Соус (соевый соус, красный рисовый уксус, кунжутное масло, соевое масло, анчоусный соус, сахар, соль)",,"240,00 / 36%"
+,"Удон курица су-вид пад-тай, Юдзу","Удон, куриное филе, масло кунжутное / соевое, морковь, сельдерей, зеленый базилик
+Соус (пад-тай / соевый / анчоусный / вочестер, юдзу, сок лайм / лимон / апельсин, мед, рисовый уксус)",,
+,,,,
+"СМАК
+(фокачча, киш)",Фокачча,"Фокачча с рваной говядиной и печёными перцами / 260 гр
+Хлеб, соус (творожный сыр, майонез собственного приготовления, французская горчица), говядина, перец болгарский, сыр чеддер, помидор, французская горчица, руккола
 
- Copyright The Closure Library Authors.
- SPDX-License-Identifier: Apache-2.0
-*/
-/*
+Фокачча с ветчиной и пармезаном / 260 гр
+Хлеб, ветчина из индейки, соус (творожный сыр, майонез собственного приготовления, французская горчица), помидор, огурец, сыр пармезан, лист салата
 
- Copyright Google LLC
- SPDX-License-Identifier: Apache-2.0
-*/
-function n(){var a=new p,b=new q,c=document.getElementsByClassName("document-root")[0],d=this;this.g=new r;this.h=a;this.l=b;this.i=c;c.getElementsByClassName("accept-button")[0].addEventListener("click",function(){return void t(d)});c.getElementsByClassName("sign-in-button")[0].addEventListener("click",function(e){return void u(d,e)})}
-function v(){var a=new n;w()?x()||typeof document.hasStorageAccess!=="function"||typeof document.requestStorageAccess!=="function"?y(a,"show-login-page"):a.h.hasStorageAccess().then(function(b){b?y(a,"show-login-page"):z().then(function(c){c==="prompt"?y(a,"show-storage-access"):c==="granted"?t(a):y(a,"show-error")})},function(){y(a,"show-error")}):A(a,window.location.href,"not_in_iframe")}
-function A(a,b,c){c=c?m(b,c):b;if(a.g.get()){if(b=a.g.get())c=B(c),c=C(c),c!==void 0&&(b.action=c);a.g.submit()}else window.location.href===c?window.location.reload():(a=window.location,b=B(c)||D,b=C(b),b!==void 0&&(a.href=b))}function y(a,b){a.i.className="document-root "+b}function t(a){a.h.requestStorageAccess().then(function(){A(a,window.location.href,"storage_access_granted")},function(){y(a,"show-error")})}
-function u(a,b){var c;if(b=(c=b.currentTarget)==null?void 0:c.getAttribute("data-popup-url")){var d=E(window,B(b)||D);F(a.l,function(){d&&d.close();var e=window.location.href;var f=(new URL(e)).searchParams,g=1;f.has("login_counter")&&(f=Number(f.get("login_counter")),isFinite(f)&&(g=f+1));e=m(e,"login_counter",String(g));A(a,e)})}};function G(a){this.g=a}G.prototype.toString=function(){return this.g};var D=new G("about:invalid#zClosurez");function H(a){this.j=a}function I(a){return new H(function(b){return b.substr(0,a.length+1).toLowerCase()===a+":"})}var J=[I("data"),I("http"),I("https"),I("mailto"),I("ftp"),new H(function(a){return/^[^:]*([/?#]|$)/.test(a)})];function B(a){var b=b===void 0?J:b;if(a instanceof G)return a;for(var c=0;c<b.length;++c){var d=b[c];if(d instanceof H&&d.j(a))return new G(a)}}var K=/^\s*(?!javascript:)(?:[\w+.-]+:|[^:/?#]*(?:[/?#]|$))/i;
-function C(a){if(a instanceof G)if(a instanceof G)a=a.g;else throw Error("");else a=K.test(a)?a:void 0;return a};function E(a,b){b=C(b);return b!==void 0?a.open(b,"popupWindow","popup=yes,height=500,width=690"):null};function r(){}r.prototype.get=function(){return document.querySelector("form")};r.prototype.submit=function(){var a;(a=this.get())==null||a.submit()};function L(a){for(var b=k(document.cookie.split(";")),c=b.next();!c.done;c=b.next())if(c=c.value.split("="),c[0].trim()===a)return c[1]};function q(){this.h=["SAPISID","__Secure-1PAPISID","__Secure-3PAPISID"];this.g=void 0}function F(a,b){a.g&&clearInterval(a.g);for(var c={},d=k(a.h),e=d.next();!e.done;e=d.next())e=e.value,c[e]=L(e);a.g=setInterval(function(){a:{var f=k(a.h);for(var g=f.next();!g.done;g=f.next())if(g=g.value,L(g)!==void 0&&c[g]!==L(g)){f=!0;break a}f=!1}f&&(clearInterval(a.g),a.g=void 0,b())},1E3)};function w(){var a=!0;try{a=window.self!==window.top}catch(b){}return a};function p(){}p.prototype.hasStorageAccess=function(){return document.hasStorageAccess()};function z(){return navigator.permissions.query({name:"storage-access"}).then(function(a){return a.state}).catch(function(){return"prompt"})}p.prototype.requestStorageAccess=function(){return document.requestStorageAccess()};
-function x(){if(window.navigator.userAgentData&&window.navigator.userAgentData.brands)for(var a=window.navigator.userAgentData.brands,b=0;b<a.length;b++){var c=a[b];if(c.brand==="Google Chrome")return c.version==="115"||c.version==="116"}return!1};document.readyState==="complete"?v():document.addEventListener("DOMContentLoaded",M);function M(){v()};
-</script><div class="document-root loading"><div class="request-storage-access"><div><img src=&#47;&#47;ssl.gstatic.com&#47;docs&#47;common&#47;product&#47;sheets_app_icon1.png alt=Google&#32;Таблицы class="icon"></div><div class="title-text">Предоставьте Google Таблицы доступ к нужным файлам cookie</div><div class="subtitle-text">Невозможно получить доступ к этому контенту, пока нужные файлы cookie отключены</div><div class="button-container"><a target="cookieAccessHelp" href="https://support.google.com/drive?p=enable_storage_access" class=" button">Подробнее…</a><button type="button" class="accept-button button primary-button">Разрешить файлы cookie</button></div></div><div class="login"><div><img src=https:&#47;&#47;www.gstatic.com&#47;images&#47;branding&#47;googleg&#47;1x&#47;googleg_standard_color_48dp.png alt=Логотип&#32;Google class="icon"></div><div class="title-text">Войдите в свой аккаунт Google.</div><div class="subtitle-text">Чтобы получить доступ к контенту, войдите в аккаунт</div><div class="button-container"><button type="button" class="sign-in-button button primary-button" data-popup-url=https:&#47;&#47;accounts.google.com&#47;ServiceLogin?continue&#61;https:&#47;&#47;docs.google.com&#47;spreadsheets&#47;d&#47;1J5BXZjLnAF3amAw02xH4MTYN5bPg9IwqOwnxqWBDJR4&#47;export?format%3Dcsv%26gid%3D0&amp;btmpl&#61;popup&amp;hl&#61;ru_RU>Войти</button></div></div><div class="error"><div><img src=https:&#47;&#47;www.gstatic.com&#47;images&#47;branding&#47;googleg&#47;1x&#47;googleg_standard_color_48dp.png alt=Логотип&#32;Google class="icon"></div><div class="title-text">Нет доступа к аккаунту Google</div><div class="subtitle-text">Не удалось получить доступ к этому контенту. Попробуйте войти в свой аккаунт Google или разрешите доступ к файлам cookie.</div><div class="button-container"><a target="cookieAccessHelp" href="https://support.google.com/drive?p=enable_storage_access" class="primary-button button">Подробнее…</a></div></div></div>
+Фокачча с курицей и вялеными томатами / 260 гр
+Хлеб, курица копченая, соус (творожный сыр, майонез собственного приготовления, французская горчица), помидор вяленый, сыр российский, огурец, руккола",350₽,"248,00 ₽"
+,,,,
+,Киш с рыбой,"Киш с семгой и брокколи
+Семга, мука пшеничная, брокколи, сыр твердый, масло сливочное, молоко, сливки, яйцо куриное, соль, сахар, перец",350₽,"237,00 ₽"
+,Киш с мясом,"Киш с ветчиной и сыром
+Ветчина из индейки, сыр твердый, мука пшеничная, масло сливочное, молоко, сливки, яйцо куриное, соль, сахар, перец
+
+Киш с курицей, грибами и сыром
+Филе куриное, мука пшеничная, сыр твердый, грибы шампиньоны, масло сливочное, молоко, сливки, зеленый лук, яйцо куриное, соль, сахар, перец",320₽,"193,00 ₽"
+,,,,
+,,,,
+,,,,
+,,,,
+,,,,
+МФуд,Блины с ветчиной и сыром,"Ветчина, сыр. Подаются со сметаной",310,"220,00 / 29%"
+,Блины с курицей и грибами,"Курица, грибы, сыр. Подаются со сметаной",310,"220,00 / 29%"
+,Блины с творогом ,"Творог, подаются со сгущенкой",310,"210,00 / 32,2%"
+,Блины с нутеллой и бананом,,285₽,"150,00 / 47,3%"
+,Панини с курицей ,"Курица, пармезан, соус цезарь, салат айсберг",260₽,"110,00 / 50%"
+,Панини с беконом,"Бекон, соус BBQ, сыр голландский, салат айсберг",260₽,"110,00 / 50%"
+,Боул с индейкой,"Индейка, киноа, горошек и кукуруза консервир., кунжут, соус шрирача",260₽,"185,00 / 68,52%"
+,Поке с курицей ,"Рис отварной, курица, свежие овощи, горошек, кукуруза консервированная",260₽,"185,00 / 68,52%"
+,"Поке с лососем ""Понзу""","Рис отварной, лосось, огурец, авокадо, водоросли чука, бобы эдомамме, соус унаги",260₽,"195,00 / 60,94%"
+,Сырники творожные,Сырники подаются со сгущенкой,310,"220,00 / 29%"
+,Чиабатта с говядиной,"Говядина, соус чили, свежие овощи ",310₽,"225,00 / 27,4%"
+,Чиабатта с курицей,"Курица, сыр, соус тар-тар, свежие овощи ",310₽,"215,00 / 30,6%"
+,Пицца,"Болоньезе
+Говядина, сыр моцарелла, сыр тильзитер, томаты, авторский красный соус.
+
+Охотничья
+Охотничьи колбаски, сыр моцарелла, сыр тильзитер, томаты, шампиньоны, авторский красный соус
+
+Барбекю
+Куриное филе су-вид, бекон свиной, сыр моцарелла, сыр тильзитер, лук ялтинский, авторский красный соус, соус BBQ
+
+Цезарь
+Куриное филе су-вид, сыр моцарелла, сыр тильзитер, сыр пармезан, айсберг, томаты, соус Цезарь",160₽,"135,00 / 15,6%"
+,Грибной крем-суп,Крем суп на основе грибов шампиньонов и сливок. Подаётся с сухариками,300₽,"210,00 / 40%"
+,Гречка с курицей и грибами,Отварная гречка с курицей и грибами в сливочном соусе,300₽,"220,00 /"
+,Удон с курицей и овощами,"Куриное филе обжаренное с овощами: болгарский перец, репчатый лук, имбирь и ароматный чеснок в соевом соусе с пшеничной лапшой Удон с кунжутом и зеленым луком",350₽,"245,00 / 18,3%"
+,Соба с курицей Терияки,Гречневая лапша с курицей в соусе Терияки с ароматным чесноком и кунжутом,350₽,"210,00 / 30%"
+,Чиабатта с семгой,,330₽,"220,00 / 33,3%"
+,,,,
+"
+
+
+Наша кухня (ВК)",Блины с ветчиной и сыром,"Ветчина, сыр моцарелла, сыр маасдам, соль, перец 
+Подается со сметаной",250₽,"187,00 / 25%"
+,Блины с курицей и грибами,"Курица, грибы шампиньоны, сыр моцарелла, крем-чиз, соль, перец. 
+Подается со сметаной",250₽,"185,00 / 26%"
+,Блины с творогом,"Творог, яйца, рисовая мука, кукурузная мука, ванилин
+Подается со сметаной",250₽,"175,00 / 30%"
+,Боул с индейкой,"птитим (основа), кукуруза, огурцы, болгарский перец, зелень, индейка, кунжут, терияки.  Подается с чесночным соусом  и начосами",400₽,"230,00 / 42,5%"
+,Боул с рыбой,"киноа (основа), огурцы, болгарский перец, жареный адыгейский сыр, семга, терияки, кунжут, зелень. Подается с соусом спайси (майонез и соус чили)",450₽,"325,00 / 27,7%"
+,Буритто,"Куриное филе в соусе берокруз, отварная консерв. красная фасоль, моцарела, консерв. кукуруза 
+Подается с соусом сальса и сметаной
+*соус берокруз - апельсиновый сок, томатная паста, специя кумин
+*соус сальса - томаты, болг. перец, лук",300₽,"222,00 / 26%"
+,Киш с курицей и грибами,"Начинка: шампиньоны, куриное филе, сливки, моцарелла, лук, чеснок, перец черный, масло растит., зелень 
+Тесто: мука, соль, масло, яйца",280₽,"160,00 / 42,8%"
+,Пицца маргарита,"Тесто, томаты, сыр, соус фирменный 
+(три вида: томатный, песто, чесночный)",150₽,"107,00 / 28,6%"
+,Пицца с ветчиной,"Тесто, томаты, маслины, сыр, ветчина (из курицы/индейки), соус фирменный 
+(три вида: томатный, песто, чесночный)",170₽,"115,00 / 32%"
+,Рис терияки с индейкой,"рис, маринованное мясо индейки (приправа для курицы, копченая паприка, соль, раст.масло), лук красный, болгарский перец, соевый соус, чеснок, сушеный имбирь, масло растительное",350₽,"225,00 / 35,7%"
+,Ролл индейка,"тортилья, маринованное мясо индейки (приправа для курицы, копченая паприка, соль, раст.масло), майонез с чесноком, томатный соус, томаты, огурец, айсберг",330₽,"220,00 / 33,3%"
+,Ролл курица,"тортилья, маринованное мясо курицы (приправа для курицы, копченая паприка, соль, раст.масло), соус карри, томаты, огурец, айсберг. 
+Состав соуса карри: майонез, соус гриль, масло раст., соевый концентрат, карри, горчица, суш.имбирь, сахар, кинза",330₽,"220,00 / 33,3%"
+,Ролл креветка,"тортилья, креветка, крем-чиз, томаты, огурец, айсберг, соус спайси (майонез и соус чили), соус песто. 
+Маринад креветки: соль, пров.травы, масло раст.",380₽,"240,00 / 36,8%"
+,Ролл сёмга,"Тортилья, лосось, крем чиз, айсберг, соус песто, огурец, томаты",320₽,"205,00 / 35,9%"
+,Онигурадзу жареный сыр,"Нори, рис, жареный адыгейский сыр, айсберг, болгарский перец, огурец, майонез, кунжут, соусы: терияки, чатни (томатный соус с гвоздикой). Подается с соевым соусом",320₽,"150,00 / 53,1%"
+,Онигурадзу индейка,"Нори, рис, индейка, айсберг, болгарский перец, огурец, крем чиз, кунжут, соусы: терияки, чатни (томатный соус с гвоздикой). Подается с соевым соусом",320₽,"165,00 / 48,4%"
+,Онигурадзу краб ,"нори, рис, крабовые палочки, огурец, айсберг, крем-чиз, майонез, икра масаго (икра мойвы), терияки, кунжут. Подается с соевым соусом",450,"250,00 / 44,4%"
+,Онигурадзу креветка,"нори, рис, маринованная креветка, огурец, айсберг, крем-чиз, соус спайси, терияки, кунжут. Подается с соевым соусом. 
+Маринад креветки: соль, пров.травы, масло раст.",450,"250,00 / 44,4%"
+,Онигурадзу креветка Том Ям  ,"Нори, рис, креветки 2 шт, соус тоям, айсберг, огурец, грибы шитаки, кунжут, терияки. 
+Соус том ям состав: паста том ям, майонез, кокосовая стружка молотая, специя чили, сахар.
+Подается с соевым соусом",450,"250,00 / 44,4%"
+,Онигурадзу сёмга,"нори, рис, семга, огурец, майонез, айсберг, крем-чиз, терияки, кунжут. Подается с соевым соусом",450,"250,00 / 44,4%"
+,Онигурадзу шеф,"нори, рис, семга, креветка, огурец, айсберг, крем-чиз,  майонез, икра масаго, соус чили, терияки, кунжут.
+Подается с соевым соусом",480₽,"320,00 / 33,3%"
+,Отбивная из курицы,"куриная грудка, мука, раст.масло, майонез, томаты, сыр моцарелла, свежий огурчик, картофель айдахо в прованских травах, кудрявая петрушка",420₽,"310,00 / 26,1%"
+,Салат Баклажан ,"жареный баклажан в панировке, крем чиз, томаты, айсберг, орех грецкий, соус сладкий чили",350₽,"220,00 / 37,1%"
+,Салат Цезарь с курицей ,"куриное филе гриль, айсберг, томаты, сухарики, сыр пармезан, яйцо перепелинное, соус цезарь (майонез, карри, олив.масло, соевый соус, чеснок, кинза)",350₽,"220,00 / 37,1%
+"
+,Сэндвич Мясной ,"Хлеб тостовый, курица запеченная в специях, ветчина свиная Балык (копченая), маринованные огурчики, айсберг, соус фирменный (три вида: барбекю, горчичный, гриль)",280₽,"200,00 / 28,5%"
+,Сэндвич Цезарь,"хлеб тостовый, курица запеченная в специях, маринованные огурчики, сыр, айсберг, соус фирменный (два вида: барбекю, цезарь)",350₽,"250,00 / 28,5%"
+,Сэндвич Итальянец,"хлеб тостовый, адыг.сыр, майонез, чеснок, запеченные томаты, куриный рулет, зеленый базилик свежий, соус цезарь",350₽,"250,00 / 28,5%"
+,Сэндвич Ветчина и сыр,"Хлеб тостовый, мясо свинины копченое (Балык), айсберг, сыр, соус фирменный (три вида: барбекю, горчичный, сырный)",280₽,
+,Шашлычок куриный,"Филе курицы или индейки в маринаде из соусов: чили, соевый, масло растительное. Овощи свежие: огурчик, черри, петрушка. Кунжут. Подается с томатным соусом",300₽,"210,00 / 30%"
