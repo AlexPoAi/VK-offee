@@ -137,7 +137,7 @@ def search_knowledge_base(query: str, max_results: int = 5):
     return results
 
 def generate_ai_response(user_question: str, search_results: list) -> str:
-    """Генерация умного ответа с помощью GPT на основе найденной информации"""
+    """Генерация умного ответа с помощью ChatGPT на основе найденной информации"""
 
     logger.info(f"Generating AI response for question: '{user_question}' with {len(search_results)} search results")
 
@@ -151,7 +151,7 @@ def generate_ai_response(user_question: str, search_results: list) -> str:
 
     context = "\n\n".join(context_parts) if context_parts else "Информация не найдена в базе знаний."
 
-    # Формируем промпт для GPT
+    # Формируем промпт для ChatGPT
     system_prompt = """Ты - AI-ассистент сети кофеен «Вкусный Кофе».
 Твоя задача - отвечать на вопросы сотрудников и менеджеров на основе информации из базы знаний.
 
