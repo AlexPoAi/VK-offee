@@ -12,6 +12,10 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import pandas as pd
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Загрузка переменных окружения из .env
+load_dotenv()
 
 # Настройка логирования
 logging.basicConfig(
