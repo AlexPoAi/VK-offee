@@ -30,6 +30,32 @@ SHEETS = [
     ("1xcbVugDZoUMrrDHQb_Dycbiq6mMBFvOiFPQV-uZo1Og", "Калькуляции напитки", "БАР"),
     ("1J5BXZjLnAF3amAw02xH4MTYN5bPg9IwqOwnxqWBDJR4", "Составы продукции", "БАР"),
     ("1s3PgusaFjJftN8oKpxiDUQewqcV-NzwiRzboFyK-0GA", "Срок продукции", "БАР"),
+    ("1WzFPsrsXIa3BewZOo2rC3vcCsjOSfzvaV099yBahM8c", "чек-лист Тургенева", "БАР"),
+    ("1w0xAzC20YSUPAmxYTezAIG0764uXMXOfMH1yqUPT1BA", "чек-лист Самокиша", "БАР"),
+    ("187eTXnt3i17vnnMeSX9KQHi5_qPuL7lQqGUehyfupds", "чек-лист Луговая", "БАР"),
+    ("1b_T5uST433dJGXnIlS4WNbIU0IDj1RymECZ8uMvITNk", "Чек-лист Раннера Тургенева", "БАР"),
+    ("1_0EDx54ziO4mW6jSKtyspux92t7OG5v6tc1kykc98bE", "Чек-лист Раннера Самокиша", "БАР"),
+    ("1J3kZ33YrBxXKW6WI2r6kl8kw51UHGTL3eKwJf3_Ri8s", "Чек-лист Раннера Луговая", "БАР"),
+
+    # Персонал
+    ("1vA2XkU229QoRQhWAbqjGTeB1Ba_fFSp0Dq_CEhKZC7Y", "Таблица по ЗП сотрудников", "Персонал"),
+    ("1w4K9mrGmrSIua6oUI4kuMziI88YjLetJkcdjdzLADOE", "Размер одежды сотрудников", "Персонал"),
+    ("1KiXAyzk88L0fyOWp0C9IbEcI0QGAhQL7jmPJgE__aVU", "ДР сотрудников и рабочая почта", "Персонал"),
+    ("1pRFiKE3Ll6jTogDU-dgLgv2yKpNnMjxbJlwloBI4P-g", "Список чатов кофейни", "Персонал"),
+    ("1edkjH38zRhWnkovDImu__v5kJy-Fnrp6CVQhjxVc5wQ", "Обратная связь по кофейне от сотрудников", "Персонал"),
+    ("1ebAx2jvt0B7KHJhJBEJ_NUcXjgWxt3muChV7xitxhmk", "Ответы Тестирование ДИ Официанта", "Персонал"),
+
+    # ДЛЯ ШЕФА
+    ("1kr6Z0HyYcAZWTTp7Jp_nopsGRVuK45smtcayBaTRPMM", "Закуп сравнение цен", "ДЛЯ ШЕФА"),
+    ("1h22FSh3F7dUGAIUDJXGbyOWQJokZ7jKVSh_aYt9pceI", "Контакты печати строительных сеток", "ДЛЯ ШЕФА"),
+    ("1fge42tcKdx33MNxH9jrQxxdmzAaoIeS8eCTbuFF4AMM", "Компании по дезинсекции", "ДЛЯ ШЕФА"),
+    ("1asLM0UlGNOOhQfMkoc5zDj2MKgtc4tWnwPSn5A3E9js", "Расчет Диана МЕЛТ", "ДЛЯ ШЕФА"),
+    ("1QrL48GAzpVABqwwSO5z80PNZNk2cVKXLwDYwEGXz5sM", "График оплаты поставщиков", "ДЛЯ ШЕФА"),
+
+    # Инвентаризация
+    ("1-MMMX8UrxvrRhwDwkN5K94bdf95YG1bAEtGQ9kwvV6I", "Список посуды", "Инвентаризация"),
+    ("1OhCnZGMgDEx-ghU-F-0VCP3xloGQO37mrzlJ1SnsbIU", "Отчет по инвентаризации", "Инвентаризация"),
+    ("1sqrYyqSENH83Q-O9BWtUUAYpAWa63JHyvpp2NZuGUIg", "Список зерна по кофейням", "Инвентаризация"),
 ]
 
 stats = {'success': 0, 'failed': 0, 'sheets_read': 0}
