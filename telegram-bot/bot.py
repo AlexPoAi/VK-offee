@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 # Конфигурация
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-REPO_PATH = Path(__file__).parent.parent  # Путь к репозиторию VK-offee
+# Путь к репозиторию VK-offee (на уровень выше telegram-bot)
+REPO_PATH = Path(__file__).parent.parent.resolve()
 
 # Инициализация OpenAI клиента
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
@@ -61,16 +62,6 @@ def search_knowledge_base(query: str, max_results: int = 5):
         if any(pattern in path_str for pattern in exclude_patterns):
             continue
 
-        # Поиск в названии файла
-        if query.lower() in file_path.name.lower():
-            results.append({
-                'file': str(file_path.relative_to(REPO_PATH)),
-                'context': f"Найдено в названии файла"
-            })
-            if len(results) >= max_results:
-                break
-            continue
-
         # Обработка таблиц (CSV, Excel)
         if file_path.suffix in ['.csv', '.xlsx', '.xls']:
             try:
@@ -85,14 +76,14 @@ def search_knowledge_base(query: str, max_results: int = 5):
                 for col in df.columns:
                     for idx, value in df[col].items():
                         if pd.notna(value) and query.lower() in str(value).lower():
-                            # Формируем контекст: показываем строку с найденным значением
+                            # Формируем контекст: показываем всю строку с найденным значением
                             row_data = df.iloc[idx].to_dict()
                             context_parts = [f"{k}: {v}" for k, v in row_data.items() if pd.notna(v)]
-                            context = " | ".join(context_parts[:3])  # Первые 3 колонки
+                            context = " | ".join(context_parts)  # Все колонки
 
                             results.append({
                                 'file': str(file_path.relative_to(REPO_PATH)),
-                                'context': context[:200]
+                                'context': context[:500]  # Увеличил лимит до 500 символов
                             })
                             found = True
                             break
@@ -150,6 +141,9 @@ def generate_ai_response(user_question: str, search_results: list) -> str:
         context_parts.append(f"Файл: {result['file']}\nИнформация: {result['context']}")
 
     context = "\n\n".join(context_parts) if context_parts else "Информация не найдена в базе знаний."
+
+    # Логируем контекст для отладки
+    logger.info(f"Context being sent to ChatGPT:\n{context[:1000]}")
 
     # Формируем промпт для ChatGPT
     system_prompt = """Ты - AI-ассистент сети кофеен «Вкусный Кофе».
@@ -337,8 +331,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                   'был', 'была', 'были', 'будет', 'для', 'или', 'при', 'так',
                   'вот', 'мой', 'твой', 'его', 'её', 'чем', 'том', 'тот'}
 
-    # Извлекаем ключевые слова (слова длиннее 3 символов, исключая стоп-слова)
-    keywords = [word for word in text_lower.split() if len(word) > 3 and word not in stop_words]
+    # Убираем знаки препинания и извлекаем ключевые слова
+    import re
+    text_clean = re.sub(r'[^\w\s]', ' ', text_lower)  # Убираем знаки препинания
+    keywords = [word for word in text_clean.split() if len(word) > 3 and word not in stop_words]
 
     # Добавляем синонимы для популярных запросов
     synonyms = {
