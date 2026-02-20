@@ -177,16 +177,14 @@ def main():
     service = build('drive', 'v3', credentials=creds)
 
     # Создать структуру папок
-    root_folder_id = DRIVE_FOLDER_ID
+    # Создаём папку "Разработано в базе данных" для новых документов
+    staging_folder_id = find_or_create_folder(service, 'Разработано в базе данных', DRIVE_FOLDER_ID)
 
-    # БАР/
-    bar_folder_id = find_or_create_folder(service, 'БАР', root_folder_id)
+    # Должностные инструкции/
+    di_folder_id = find_or_create_folder(service, 'Должностные инструкции', staging_folder_id)
 
-    # БАР/Должностные инструкции/
-    di_folder_id = find_or_create_folder(service, 'Должностные инструкции', bar_folder_id)
-
-    # БАР/Матрицы ответственности/
-    matrix_folder_id = find_or_create_folder(service, 'Матрицы ответственности', bar_folder_id)
+    # Матрицы ответственности/
+    matrix_folder_id = find_or_create_folder(service, 'Матрицы ответственности', staging_folder_id)
 
     # Загрузить документы
     print("\n📤 Загрузка документов...")
