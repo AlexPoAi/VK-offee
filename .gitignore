@@ -15,3 +15,7 @@ telegram-bot/token.pickle
 .github/scripts/credentials.json
 .github/scripts/token.pickle
 .github/scripts/*.log
+
+# OAuth tokens and configs (для веб-агентов)
+config/
+scripts/
