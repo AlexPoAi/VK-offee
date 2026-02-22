@@ -161,6 +161,7 @@
 
 - `knowledge-base/ДЛЯ ШЕФА/Таблица по З/п сотрудников - Зарплата сотрудников КУХНЯ.csv`
 - `knowledge-base/Протокол планерки.md`
+- [Google Sheets — Модель оплаты труда кухни](https://docs.google.com/spreadsheets/d/1L2waYtNk7Gv_NshGQpAubVWPwCI6pFfISBQs1lCLD80)
 
 ---
 
