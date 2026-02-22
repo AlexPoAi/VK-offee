@@ -1,0 +1,16 @@
+==========================================
+Google Drive Sync: Sat Feb 21 09:03:05 MSK 2026
+==========================================
+Traceback (most recent call last):
+  File "/Users/alexander/VK-offee/.github/scripts/sync_google_drive_v2.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
+❌ Ошибка синхронизации
+==========================================
+Google Drive Sync: Sun Feb 22 09:01:49 MSK 2026
+==========================================
+Traceback (most recent call last):
+  File "/Users/alexander/VK-offee/.github/scripts/sync_google_drive_v2.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
+❌ Ошибка синхронизации
