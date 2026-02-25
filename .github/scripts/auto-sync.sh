@@ -2,7 +2,7 @@
 # Скрипт автоматической синхронизации Google Drive
 # Запускается через cron каждый день в 9:00
 
-cd /Users/alexander/VK-offee/.github/scripts
+cd /Users/alexander/Github/VK-offee/.github/scripts
 
 echo "=========================================="
 echo "Google Drive Sync: $(date)"
@@ -16,7 +16,7 @@ if [ $? -eq 0 ]; then
     echo "✅ Синхронизация завершена успешно"
 
     # Автоматический коммит изменений
-    cd /Users/alexander/VK-offee
+    cd /Users/alexander/Github/VK-offee
 
     # Проверка наличия изменений
     if [ -n "$(git status --porcelain)" ]; then
