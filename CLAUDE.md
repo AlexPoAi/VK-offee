@@ -2,8 +2,8 @@
 
 > Инструкции для AI-агентов и разработчиков, работающих с репозиторием VK-offee
 
-**Версия:** 2.0 (FPF+SPF+SRT+FMT интеграция)
-**Дата:** 2026-02-20
+**Версия:** 3.0 (5 Bounded Contexts)
+**Дата:** 2026-02-28
 
 ---
 
@@ -47,6 +47,66 @@ VK-offee - это операционная база знаний сети коф
 
 ---
 
+## 🏗️ Архитектура VK-offee: 5 Bounded Contexts
+
+### System-of-Interest (Целевая система)
+
+**SoI = Сеть кофеен VK-offee (3 кофейни)**
+
+Каждая кофейня — компонент SoI с общими стандартами и процессами.
+
+### 5 Bounded Contexts (Предметные области)
+
+| BC | Pack | Префикс | Описание |
+|----|------|---------|----------|
+| **Bar Operations** | PACK-bar | BAR | Барная стойка: напитки, эспрессо, бариста, касса |
+| **Kitchen Operations** | PACK-kitchen | KITCHEN | Кухня: блюда, заготовки, повар, ТТК, себестоимость |
+| **Service Operations** | PACK-service | SERVICE | Обслуживание: официант, заказы, подача, гости |
+| **Shift Management** | PACK-management | MGMT | Управление сменой: планирование, контроль, отчёты |
+| **HR Operations** | PACK-hr | HR | Персонал: найм, обучение, ДИ, графики |
+
+### Context Map (Связи между BC)
+
+```
+┌─────────────────┐
+│  Bar Operations │ ←─ Partnership ─→ ┌─────────────────┐
+│   (Барная)      │                   │Service Operations│
+└────────┬────────┘                   │  (Обслуживание) │
+         │                            └────────┬─────────┘
+         │ Customer-Supplier                   │
+         ↓                                     │ Customer
+┌──────────────────┐                          │
+│Kitchen Operations│ ←────────────────────────┘
+│     (Кухня)      │
+└────────┬─────────┘
+         │ Conformist
+         ↓
+┌─────────────────────────────────────────────┐
+│    Shift Management (Управление сменой)     │
+│    Published Language → All Operations      │
+└────────┬────────────────────────────────────┘
+         │ Published Language
+         ↓
+┌─────────────────┐
+│  HR Operations  │
+│   (Персонал)    │
+└─────────────────┘
+```
+
+### Маршрутизация знаний
+
+Экстрактор автоматически распределяет captures по Pack на основе ключевых слов:
+
+- **Капучино, бариста, эспрессо** → PACK-bar
+- **Боул, повар, заготовки, ТТК** → PACK-kitchen
+- **Официант, заказ, гость** → PACK-service
+- **Смена, план, контроль** → PACK-management
+- **Найм, обучение, график** → PACK-hr
+
+Конфигурация: `FMT-exocortex-template/roles/extractor/config/routing.md`
+
+---
+
 ## 📁 Структура репозитория
 
 ```
@@ -78,32 +138,58 @@ VK-offee/
 │   ├── ids-and-references.md       # Система ID и ссылок
 │   └── human-guides.md             # Руководства для людей
 │
-├── PACK-cafe-operations/           # 📦 PACK (Доменное знание)
+├── PACK-bar/                       # 📦 PACK: Bar Operations (Барная стойка)
 │   ├── 00-pack-manifest.md         # Манифест Pack
 │   ├── 01-domain-contract/         # Контракт домена
-│   │   ├── 01A-bounded-context.md  # Границы домена
-│   │   ├── 01B-distinctions.md     # 12 различений
-│   │   └── 01C-ontology.md         # Онтология
-│   ├── 02-domain-entities/         # Сущности домена
-│   │   ├── 02A-roles.md            # Роли (бариста, официант...)
-│   │   ├── 02B-products.md         # Продукты (напитки, блюда)
-│   │   └── 02C-methods-index.md    # Индекс методов
-│   ├── 03-methods/                 # Методы (карточки процессов)
-│   │   ├── CAFE.METHOD.001-espresso.md
-│   │   ├── CAFE.METHOD.002-cappuccino.md
-│   │   └── ...
-│   ├── 04-work-products/           # Рабочие продукты
-│   │   ├── CAFE.WP.001-menu.md
-│   │   ├── CAFE.WP.002-checklist.md
-│   │   └── ...
+│   ├── 02-domain-entities/         # Сущности (роли: бариста, кассир)
+│   ├── 03-methods/                 # Методы (эспрессо, капучино, латте)
+│   ├── 04-work-products/           # Рабочие продукты (меню напитков, чек-листы)
 │   ├── 05-failure-modes/           # Типовые ошибки
-│   │   ├── CAFE.FAIL.001-burnt-milk.md
-│   │   └── ...
 │   ├── 06-sota/                    # SoTA-аннотации
-│   │   └── CAFE.SOTA.001-coffee-extraction.md
-│   ├── 07-map/                     # Карты связей
-│   │   └── CAFE.MAP.001.md
-│   └── _template/                  # Шаблоны для новых документов
+│   └── 07-map/                     # Карты связей
+│
+├── PACK-kitchen/                   # 📦 PACK: Kitchen Operations (Кухня)
+│   ├── 00-pack-manifest.md         # Манифест Pack
+│   ├── 01-domain-contract/         # Контракт домена
+│   ├── 02-domain-entities/         # Сущности (роли: повар, помощник, шеф)
+│   ├── 03-methods/                 # Методы (приготовление блюд, заготовки)
+│   │   ├── KITCHEN.METHOD.001-ingredient-change.md
+│   │   └── KITCHEN.METHOD.002-writeoff-rework.md
+│   ├── 04-work-products/           # Рабочие продукты (ТТК, калькуляции)
+│   │   └── KITCHEN.WP.001-production-system-sta.md
+│   ├── 05-failure-modes/           # Типовые ошибки
+│   ├── 06-sota/                    # SoTA-аннотации
+│   └── 07-map/                     # Карты связей
+│
+├── PACK-service/                   # 📦 PACK: Service Operations (Обслуживание)
+│   ├── 00-pack-manifest.md         # Манифест Pack
+│   ├── 01-domain-contract/         # Контракт домена
+│   ├── 02-domain-entities/         # Сущности (роли: официант, раннер)
+│   ├── 03-methods/                 # Методы (приём заказов, подача)
+│   ├── 04-work-products/           # Рабочие продукты (стандарты обслуживания)
+│   ├── 05-failure-modes/           # Типовые ошибки
+│   ├── 06-sota/                    # SoTA-аннотации
+│   └── 07-map/                     # Карты связей
+│
+├── PACK-management/                # 📦 PACK: Shift Management (Управление сменой)
+│   ├── 00-pack-manifest.md         # Манифест Pack
+│   ├── 01-domain-contract/         # Контракт домена
+│   ├── 02-domain-entities/         # Сущности (роли: менеджер смены, шеф)
+│   ├── 03-methods/                 # Методы (планирование, контроль качества)
+│   ├── 04-work-products/           # Рабочие продукты (отчёты, стандарты)
+│   ├── 05-failure-modes/           # Типовые ошибки
+│   ├── 06-sota/                    # SoTA-аннотации
+│   └── 07-map/                     # Карты связей
+│
+├── PACK-hr/                        # 📦 PACK: HR Operations (Персонал)
+│   ├── 00-pack-manifest.md         # Манифест Pack
+│   ├── 01-domain-contract/         # Контракт домена
+│   ├── 02-domain-entities/         # Сущности (роли: HR-менеджер)
+│   ├── 03-methods/                 # Методы (найм, обучение, адаптация)
+│   ├── 04-work-products/           # Рабочие продукты (ДИ, обучающие материалы)
+│   ├── 05-failure-modes/           # Типовые ошибки
+│   ├── 06-sota/                    # SoTA-аннотации
+│   └── 07-map/                     # Карты связей
 │
 ├── SRT/                            # 🗂️ SRT (F0-F9)
 │   ├── README.md                   # Обзор SRT
@@ -494,6 +580,6 @@ VK-offee/
 
 ---
 
-**Версия:** 2.0
-**Последнее обновление:** 2026-02-20
-**Следующий пересмотр:** 2026-03-20
+**Версия:** 3.0
+**Последнее обновление:** 2026-02-28
+**Следующий пересмотр:** 2026-03-28
