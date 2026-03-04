@@ -9,7 +9,7 @@ last_updated: 2026-02-28
 migrated_from: CO.METHOD.001
 ---
 
-## KITCHEN.METHOD.001 Регламент изменения состава блюда
+## KITCHEN.METHOD.001 (Регламент изменения состава блюда)
 
 ### Определение
 

@@ -8,7 +8,7 @@ last_updated: 2026-02-28
 migrated_from: CO.ENTITY.001
 ---
 
-## KITCHEN.ENTITY.001 Концепция нового помещения кухни
+## KITCHEN.ENTITY.001 (Концепция нового помещения кухни)
 
 ### Определение
 
