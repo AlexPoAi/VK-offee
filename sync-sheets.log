@@ -1,3 +1,15 @@
 /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/alexander/sync-google-sheets.py': [Errno 2] No such file or directory
 /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/alexander/sync-google-sheets.py': [Errno 2] No such file or directory
 /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/alexander/sync-google-sheets.py': [Errno 2] No such file or directory
+Traceback (most recent call last):
+  File "/Users/alexander/Github/VK-offee/.github/scripts/sync-google-sheets.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
+Traceback (most recent call last):
+  File "/Users/alexander/Github/VK-offee/.github/scripts/sync-google-sheets.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
+Traceback (most recent call last):
+  File "/Users/alexander/Github/VK-offee/.github/scripts/sync-google-sheets.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
