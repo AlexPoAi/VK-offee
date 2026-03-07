@@ -19,3 +19,7 @@ telegram-bot/token.pickle
 # OAuth tokens and configs (для веб-агентов)
 config/
 scripts/
+
+# Google credentials
+ops/automation/google-*.json
+ops/automation/*-credentials.json
