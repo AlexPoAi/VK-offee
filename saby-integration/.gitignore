@@ -1,0 +1,9 @@
+# Saby Integration
+
+.env
+.token
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+.vscode/

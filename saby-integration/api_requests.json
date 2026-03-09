@@ -1,0 +1,1207 @@
+[
+  {
+    "url": "https://sso.saby.ru/theming-public/service/?id=1&protocol=6&method=SabyTheme.GetCss&args=eyJzZWxlY3RvciI6ImRlZmF1bHRfX29ubGluZW5hdmlnYXRpb24iLCJ2ZXJzaW9uIjoxNzcyNTc2MjA1fQ==",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/LocalizationConfigs/localization_configs/region/RU.json.min.js?x_module=a06e6776f8d511208eeec3c1b2dab205",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Types/lang/ru/ru.json.min.js?x_module=b438dc49bf110f940582b0a7bdf27a06",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Controls/lang/ru/ru.json.min.js?x_module=7257b793d5f2f492376569e6ea11c660",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/SbisEnvUI/lang/ru/ru.json.min.js?x_module=9e4f78470d32502edef7dffe255a323d",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Page/lang/ru/ru.json.min.js?x_module=bf7a240787992e3c83207d73fd468a96",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/SabyPage/lang/ru/ru.json.min.js?x_module=41a2173c669ef442569489d671d48a25",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/AuthControls/lang/ru/ru.json.min.js?x_module=a0059aa78b72d845615b0b723d10ecaa",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Hint/lang/ru/ru.json.min.js?x_module=80c9df53d26753874bbcdc0dd81c219c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/PopupNotifications/lang/ru/ru.json.min.js?x_module=59c739aa55b725f949f87b8e492ec566",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/NavigationPanels/lang/ru/ru.json.min.js?x_module=3252e2a1a52244800f8e2f1736c242e5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/AuthPage/lang/ru/ru.json.min.js?x_module=5522a32562001a58f8009c270c443eb8",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/AuthOnlinePagesUI/lang/ru/ru.json.min.js?x_module=9bc74ce95d82eeedf9ba33571a37c0d1",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Router/CustomRouterJson.min.js?x_module=b70da714c2e746d23bec18132fcd5fcc",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Controls/packageMap.json.min.js?x_module=7257b793d5f2f492376569e6ea11c660",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/NavigationPanels/packageMap.json.min.js?x_module=3252e2a1a52244800f8e2f1736c242e5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/Page/packageMap.json.min.js?x_module=bf7a240787992e3c83207d73fd468a96",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/ThemesModule/sabythemes/default.min.json?x_module=b0a065e9d9858d26526b0911e834b067",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/ServiceUpdateNotifier/packageMap.json.min.js?x_module=c92cf315cedd243763d56689cb32d622",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/ServiceUpdateNotifier/lang/ru/ru.json.min.js?x_module=c92cf315cedd243763d56689cb32d622",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/SBIS3.Plugin/_base/entryPointConfig.min.json?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/SBIS3.Plugin/lang/ru/ru.json.min.js?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://captcha-api.yandex.ru/captcha.js",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://captcha-api.yandex.ru/vendors.ed4b113f68d9e68992da.chunk.js",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://captcha-api.yandex.ru/shield.980294ac6075b098436d.chunk.js",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://captcha-api.yandex.ru/backend.5e56b772c972d11334c1.html?sitekey=ysc1_ik5heJScpnyolXVO90LBQHQAPdqyTMz5kkEs0gTJ7d0c6a2b&theme=light&hl=ru&host=sso.saby.ru&href=https%3A%2F%2Fsso.saby.ru%2Fauth-online%2Fonline.sbis.ru%2F%3Fret%3Donline.sbis.ru%2F&test=false&webview=false&hideChallengeContainer=false",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://captcha-api.yandex.ru/advanced.ru.93b0a67517cdf9d9fb0e.html?sitekey=ysc1_ik5heJScpnyolXVO90LBQHQAPdqyTMz5kkEs0gTJ7d0c6a2b&theme=light&hl=ru&host=sso.saby.ru&href=https%3A%2F%2Fsso.saby.ru%2Fauth-online%2Fonline.sbis.ru%2F%3Fret%3Donline.sbis.ru%2F&test=false&webview=false&hideChallengeContainer=false",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/AccessDenied/packageMap.json.min.js?x_module=40dee15a9c019d7cbf5e2d73afe99ea7",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/static/resources/BasicAccessDenied/packageMap.json.min.js?x_module=4bd83961e12de150065df735e434f3eb",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-online/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://sso.saby.ru/auth-service/service/?x_version=26.1220-168",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/theming-public/service/?id=1&protocol=6&method=SabyTheme.GetCss&args=eyJzZWxlY3RvciI6ImRlZmF1bHRfX29ubGluZW5hdmlnYXRpb24iLCJ2ZXJzaW9uIjoxNzcyNTc2MjA1fQ==",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/CustomRouterJsonGroup/CustomRouterJson.min.js?x_module=666c47817d41660eab577fa97aac0303",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/cdn/OnlineCDN/manifest/1.0.11/manifest.json",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Dashboard/new/_loader/emptyLayout.min.json?x_module=f7a2b35061cd56a0b6148e729d548eff",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/LocalizationConfigs/localization_configs/region/RU.json.min.js?x_module=a06e6776f8d511208eeec3c1b2dab205",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/5ed9b16d-cc3d-4d0f-bfed-a26fd5cbe219",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/FrameEditor/api.min.js?x_module=422cbc9167799f1507d077599304c35c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Person/lang/ru/ru.json.min.js?x_module=282cc8c99a65bc42e58a69d4ba6165c2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/WorkTimeManagementBase/lang/ru/ru.json.min.js?x_module=82902b49f20136fb06a65f49dab30f1b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EntityWidget/lang/ru/ru.json.min.js?x_module=82e730a34eed251d8a5826830cc4ab79",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/0a12ea49-884b-4282-98de-4275affdece6",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/40361e0c-2a68-4418-9cb2-649a4b6f0b54",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/bb6a612c-78db-4415-a2d0-1748765a36d9",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/d95f3687-bf3b-4540-88a3-e080826f8831",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/MotivationGame/lang/ru/ru.json.min.js?x_module=deb26ef5e3296202421d31606a2b170e",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/d712ac11-f5a6-4c4a-8ac0-01803a40c8ff",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/c9b53bff-72a6-4ab0-afa3-3f7cfc84ca7a",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/58a584a6-46ee-43e7-9818-75a4a7680cd2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/0ae9277d-70e6-4551-888d-a5b6542cb22e",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/0bd8ef4c-204d-4145-890f-0184f75340db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/8d15864f-00c6-429a-90be-56db2018736a",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/04bac3f6-9d43-4d69-8f04-ef25adf37f8b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/26806417-0bd7-4964-949c-70c73c5f1f90",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenterBase/contents.json.min.js?x_module=fd55646370c674edca303fa403113bac",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EventRibbon/lang/ru/ru.json.min.js?x_module=4c28dbfb08c735c1a1946285e928685d",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Motivation/lang/ru/ru.json.min.js?x_module=056e2d01f198c32cf78699b7839f7e78",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EntityCommon/lang/ru/ru.json.min.js?x_module=ca7ae4c1c540c3f7eb33198d211c57f2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NewsCommon/lang/ru/ru.json.min.js?x_module=e26a5f088dd8f86fe9dfbe6a901b4921",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/MotivationNotice/lang/ru/ru.json.min.js?x_module=48cba7b39fbd376178137719cde09aa4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HelpDashboardWidgets/contents.json.min.js?x_module=422bea1cc10e76b47c5b3d17734e5e1a",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Hint/lang/ru/ru.json.min.js?x_module=80c9df53d26753874bbcdc0dd81c219c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/News/lang/ru/ru.json.min.js?x_module=d78256e4d184bed7b34887e91a3ae6dc",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeConstants/lang/ru/ru.json.min.js?x_module=426cf8e02ce9abc759b332bddf31b037",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Graphs/lang/ru/ru.json.min.js?x_module=52ad1cdc904249bcf5ff76d952055484",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ContractorBase/lang/ru/ru.json.min.js?x_module=6c731193e2a74e0fd5ce833a7284a1da",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/WarehouseStatsWidgets/lang/ru/ru.json.min.js?x_module=c5a5646c88c46abd53276c36691f8f66",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenter/contents.json.min.js?x_module=dad97c8ef7581f171e847c6ef8c8ff2b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NewsWidgets/lang/ru/ru.json.min.js?x_module=3127ee6b4f995dbce72ce7d048f56019",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Addressee/lang/ru/ru.json.min.js?x_module=3c6a5e062dbf8bf06f2b9e80104cdb60",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ContractorCommon/lang/ru/ru.json.min.js?x_module=51950be1682448a59c9676b9e0d1999e",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/36242300-dcd0-4a71-9b00-f8bbdae6b0d0",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/51f3d7f1-f701-4248-8ddd-b0012a4a29e3",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/3c749fab-bdd1-4d9e-bff9-06ea284be4a5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenterBase/lang/ru/ru.json.min.js?x_module=fd55646370c674edca303fa403113bac",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenter/lang/ru/ru.json.min.js?x_module=dad97c8ef7581f171e847c6ef8c8ff2b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/50c15f0d-6d32-44e5-9c2e-9ace924acc6e",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/500/500/disk/api/v1/93028ab7-f0d4-419c-a134-4e8791942525",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/previewer/news/r/1000/500/disk/api/v1/a100416f-a750-4c98-a27e-92e3cc70324b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/DOCVIEW3Core/lang/ru/ru.json.min.js?x_module=ca51498fda0a4f7b0ee0db8bc8f05b87",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/LinkDecorator/lang/ru/ru.json.min.js?x_module=c94719e790a3f67e317d332b72f097d9",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Controls-Actions/lang/ru/ru.json.min.js?x_module=6ac90ff574ebe31cf15c152855f0ce32",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Docflow/lang/ru/ru.json.min.js?x_module=e4095e386c35471fcc3b612b67cb8d48",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/TodayCalendar/lang/ru/ru.json.min.js?x_module=0477ac4d14534ea2501898ff7c01468f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/GeneralSearch/lang/ru/ru.json.min.js?x_module=ad41679e5864e252340f26cf29237628",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ThemesModule/sabythemes/default.min.json?x_module=7cbc6198977a9680a23f970832c8f41b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SBIS3.Plugin/_base/entryPointConfig.min.json?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SBIS3.Plugin/lang/ru/ru.json.min.js?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/AuthControls/lang/ru/ru.json.min.js?x_module=a0059aa78b72d845615b0b723d10ecaa",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ServiceUpdateNotifier/lang/ru/ru.json.min.js?x_module=c92cf315cedd243763d56689cb32d622",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HintManager/contents.json.min.js?x_module=e84ecf9761f4922e970cd5cde7944648",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/business-calendar/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ManagerWorkplaceDevice/lang/ru/ru.json.min.js?x_module=f5e9f387f3b7a39829e79039764fbac3",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/plugin-configurations/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/DeviceService/lang/ru/ru.json.min.js?x_module=95f12dbd26be94f98b0a3a2aab505ef5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/CoreDevice/lang/ru/ru.json.min.js?x_module=177770f7c80b331736c99ecbbbca7710",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/consumertracking/service/app_stat/",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/WS.Core/lang/ru/ru.json.min.js?x_module=265c7eb35baa93b601917a2016b6d9ca",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/plugin-configurations/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/activity/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4&protocol=7&method=SiteNavigation.ListAll&args=eyLQlNC%2B0L%2FQn9C%2B0LvRjyI6W10sItCd0LDQstC40LPQsNGG0LjRjyI6bnVsbCwi0KHQvtGA0YLQuNGA0L7QstC60LAiOm51bGwsItCk0LjQu9GM0YLRgCI6eyJkIjpbeyJyaWdodHNOZWVkZWQiOnRydWUsInVzZUhpZGRlblNlY3Rpb25zIjpmYWxzZSwiaXNBZGFwdGl2ZSI6ZmFsc2UsImFwcGxpY2F0aW9uSWQiOiJkN2IxZDZhNS1lNTlkLTRiMDMtYjgyMy03MjZmYmRjMzVkMDkiLCJibENhY2hlIjoiYTI2ZGRjODcwOGNiZWE4NzJmNjE1NWE1OTJjNGZiZTkiLCJ3c0J1aWxkIjoiMjYuMTIyMC0xNTguNCIsImxhbmciOiJydSJ9LCJsZWZ0Il0sInMiOlt7InQiOiJKU09OLdC%2B0LHRitC10LrRgiIsIm4iOiJvcHRpb25zIn0seyJ0Ijoi0KHRgtGA0L7QutCwIiwibiI6InJlZ2lvbiJ9XSwiX3R5cGUiOiJyZWNvcmQiLCJmIjowfX0%3D&id=1",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/informers/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/mobile-service/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/mobile-service/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/activity-write/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Cryptography/lang/ru/ru.json.min.js?x_module=81e96cdd2d315c00af4d07f288f73fe9",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ServerSign/lang/ru/ru.json.min.js?x_module=db175558a3526d005d319ff806bba856",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDOContracts/lang/ru/ru.json.min.js?x_module=e9be4c1e502ce194cc0e6b51c74d2b84",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDO4/lang/ru/ru.json.min.js?x_module=7bb724c67a37749165e900fd36d8308a",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EntityChoice/lang/ru/ru.json.min.js?x_module=75a6e51ca6699b0f428255134b5c83b2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDO3Core/lang/ru/ru.json.min.js?x_module=e659ebd0f3513109a2adc840fe602618",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDO3/lang/ru/ru.json.min.js?x_module=c78033d04efab9d22f3015ca1da0cd34",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDWS3/lang/ru/ru.json.min.js?x_module=2640898230c61284450d5900f0a8f7fe",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/LongOperations/lang/ru/ru.json.min.js?x_module=3d130b9f3f413336fad4606e2ea21587",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/activity/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/input-history/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/consumertracking/service/app_stat/",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn2.saby.ru/cdn/OnlineCDN/manifest/1.0.11/manifest.json",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EDOGeneral/SbisServiceJson.min.js?x_module=d1e85d121f414c7bd68d098c5da6eaef",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/help-system/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ReviewsUtils/lang/ru/ru.json.min.js?x_module=f63ad1f3d3d09eee67dcd8e77827ba90",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ReviewsUtilsInside/lang/ru/ru.json.min.js?x_module=cd80f2ae46328ef534ab6dff8f67bad2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/PrintingTemplates/lang/ru/ru.json.min.js?x_module=f1dc6718e7535df2904faba95289d83f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/DOCVIEW3/lang/ru/ru.json.min.js?x_module=aab6425fae6478e120856c2e04549184",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HelpBase/contents.json.min.js?x_module=17c0055903be6795b9300a10620eca0f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/File/lang/ru/ru.json.min.js?x_module=4195c50b604e10b7809aad96fd7830d0",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HelpBase/lang/ru/ru.json.min.js?x_module=17c0055903be6795b9300a10620eca0f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/FileLoader/lang/ru/ru.json.min.js?x_module=5085df008b94cadd7fdbc70bc404b18d",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/help-system/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HelpBase-meta/contents.json.min.js?x_module=7e9a2829f42c2586c87e90c2babbab05",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/help-system/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Controls-editors/_properties/IconEditor/resources/icons.min.json?x_module=2d3b3c937ef48c2b925d37d65b347552",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/linkdecorator/service/?srv=1&x_version=26.1220-158.4&protocol=7&method=LinkDecorator.Decorate&args=eyJQYXJhbXMiOnsiZCI6WyJodHRwczovL3ZrLmNvbS92aWRlby0xNTY4Nzc1MjZfNDU2MjM5NTU0IiwieGwiLHRydWVdLCJzIjpbeyJ0Ijoi0KHRgtGA0L7QutCwIiwibiI6ImxpbmsifSx7InQiOiLQodGC0YDQvtC60LAiLCJuIjoidHlwZSJ9LHsidCI6ItCb0L7Qs9C40YfQtdGB0LrQvtC1IiwibiI6Im5ld19kZWNvcmF0ZSJ9XSwiX3R5cGUiOiJyZWNvcmQiLCJmIjowfX0%3D&id=1",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/theming-public/service/?id=1&protocol=6&method=SabyTheme.GetCss&args=eyJzZWxlY3RvciI6ImRlZmF1bHRfX29ubGluZW5hdmlnYXRpb24iLCJ2ZXJzaW9uIjoxNzcyNTc2MjA1fQ==",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/cdn/OnlineCDN/manifest/1.0.11/manifest.json",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/LocalizationConfigs/localization_configs/region/RU.json.min.js?x_module=a06e6776f8d511208eeec3c1b2dab205",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Types/lang/ru/ru.json.min.js?x_module=b438dc49bf110f940582b0a7bdf27a06",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Controls/lang/ru/ru.json.min.js?x_module=52379f3c550126a3b295128b805f5443",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Page/lang/ru/ru.json.min.js?x_module=bf7a240787992e3c83207d73fd468a96",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SbisEnvUI/lang/ru/ru.json.min.js?x_module=9e4f78470d32502edef7dffe255a323d",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SabyPage/lang/ru/ru.json.min.js?x_module=41a2173c669ef442569489d671d48a25",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NavigationPanels/lang/ru/ru.json.min.js?x_module=3252e2a1a52244800f8e2f1736c242e5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Informers/lang/ru/ru.json.min.js?x_module=ad1b062f2e6d7235eea760ea64655472",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/CustomRouterJsonGroup/CustomRouterJson.min.js?x_module=666c47817d41660eab577fa97aac0303",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Controls-Actions/lang/ru/ru.json.min.js?x_module=6ac90ff574ebe31cf15c152855f0ce32",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenter/contents.json.min.js?x_module=dad97c8ef7581f171e847c6ef8c8ff2b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NoticeCenter/lang/ru/ru.json.min.js?x_module=dad97c8ef7581f171e847c6ef8c8ff2b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Docflow/lang/ru/ru.json.min.js?x_module=e4095e386c35471fcc3b612b67cb8d48",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/TodayCalendar/lang/ru/ru.json.min.js?x_module=0477ac4d14534ea2501898ff7c01468f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Hint/lang/ru/ru.json.min.js?x_module=80c9df53d26753874bbcdc0dd81c219c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Router/CustomRouterJson.min.js?x_module=b70da714c2e746d23bec18132fcd5fcc",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/OnlineSbisRu/lang/ru/ru.json.min.js?x_module=9321add0987ca15a01e1025cc3a6cb82",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/NavigationPanels/packageMap.json.min.js?x_module=3252e2a1a52244800f8e2f1736c242e5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Controls/packageMap.json.min.js?x_module=52379f3c550126a3b295128b805f5443",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/RequestAccessDenied/packageMap.json.min.js?x_module=c67dde432004bebc905a1610818629bf",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Informers/packageMap.json.min.js?x_module=ad1b062f2e6d7235eea760ea64655472",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ThemesModule/sabythemes/default.min.json?x_module=7cbc6198977a9680a23f970832c8f41b",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/CoreUserCalendar/packageMap.json.min.js?x_module=743d48c86133ac8add4e7a04302ae3bd",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/OnlineSbisRu/packageMap.json.min.js?x_module=9321add0987ca15a01e1025cc3a6cb82",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/EngineLink/packageMap.json.min.js?x_module=1c6758c50e390db8587d7189bc61451f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/LongOperations/packageMap.json.min.js?x_module=3d130b9f3f413336fad4606e2ea21587",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/Notes/packageMap.json.min.js?x_module=b39bd69e086e5266026e8d86383373b8",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ServiceUpdateNotifier/packageMap.json.min.js?x_module=c92cf315cedd243763d56689cb32d622",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/AuthControls/lang/ru/ru.json.min.js?x_module=a0059aa78b72d845615b0b723d10ecaa",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SBIS3.Plugin/_base/entryPointConfig.min.json?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/SBIS3.Plugin/lang/ru/ru.json.min.js?x_module=52bed0e98ef5d2ad259d0c1a6bf7fa24",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/HintManager/contents.json.min.js?x_module=e84ecf9761f4922e970cd5cde7944648",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/plugin-configurations/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/ServiceUpdateNotifier/lang/ru/ru.json.min.js?x_module=c92cf315cedd243763d56689cb32d622",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/plugin-configurations/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/mobile-service/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/activity/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/parameters/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4&protocol=7&method=SiteNavigation.ListAll&args=eyLQlNC%2B0L%2FQn9C%2B0LvRjyI6W10sItCd0LDQstC40LPQsNGG0LjRjyI6bnVsbCwi0KHQvtGA0YLQuNGA0L7QstC60LAiOm51bGwsItCk0LjQu9GM0YLRgCI6eyJkIjpbeyJyaWdodHNOZWVkZWQiOnRydWUsInVzZUhpZGRlblNlY3Rpb25zIjpmYWxzZSwiaXNBZGFwdGl2ZSI6ZmFsc2UsImFwcGxpY2F0aW9uSWQiOiJkN2IxZDZhNS1lNTlkLTRiMDMtYjgyMy03MjZmYmRjMzVkMDkiLCJibENhY2hlIjoiYTI2ZGRjODcwOGNiZWE4NzJmNjE1NWE1OTJjNGZiZTkiLCJ3c0J1aWxkIjoiMjYuMTIyMC0xNTguNCIsImxhbmciOiJydSJ9LCJsZWZ0Il0sInMiOlt7InQiOiJKU09OLdC%2B0LHRitC10LrRgiIsIm4iOiJvcHRpb25zIn0seyJ0Ijoi0KHRgtGA0L7QutCwIiwibiI6InJlZ2lvbiJ9XSwiX3R5cGUiOiJyZWNvcmQiLCJmIjowfX0%3D&id=1",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/PrintingTemplates/packageMap.json.min.js?x_module=f1dc6718e7535df2904faba95289d83f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/AppCommon/service.min.js?x_module=2874455cf05f4a30c83ab81f4ff579c2",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/AppSelector/lang/ru/ru.json.min.js?x_module=f6c594b1b0a8c9f52c2fc2518a4707e5",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://cdn.sbis.ru/static/resources/PrintingTemplates/lang/ru/ru.json.min.js?x_module=f1dc6718e7535df2904faba95289d83f",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/informers/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "url": "https://online.sbis.ru/activity-write/service/?x_version=26.1220-158.4",
+    "method": "GET",
+    "status": 200
+  }
+]
