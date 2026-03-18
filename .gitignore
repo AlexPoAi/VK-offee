@@ -23,3 +23,15 @@ scripts/
 # Google credentials
 ops/automation/google-*.json
 ops/automation/*-credentials.json
+
+# Большие файлы — хранить на Google Drive, не в git
+# На GitHub только .md карточки с описаниями и ссылками
+*.pdf
+*.docx
+*.xlsx
+*.pptx
+*.zip
+*.rar
+*.mp4
+*.mov
+*.avi
