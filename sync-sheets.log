@@ -33,3 +33,7 @@ Traceback (most recent call last):
   File "/Users/alexander/Github/VK-offee/.github/scripts/sync-google-sheets.py", line 13, in <module>
     from google.oauth2.credentials import Credentials
 ModuleNotFoundError: No module named 'google'
+Traceback (most recent call last):
+  File "/Users/alexander/Github/VK-offee/.github/scripts/sync-google-sheets.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'

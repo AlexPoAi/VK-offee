@@ -78,3 +78,11 @@ Traceback (most recent call last):
     from google.oauth2.credentials import Credentials
 ModuleNotFoundError: No module named 'google'
 ❌ Ошибка синхронизации
+==========================================
+Google Drive Sync: Thu Mar 19 09:00:00 MSK 2026
+==========================================
+Traceback (most recent call last):
+  File "/Users/alexander/Github/VK-offee/.github/scripts/sync_google_drive_v2.py", line 13, in <module>
+    from google.oauth2.credentials import Credentials
+ModuleNotFoundError: No module named 'google'
+❌ Ошибка синхронизации
