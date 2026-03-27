@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-VK-offee AI Bot v2.0
-Telegram бот с доступом к базе знаний GitHub
+VK-offee AI Bot v3.0
+Telegram бот с RAG-поиском по базе знаний VK-offee (ChromaDB + Claude)
 """
 
 import os
@@ -10,9 +10,8 @@ import logging
 from pathlib import Path
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-import pandas as pd
-from openai import OpenAI
 from dotenv import load_dotenv
+from rag_client import get_rag_client
 
 # Загрузка переменных окружения из .env
 load_dotenv()
@@ -30,12 +29,10 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-# Путь к репозиторию VK-offee (на уровень выше telegram-bot)
 REPO_PATH = Path(__file__).parent.parent.resolve()
 
-# Инициализация OpenAI клиента
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+# RAG клиент (singleton)
+rag = get_rag_client()
 
 # Вспомогательная функция поиска
 def search_knowledge_base(query: str, max_results: int = 5):
@@ -323,52 +320,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Для всех остальных сообщений - поиск в базе знаний
-    await update.message.reply_text("🔍 Ищу информацию...")
+    # Для всех остальных сообщений — RAG-поиск по базе знаний
+    await update.message.reply_text("🔍 Ищу информацию в базе знаний...")
 
-    # Стоп-слова для фильтрации
-    stop_words = {'какая', 'какой', 'какие', 'где', 'как', 'что', 'это', 'есть',
-                  'был', 'была', 'были', 'будет', 'для', 'или', 'при', 'так',
-                  'вот', 'мой', 'твой', 'его', 'её', 'чем', 'том', 'тот'}
+    result = rag.query(text)
 
-    # Убираем знаки препинания и извлекаем ключевые слова
-    import re
-    text_clean = re.sub(r'[^\w\s]', ' ', text_lower)  # Убираем знаки препинания
-    keywords = [word for word in text_clean.split() if len(word) > 3 and word not in stop_words]
+    if result is None:
+        await update.message.reply_text(
+            "⚠️ RAG API недоступен — попробуйте позже.
+"
+            "Убедитесь что сервер запущен: cd VK-offee-rag && python src/api.py"
+        )
+        return
 
-    # Добавляем синонимы для популярных запросов
-    synonyms = {
-        'зарплата': ['з/п', 'оплата', 'зарплат'],
-        'зарплат': ['з/п', 'оплата'],
-        'себестоимость': ['себестоим', 'стоимость'],
-        'рецепт': ['приготовление', 'готовить'],
-        'повар': ['повар', 'кухня'],
-        'официант': ['официант', 'раннер'],
-    }
-
-    # Расширяем список ключевых с��ов синонимами
-    expanded_keywords = []
-    for keyword in keywords:
-        expanded_keywords.append(keyword)
-        # Проверяем, есть ли синонимы для этого слова
-        for main_word, syns in synonyms.items():
-            if keyword in main_word or main_word in keyword:
-                expanded_keywords.extend(syns)
-                break
-
-    # Поиск по каждому ключевому слову
-    all_results = []
-    for keyword in expanded_keywords[:6]:  # Ограничиваем первыми 6 ключевыми словами
-        results = search_knowledge_base(keyword, max_results=3)
-        all_results.extend(results)
-
-    # Убираем дубликаты
-    unique_results = list({r['file']: r for r in all_results}.values())
-
-    # Генерируем умный ответ с помощью GPT
-    ai_response = generate_ai_response(text, unique_results)
-
-    await update.message.reply_text(ai_response)
+    answer = rag.format_answer(result, show_sources=True)
+    await update.message.reply_text(answer, parse_mode="Markdown")
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка ошибок"""
@@ -376,7 +342,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Запуск бота"""
-    logger.info("🤖 VK-offee AI Bot v2.0 запущен с доступом к GitHub!")
+    logger.info("🤖 VK-offee AI Bot v3.0 запущен с RAG-поиском!")
 
     # Создание приложения
     application = Application.builder().token(TELEGRAM_TOKEN).build()
