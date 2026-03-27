@@ -1,364 +1,208 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-VK-offee AI Bot v3.0
-Telegram бот с RAG-поиском по базе знаний VK-offee (ChromaDB + Claude)
+VK-offee AI Bot v3.1
+Telegram бот с RAG-поиском по базе знаний VK-offee (ChromaDB + Claude).
+Меню ориентировано на сотрудников кофейни.
 """
 
 import os
 import logging
-from pathlib import Path
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
 from rag_client import get_rag_client
 
-# Загрузка переменных окружения из .env
 load_dotenv()
 
-# Настройка логирования
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
     handlers=[
-        logging.FileHandler('bot.log'),
-        logging.StreamHandler()
-    ]
+        logging.FileHandler("bot.log"),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
-# Конфигурация
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-REPO_PATH = Path(__file__).parent.parent.resolve()
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# RAG клиент (singleton)
+# RAG клиент (singleton, retry x3)
 rag = get_rag_client()
 
-# Вспомогательная функция поиска
-def search_knowledge_base(query: str, max_results: int = 5):
-    """Поиск в базе знаний по запр��су с поддержкой таблиц"""
-    knowledge_base = REPO_PATH / "knowledge-base"
-    results = []
+# ─── Клавиатура ──────────────────────────────────────────────────────────────
 
-    if not knowledge_base.exists():
-        logger.warning(f"Knowledge base not found at: {knowledge_base}")
-        return []
+MAIN_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        [KeyboardButton("☕ Напитки"),   KeyboardButton("🍽️ Еда")],
+        [KeyboardButton("📋 Стандарты"), KeyboardButton("💰 Цены")],
+        [KeyboardButton("👤 Персонал"),  KeyboardButton("📊 Статус")],
+    ],
+    resize_keyboard=True,
+)
 
-    logger.info(f"Searching for: '{query}' in {knowledge_base}")
-    files_checked = 0
+# Быстрые RAG-запросы для каждой кнопки
+BUTTON_QUERIES = {
+    "☕ Напитки":    "Список напитков и рецептуры бара VK-offee",
+    "🍽️ Еда":        "Список блюд и заготовки кухни VK-offee",
+    "📋 Стандарты":  "Стандарты обслуживания и чек-листы смены",
+    "💰 Цены":       "Прайс-лист напитков и еды VK-offee",
+    "👤 Персонал":   "Ставки оплаты труда бариста официант повар раннер",
+}
 
-    for file_path in knowledge_base.rglob("*"):
-        if not file_path.is_file():
-            continue
+# ─── Хелпер ──────────────────────────────────────────────────────────────────
 
-        files_checked += 1
-
-        # Исключаем служебные и неактуальные файлы
-        path_str = str(file_path).lower()
-        exclude_patterns = ['sync-report', 'отчет синхронизации', 'неактуально', 'неактуальн']
-        if any(pattern in path_str for pattern in exclude_patterns):
-            continue
-
-        # Обработка таблиц (CSV, Excel)
-        if file_path.suffix in ['.csv', '.xlsx', '.xls']:
-            try:
-                # Читаем таблицу
-                if file_path.suffix == '.csv':
-                    df = pd.read_csv(file_path, encoding='utf-8', on_bad_lines='skip')
-                else:
-                    df = pd.read_excel(file_path)
-
-                # Ищем во всех ячейках таблицы
-                found = False
-                for col in df.columns:
-                    for idx, value in df[col].items():
-                        if pd.notna(value) and query.lower() in str(value).lower():
-                            # Формируем контекст: показываем всю строку с найденным значением
-                            row_data = df.iloc[idx].to_dict()
-                            context_parts = [f"{k}: {v}" for k, v in row_data.items() if pd.notna(v)]
-                            context = " | ".join(context_parts)  # Все колонки
-
-                            results.append({
-                                'file': str(file_path.relative_to(REPO_PATH)),
-                                'context': context[:500]  # Увеличил лимит до 500 символов
-                            })
-                            found = True
-                            break
-                    if found:
-                        break
-            except Exception:
-                # Если не удалось прочитать таблицу, пробуем как текст
-                try:
-                    content = file_path.read_text(encoding='utf-8', errors='ignore')
-                    if query.lower() in content.lower():
-                        lines = content.split('\n')
-                        for line in lines:
-                            if query.lower() in line.lower():
-                                results.append({
-                                    'file': str(file_path.relative_to(REPO_PATH)),
-                                    'context': line.strip()[:200]
-                                })
-                                break
-                except Exception:
-                    pass
-
-        # Обработка текстовых файлов (MD, TXT)
-        elif file_path.suffix in ['.md', '.txt']:
-            try:
-                content = file_path.read_text(encoding='utf-8', errors='ignore')
-                if query.lower() in content.lower():
-                    lines = content.split('\n')
-                    for line in lines:
-                        if query.lower() in line.lower():
-                            results.append({
-                                'file': str(file_path.relative_to(REPO_PATH)),
-                                'context': line.strip()[:200]
-                            })
-                            break
-            except Exception:
-                pass
-
-        if len(results) >= max_results:
-            break
-
-    logger.info(f"Search completed. Files checked: {files_checked}, Results found: {len(results)}")
-    return results
-
-def generate_ai_response(user_question: str, search_results: list) -> str:
-    """Генерация умного ответа с помощью ChatGPT на основе найденной информации"""
-
-    logger.info(f"Generating AI response for question: '{user_question}' with {len(search_results)} search results")
-
-    if not openai_client:
-        return "⚠️ AI-функции недоступны. Проверьте настройки API ключа."
-
-    # Формируем контекст из результатов поиска
-    context_parts = []
-    for result in search_results[:5]:  # Берем первые 5 результатов
-        context_parts.append(f"Файл: {result['file']}\nИнформация: {result['context']}")
-
-    context = "\n\n".join(context_parts) if context_parts else "Информация не найдена в базе знаний."
-
-    # Логируем контекст для отладки
-    logger.info(f"Context being sent to ChatGPT:\n{context[:1000]}")
-
-    # Формируем промпт для ChatGPT
-    system_prompt = """Ты - AI-ассистент сети кофеен «Вкусный Кофе».
-Твоя задача - отвечать на вопросы сотрудников и менеджеров на основе информации из базы знаний.
-
-Правила:
-- Отвечай кратко и по делу
-- Используй только информацию из предоставленного контекста
-- Если информации нет в контексте, честно скажи об этом
-- Форматируй ответ понятно (используй списки, если нужно)
-- Говори на русском языке
-- Будь дружелюбным и профессиональным"""
-
-    user_prompt = f"""Вопрос пользователя: {user_question}
-
-Информация из базы знаний:
-{context}
-
-Ответь на вопрос пользователя на основе этой информации."""
-
-    try:
-        # Вызываем OpenAI API
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
-        )
-
-        return response.choices[0].message.content
-
-    except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
-        return f"❌ Ошибка при генерации ответа: {str(e)}"
-
-# Команды бота
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /start"""
-    # Создаём кнопки меню
-    keyboard = [
-        [KeyboardButton("🔍 Поиск"), KeyboardButton("📋 Меню")],
-        [KeyboardButton("👥 Роли"), KeyboardButton("📊 Статус")],
-        [KeyboardButton("❓ Помощь")]
-    ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
-    await update.message.reply_text(
-        "🤖 VK-offee AI Bot v2.0\n\n"
-        "Я помогу вам работать с базой знаний сети кофеен «Вкусный Кофе».\n\n"
-        "Используйте кнопки ниже или просто напишите вопрос! 👇",
-        reply_markup=reply_markup
-    )
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /help"""
-    await update.message.reply_text(
-        "📚 Помощь по боту\n\n"
-        "Я могу:\n"
-        "• Искать информацию в базе знаний\n"
-        "• Показывать документы по ролям (F1-F9)\n"
-        "• Отвечать на вопросы о процессах\n"
-        "• Показывать меню и рецепты\n\n"
-        "Просто напишите мне вопрос или используйте команды!"
-    )
-
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /status"""
-    # Проверка доступа к репозиторию
-    repo_exists = REPO_PATH.exists()
-    content_dir = REPO_PATH / "content"
-    content_exists = content_dir.exists()
-
-    status_text = (
-        f"🟢 Бот работает!\n\n"
-        f"📁 Репозиторий: {'✅' if repo_exists else '❌'}\n"
-        f"📂 База знаний: {'✅' if content_exists else '❌'}\n"
-        f"📍 Путь: {REPO_PATH}\n"
-    )
-
-    await update.message.reply_text(status_text)
-
-async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /search"""
-    query = ' '.join(context.args) if context.args else None
-
-    if not query:
-        await update.message.reply_text(
-            "Использование: /search <запрос>\n"
-            "Например: /search бариста"
-        )
-        return
-
-    await update.message.reply_text(f"🔍 Ищу информацию по запросу: {query}...")
-
-    results = search_knowledge_base(query)
-
-    if results:
-        response = f"✅ Найдено результатов: {len(results)}\n\n"
-        for r in results:
-            response += f"📄 {r['file']}\n💬 {r['context']}\n\n"
-    else:
-        response = f"❌ По запросу '{query}' ничего не найдено.\nПопробуйте другие ключевые слова."
-
-    await update.message.reply_text(response)
-
-async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /menu"""
-    menu_file = REPO_PATH / "content" / "2.VkusnyCoffeeNetwork" / "2.2.Architecture" / "menu"
-
-    if menu_file.exists():
-        await update.message.reply_text(
-            "📋 Меню кофейни\n\n"
-            "Раздел меню находится в разработке.\n"
-            f"Путь: {menu_file}"
-        )
-    else:
-        await update.message.reply_text(
-            "⚠️ Меню не найдено в базе знаний"
-        )
-
-async def roles_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /roles - показать роли FPF"""
-    roles_text = (
-        "🎯 Роли FPF (таблица 3×3)\n\n"
-        "**Надсистема (Suprasystem):**\n"
-        "F1 - Предприниматель-Контекст\n"
-        "F2 - Инженер-Окружение\n"
-        "F3 - Менеджер-Взаимодействие\n\n"
-        "**Целевая система (System-of-Interest):**\n"
-        "F4 - Предприниматель-Требования\n"
-        "F5 - Инженер-Архитектура\n"
-        "F6 - Менеджер-Реализация\n\n"
-        "**Система создания (Constructor):**\n"
-        "F7 - Предприниматель-Принципы\n"
-        "F8 - Инженер-Платформа\n"
-        "F9 - Менеджер-Команда"
-    )
-    await update.message.reply_text(roles_text)
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка текстовых сообщений"""
-    text = update.message.text
-    text_lower = text.lower()
-
-    # Обработка кнопок меню
-    if text == "🔍 Поиск":
-        await update.message.reply_text(
-            "Введите запрос для поиска в базе знаний.\n\n"
-            "Например:\n"
-            "• кофе\n"
-            "• боул с индейкой\n"
-            "• калькуляция"
-        )
-        return
-    elif text == "📋 Меню":
-        await menu_command(update, context)
-        return
-    elif text == "👥 Роли":
-        await roles_command(update, context)
-        return
-    elif text == "📊 Статус":
-        await status(update, context)
-        return
-    elif text == "❓ Помощь":
-        await help_command(update, context)
-        return
-
-    # Обработка приветствий
-    if any(word in text_lower for word in ['привет', 'здравствуй', 'hi', 'hello']):
-        await update.message.reply_text(
-            "Привет! 👋\n"
-            "Я бот базы знаний VK-offee.\n"
-            "Задавайте любые вопросы!"
-        )
-        return
-
-    # Для всех остальных сообщений — RAG-поиск по базе знаний
-    await update.message.reply_text("🔍 Ищу информацию в базе знаний...")
-
-    result = rag.query(text)
-
+async def rag_reply(update: Update, query: str) -> None:
+    """Запрос к RAG и отправка ответа пользователю."""
+    await update.message.reply_text("🔍 Ищу в базе знаний...")
+    result = rag.query(query)
     if result is None:
         await update.message.reply_text(
-            "⚠️ RAG API недоступен — попробуйте позже.
-"
-            "Убедитесь что сервер запущен: cd VK-offee-rag && python src/api.py"
+            "⚠️ RAG API недоступен.\n"
+            "Попросите администратора запустить: cd VK-offee-rag && python src/api.py"
         )
         return
-
     answer = rag.format_answer(result, show_sources=True)
     await update.message.reply_text(answer, parse_mode="Markdown")
 
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка ошибок"""
-    logger.error(f"Update {update} caused error {context.error}")
+# ─── Команды ─────────────────────────────────────────────────────────────────
 
-def main():
-    """Запуск бота"""
-    logger.info("🤖 VK-offee AI Bot v3.0 запущен с RAG-поиском!")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/start — приветствие и меню."""
+    await update.message.reply_text(
+        "☕ *VK-offee бот*\n\n"
+        "Задайте любой вопрос или выберите раздел ниже.",
+        reply_markup=MAIN_KEYBOARD,
+        parse_mode="Markdown",
+    )
 
-    # Создание приложения
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Регистрация обработчиков
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("status", status))
-    application.add_handler(CommandHandler("search", search))
-    application.add_handler(CommandHandler("menu", menu_command))
-    application.add_handler(CommandHandler("roles", roles_command))
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/help — что умеет бот."""
+    await update.message.reply_text(
+        "📚 *Что умею:*\n\n"
+        "• Отвечать на любые вопросы по базе знаний кофейни\n"
+        "• Показывать рецептуры напитков и блюд\n"
+        "• Показывать прайс-лист и ставки персонала\n"
+        "• Находить стандарты обслуживания и чек-листы\n\n"
+        "Просто напишите вопрос — например:\n"
+        "_«Как приготовить капучино?»_\n"
+        "_«Состав боула с индейкой»_\n"
+        "_«Ставка бариста»_",
+        parse_mode="Markdown",
+    )
+
+
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/status — проверка RAG API и индекса."""
+    available = rag.is_available()
+    if available:
+        # Получаем количество документов из health endpoint
+        import requests
+        try:
+            data = requests.get("http://127.0.0.1:8000/health", timeout=5).json()
+            docs = data.get("documents_indexed", "?")
+            await update.message.reply_text(
+                f"🟢 *RAG API работает*\n"
+                f"📚 Документов в индексе: {docs}\n"
+                f"🗂️ Pack: bar, kitchen, service, hr, management, cafe-ops, park",
+                parse_mode="Markdown",
+            )
+        except Exception:
+            await update.message.reply_text("🟢 RAG API работает")
+    else:
+        await update.message.reply_text(
+            "🔴 *RAG API недоступен*\n\n"
+            "Запустите: `cd VK-offee-rag && python src/api.py`",
+            parse_mode="Markdown",
+        )
+
+
+async def reindex_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/reindex — переиндексация базы знаний (только для администраторов)."""
+    await update.message.reply_text("⏳ Запускаю переиндексацию базы знаний...")
+    import subprocess, sys
+    result = subprocess.run(
+        [sys.executable, "src/indexer.py",
+         "--pack-path", "/Users/alexander/Github/VK-offee",
+         "--chroma-path", "./data/chroma",
+         "--reset"],
+        capture_output=True, text=True,
+        cwd="/Users/alexander/Github/VK-offee-rag",
+    )
+    if result.returncode == 0:
+        # Последняя строка содержит итог
+        last_line = [l for l in result.stdout.strip().split("\n") if l][-1]
+        await update.message.reply_text(f"✅ {last_line}")
+    else:
+        await update.message.reply_text(f"❌ Ошибка переиндексации:\n{result.stderr[:500]}")
+
+
+# ─── Обработчик сообщений ─────────────────────────────────────────────────────
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Текстовые сообщения: кнопки меню или свободный вопрос → RAG."""
+    text = update.message.text
+
+    # Кнопки меню → предустановленный RAG-запрос
+    if text in BUTTON_QUERIES:
+        await rag_reply(update, BUTTON_QUERIES[text])
+        return
+
+    # Статус через кнопку
+    if text == "📊 Статус":
+        await status_command(update, context)
+        return
+
+    # Приветствия
+    if any(w in text.lower() for w in ["привет", "здравствуй", "hi", "hello"]):
+        await update.message.reply_text(
+            "Привет! 👋 Задайте вопрос по базе знаний кофейни.",
+            reply_markup=MAIN_KEYBOARD,
+        )
+        return
+
+    # Любой свободный вопрос → RAG
+    await rag_reply(update, text)
+
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error("Update %s caused error: %s", update, context.error)
+
+
+# ─── Регистрация команд в BotFather ──────────────────────────────────────────
+
+async def post_init(application: Application) -> None:
+    """Регистрирует команды в Telegram (показываются в меню /commands)."""
+    await application.bot.set_my_commands([
+        BotCommand("start",   "Главное меню"),
+        BotCommand("help",    "Что умеет бот"),
+        BotCommand("status",  "Статус RAG API и индекса"),
+        BotCommand("reindex", "Переиндексировать базу знаний"),
+    ])
+
+
+# ─── main ─────────────────────────────────────────────────────────────────────
+
+def main() -> None:
+    logger.info("🤖 VK-offee AI Bot v3.1 запущен (RAG + меню для сотрудников)")
+
+    application = (
+        Application.builder()
+        .token(TELEGRAM_TOKEN)
+        .post_init(post_init)
+        .build()
+    )
+
+    application.add_handler(CommandHandler("start",   start))
+    application.add_handler(CommandHandler("help",    help_command))
+    application.add_handler(CommandHandler("status",  status_command))
+    application.add_handler(CommandHandler("reindex", reindex_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
 
-    # Запуск бота
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
