@@ -10,7 +10,7 @@ echo "================================"
 echo ""
 echo "[1/7] Обновление системы и установка зависимостей..."
 apt-get update -qq
-apt-get install -y -qq python3.11 python3.11-venv python3-pip git curl
+apt-get install -y -qq python3 python3-venv python3-pip git curl
 
 # === 2. Создаём рабочую директорию ===
 echo ""
@@ -42,7 +42,7 @@ echo "[4/7] Установка Python зависимостей..."
 
 # RAG API
 cd /opt/vk-offee/VK-offee-rag
-python3.11 -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -q --upgrade pip
 pip install -q fastapi uvicorn chromadb openai anthropic python-dotenv
@@ -50,7 +50,7 @@ deactivate
 
 # Telegram бот
 cd /opt/vk-offee/VK-offee/telegram-bot
-python3.11 -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -q --upgrade pip
 pip install -q python-telegram-bot python-dotenv requests tenacity
@@ -94,8 +94,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/vk-offee/VK-offee-rag
-ExecStartPre=/opt/vk-offee/VK-offee-rag/venv/bin/python src/indexer.py --pack-path /opt/vk-offee/VK-offee --chroma-path /opt/vk-offee/VK-offee-rag/data/chroma
-ExecStart=/opt/vk-offee/VK-offee-rag/venv/bin/python src/api.py
+ExecStartPre=/opt/vk-offee/VK-offee-rag/venv/bin/python3 src/indexer.py --pack-path /opt/vk-offee/VK-offee --chroma-path /opt/vk-offee/VK-offee-rag/data/chroma
+ExecStart=/opt/vk-offee/VK-offee-rag/venv/bin/python3 src/api.py
 Restart=always
 RestartSec=10
 EnvironmentFile=/opt/vk-offee/VK-offee-rag/.env
@@ -114,7 +114,7 @@ Wants=vk-rag-api.service
 [Service]
 Type=simple
 WorkingDirectory=/opt/vk-offee/VK-offee/telegram-bot
-ExecStart=/opt/vk-offee/VK-offee/telegram-bot/venv/bin/python bot.py
+ExecStart=/opt/vk-offee/VK-offee/telegram-bot/venv/bin/python3 bot.py
 Restart=always
 RestartSec=10
 EnvironmentFile=/opt/vk-offee/VK-offee/telegram-bot/.env
