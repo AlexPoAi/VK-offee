@@ -10,6 +10,9 @@ telegram-bot/venv/
 telegram-bot/*.log
 telegram-bot/token.pickle
 
+# Root runtime logs
+*.log
+
 # Google Drive sync
 .github/scripts/venv/
 .github/scripts/credentials.json

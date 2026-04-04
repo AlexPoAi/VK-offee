@@ -9,7 +9,7 @@
 
 В коммите `87260c30` (6 февраля 2026) файл `.env` был закоммичен с реальными API ключами:
 
-1. **Telegram Bot Token:** `7978142264:AAFr3oSP_ZNz18X_Z9ADCNAs3_lhwIZrfmU`
+1. **Telegram Bot Token:** `[УДАЛЕНО - используй TELEGRAM_BOT_TOKEN из .env]`
 2. **Anthropic API Key:** `sk-ant-api03-ShVN...` (частично)
 
 **Это значит:** Любой, кто имеет доступ к репозиторию, может увидеть эти ключи в истории Git!
