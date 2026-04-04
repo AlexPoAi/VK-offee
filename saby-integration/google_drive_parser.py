@@ -1,6 +1,10 @@
 """
 Google Drive Parser для данных из Saby Presto
 Читает Excel/CSV файлы с Google Drive и парсит данные
+
+ПАПКА GOOGLE DRIVE (для бота / Жанна):
+https://drive.google.com/drive/folders/1sGGcG1DBHIMMhZFvPGd_gGOesncQwhiq
+Folder ID: 1sGGcG1DBHIMMhZFvPGd_gGOesncQwhiq
 """
 
 import os
