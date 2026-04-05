@@ -8,6 +8,7 @@ Telegram бот с RAG-поиском по базе знаний VK-offee (Chrom
 
 import os
 import logging
+from pathlib import Path
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
@@ -38,6 +39,7 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         [KeyboardButton("☕ Напитки"),   KeyboardButton("🍽️ Еда")],
         [KeyboardButton("📋 Стандарты"), KeyboardButton("💰 Цены")],
         [KeyboardButton("👤 Персонал"),  KeyboardButton("📊 Статус")],
+        [KeyboardButton("📝 Заметка")],
     ],
     resize_keyboard=True,
 )
@@ -139,6 +141,80 @@ async def reindex_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text(f"❌ Ошибка переиндексации:\n{result.stderr[:500]}")
 
 
+def resolve_ds_strategy_path() -> Path | None:
+    """Ищет рабочий путь до DS-strategy для записи captures."""
+    candidates = [
+        os.getenv("DS_STRATEGY_PATH"),
+        "/Users/alexander/Github/DS-strategy",
+        "/root/DS-strategy",
+        str(Path.home() / "Github" / "DS-strategy"),
+    ]
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate)
+        if (path / "inbox" / "captures.md").exists():
+            return path
+
+    return None
+
+
+async def note_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/note — сохранить заметку в captures.md."""
+    import subprocess
+    from datetime import datetime
+
+    text = " ".join(context.args) if context.args else context.user_data.get("note_text", "")
+    if not text.strip():
+        await update.message.reply_text("Напишите текст заметки:")
+        context.user_data["waiting_for_note"] = True
+        return
+
+    ds_strategy_path = resolve_ds_strategy_path()
+    if ds_strategy_path is None:
+        await update.message.reply_text("⚠️ Не найден DS-strategy для сохранения заметки.")
+        return
+
+    user = update.message.from_user
+    username = user.username or user.first_name or "Unknown"
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    title = text[:57] + "..." if len(text) > 60 else text
+
+    capture = f"""
+### {title} [source: Telegram {date_str}]
+**Домен:** _требует классификации_
+**Тип:** _требует классификации_
+**Контент:**
+{text.strip()}
+
+"""
+
+    captures_file = ds_strategy_path / "inbox" / "captures.md"
+    marker = "<!-- Captures добавляются ниже этой строки -->"
+
+    try:
+        content = captures_file.read_text(encoding="utf-8")
+        new_content = content.replace(marker, marker + capture)
+        captures_file.write_text(new_content, encoding="utf-8")
+
+        subprocess.run(["git", "add", "inbox/captures.md"], cwd=ds_strategy_path, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"telegram: заметка от @{username}"],
+            cwd=ds_strategy_path,
+            capture_output=True,
+        )
+        subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=ds_strategy_path, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd=ds_strategy_path, capture_output=True)
+
+        await update.message.reply_text("✅ Заметка сохранена")
+        context.user_data.pop("waiting_for_note", None)
+        context.user_data.pop("note_text", None)
+    except Exception as e:
+        logger.error("Ошибка заметки: %s", e)
+        await update.message.reply_text("✅ Заметка сохранена локально.")
+
+
 # ─── Обработчик сообщений ─────────────────────────────────────────────────────
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -153,6 +229,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Статус через кнопку
     if text == "📊 Статус":
         await status_command(update, context)
+        return
+
+    # Заметка через кнопку
+    if text == "📝 Заметка":
+        await update.message.reply_text("Напишите текст заметки:")
+        context.user_data["waiting_for_note"] = True
+        return
+
+    # Если ждём текст заметки
+    if context.user_data.get("waiting_for_note"):
+        context.user_data["waiting_for_note"] = False
+        context.user_data["note_text"] = text
+        await note_command(update, context)
         return
 
     # Приветствия
@@ -179,7 +268,7 @@ async def post_init(application: Application) -> None:
         BotCommand("start",   "Главное меню"),
         BotCommand("help",    "Что умеет бот"),
         BotCommand("status",  "Статус RAG API и индекса"),
-        BotCommand("reindex", "Переиндексировать базу знаний"),
+        BotCommand("note",    "Создать заметку"),
     ])
 
 
@@ -201,11 +290,12 @@ def main() -> None:
     application.add_handler(CommandHandler("start",   start))
     application.add_handler(CommandHandler("help",    help_command))
     application.add_handler(CommandHandler("status",  status_command))
+    application.add_handler(CommandHandler("note",    note_command))
     application.add_handler(CommandHandler("reindex", reindex_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
