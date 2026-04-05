@@ -26,14 +26,14 @@ if [ -d "VK-offee" ]; then
     echo "  VK-offee уже есть — обновляем..."
     git -C VK-offee pull
 else
-    git clone https://github.com/alexpoaiagent-sudo/VK-offee.git
+    git clone https://github.com/AlexPoAi/VK-offee.git
 fi
 
 if [ -d "VK-offee-rag" ]; then
     echo "  VK-offee-rag уже есть — обновляем..."
     git -C VK-offee-rag pull
 else
-    git clone https://github.com/alexpoaiagent-sudo/VK-offee-rag.git
+    git clone https://github.com/AlexPoAi/VK-offee-rag.git
 fi
 
 # === 4. Python окружения ===
@@ -68,6 +68,8 @@ OPENAI_API_KEY=ВСТАВЬ_СЮДА
 ANTHROPIC_BASE_URL=https://dev.aiprime.store/api
 PACK_PATH=/opt/vk-offee/VK-offee
 CHROMA_PATH=/opt/vk-offee/VK-offee-rag/data/chroma
+API_HOST=127.0.0.1
+API_PORT=8000
 ENVFILE
     echo "  ⚠️  Заполни /opt/vk-offee/VK-offee-rag/.env"
 fi
@@ -77,6 +79,8 @@ if [ ! -f /opt/vk-offee/VK-offee/telegram-bot/.env ]; then
     cat > /opt/vk-offee/VK-offee/telegram-bot/.env << 'ENVFILE'
 TELEGRAM_BOT_TOKEN=ВСТАВЬ_СЮДА
 RAG_API_URL=http://127.0.0.1:8000
+RAG_TIMEOUT=30
+BOT_RUNTIME_MODE=cloud
 ENVFILE
     echo "  ⚠️  Заполни /opt/vk-offee/VK-offee/telegram-bot/.env"
 fi

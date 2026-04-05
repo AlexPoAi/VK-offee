@@ -26,6 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+BOT_RUNTIME_MODE = os.getenv("BOT_RUNTIME_MODE", "local-debug")
 
 # RAG клиент (singleton, retry x3)
 rag = get_rag_client()
@@ -185,7 +186,10 @@ async def post_init(application: Application) -> None:
 # ─── main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    logger.info("🤖 VK-offee AI Bot v3.1 запущен (RAG + меню для сотрудников)")
+    logger.info(
+        "🤖 VK-offee AI Bot v3.1 запущен (mode=%s, RAG + меню для сотрудников)",
+        BOT_RUNTIME_MODE,
+    )
 
     application = (
         Application.builder()

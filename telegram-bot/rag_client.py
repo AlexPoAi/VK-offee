@@ -15,6 +15,8 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# Localhost остаётся удобным dev fallback, но production/cloud runtime
+# обязан задавать RAG_API_URL явно через env.
 RAG_API_URL = os.getenv("RAG_API_URL", "http://127.0.0.1:8000")
 RAG_TIMEOUT = int(os.getenv("RAG_TIMEOUT", "30"))
 
