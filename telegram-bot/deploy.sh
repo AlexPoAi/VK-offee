@@ -127,9 +127,38 @@ EnvironmentFile=/opt/vk-offee/VK-offee/telegram-bot/.env
 WantedBy=multi-user.target
 SERVICE
 
+# RAG reindex timer
+cat > /etc/systemd/system/vk-rag-reindex.service << 'SERVICE'
+[Unit]
+Description=VK-offee RAG reindex if Pack changed
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/vk-offee/VK-offee-rag
+ExecStart=/opt/vk-offee/VK-offee-rag/scripts/reindex-if-pack-changed.sh
+SERVICE
+
+cat > /etc/systemd/system/vk-rag-reindex.timer << 'SERVICE'
+[Unit]
+Description=Periodic VK-offee Pack sync and RAG reindex
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=10min
+Unit=vk-rag-reindex.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+SERVICE
+
+chmod +x /opt/vk-offee/VK-offee-rag/scripts/reindex-if-pack-changed.sh
+
 systemctl daemon-reload
-systemctl enable vk-rag-api vk-telegram-bot
-echo "  ✅ Сервисы зарегистрированы"
+systemctl enable vk-rag-api vk-telegram-bot vk-rag-reindex.timer
+echo "  ✅ Сервисы и timer зарегистрированы"
 
 # === 7. Итог ===
 echo ""
@@ -143,11 +172,14 @@ echo ""
 echo "Затем запусти сервисы:"
 echo "   systemctl start vk-rag-api"
 echo "   systemctl start vk-telegram-bot"
+echo "   systemctl start vk-rag-reindex.timer"
 echo ""
 echo "Проверка статуса:"
 echo "   systemctl status vk-rag-api"
 echo "   systemctl status vk-telegram-bot"
+echo "   systemctl status vk-rag-reindex.timer"
 echo ""
 echo "Логи:"
 echo "   journalctl -u vk-rag-api -f"
 echo "   journalctl -u vk-telegram-bot -f"
+echo "   journalctl -u vk-rag-reindex.service -f"
