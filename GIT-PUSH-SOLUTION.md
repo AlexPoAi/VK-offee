@@ -41,15 +41,15 @@ fatal: unable to access 'https://github.com/...': CONNECT tunnel failed, respons
 **Вместо `git push` используем GitHub REST API!**
 
 ```bash
-TOKEN="ghp_YOUR_TOKEN"
-REPO="alexpoaiagent-sudo/VK-offee"
+GITHUB_TOKEN="${GITHUB_TOKEN:?set GITHUB_TOKEN first}"
+REPO="AlexPoAi/VK-offee"
 
 # Получить содержимое файла в base64
 CONTENT=$(cat FILE.md | base64 -w 0)
 
 # Создать/обновить файл и коммит через API
 curl -s -X PUT "https://api.github.com/repos/${REPO}/contents/FILE.md" \
-  -H "Authorization: token ${TOKEN}" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "{
     \"message\": \"commit message\",
@@ -68,7 +68,7 @@ curl -s -X PUT "https://api.github.com/repos/${REPO}/contents/FILE.md" \
   "commit": {
     "sha": "f5812654695976a98766c2470b30d4cc1dddb855",
     "message": "test: пробный коммит для проверки доступа",
-    "html_url": "https://github.com/alexpoaiagent-sudo/VK-offee/commit/..."
+    "html_url": "https://github.com/AlexPoAi/VK-offee/commit/..."
   }
 }
 ```
@@ -97,8 +97,8 @@ curl -s -X PUT "https://api.github.com/repos/${REPO}/contents/FILE.md" \
 ### Вариант 1: Один файл
 
 ```bash
-curl -X PUT "https://api.github.com/repos/alexpoaiagent-sudo/VK-offee/contents/FILE.md" \
-  -H "Authorization: token ${TOKEN}" \
+curl -X PUT "https://api.github.com/repos/AlexPoAi/VK-offee/contents/FILE.md" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "{
     \"message\": \"commit message\",
@@ -112,15 +112,15 @@ curl -X PUT "https://api.github.com/repos/alexpoaiagent-sudo/VK-offee/contents/F
 
 ```bash
 #!/bin/bash
-TOKEN="ghp_..."
-REPO="alexpoaiagent-sudo/VK-offee"
+GITHUB_TOKEN="${GITHUB_TOKEN:?set GITHUB_TOKEN first}"
+REPO="AlexPoAi/VK-offee"
 BRANCH="claude/organize-repo-domains-gxPBh"
 MESSAGE="commit message"
 
 for FILE in FILE1.md FILE2.md FILE3.md; do
   CONTENT=$(cat "$FILE" | base64 -w 0)
   curl -X PUT "https://api.github.com/repos/${REPO}/contents/${FILE}" \
-    -H "Authorization: token ${TOKEN}" \
+    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
     -H "Content-Type: application/json" \
     -d "{
       \"message\": \"${MESSAGE}\",
@@ -159,7 +159,7 @@ done
 - Файл: `TEST-COMMIT.md`
 - Коммит: `f5812654695976a98766c2470b30d4cc1dddb855`
 - Сообщение: "test: пробный коммит для проверки доступа"
-- Ссылка: https://github.com/alexpoaiagent-sudo/VK-offee/commit/f5812654695976a98766c2470b30d4cc1dddb855
+- Ссылка: https://github.com/AlexPoAi/VK-offee/commit/f5812654695976a98766c2470b30d4cc1dddb855
 
 ---
 
@@ -167,7 +167,7 @@ done
 
 ⚠️ **ВАЖНО:**
 - Никогда не коммитить токен в git
-- Использовать переменные окружения: `${TOKEN}`
+- Использовать переменные окружения: `${GITHUB_TOKEN}`
 - Для production использовать GitHub App или Actions с встроенной аутентификацией
 
 ---
