@@ -20,12 +20,12 @@
 | PARK.DOC.002 | Выписка ЕГРН | `06-documents/.../legal/Выписка из егрн.pdf` | `06-documents/.../legal/PARK.DOC.002-egrn-extract (Выписка из ЕГРН).md` | ok |
 | PARK.DOC.003 | Договор аренды земли | `06-documents/.../legal/Парк Аренда Участка.pdf` | `06-documents/.../legal/PARK.DOC.003-land-lease-contract (Договор аренды земли).md` | ok |
 | PARK.DOC.004 | Договор с архитектором | `06-documents/.../legal/PARK.WP.004-architect-contract (Договор с архитектором Лукс).pdf` | `06-documents/.../legal/PARK.DOC.004-architect-contract (Договор с архитектором).md` | ok |
-| PARK.DOC.015 | ДС2 АР полный и ПЗ | `/Users/alexander/Downloads/Парк/П 240 ДС 2 АР полный и ПЗ.pdf` | `06-documents/.../legal/PARK.DOC.015-ds2-ar-full-pz (...).md` | ok |
-| PARK.DOC.016 | ДС3 пакет РНС | `/Users/alexander/Downloads/Парк/П_240_ДС_3_пакет_документов_для_РНС_07_042026.docx`, `/Users/alexander/Downloads/Парк/П_240_ДС_3_пакет_документов_для_РНС_и_счет.pdf` | `06-documents/.../legal/PARK.DOC.016-ds3-rns-package (...).md` | ok |
-| PARK.DOC.017 | АВР1 и счета 74/75 | `/Users/alexander/Downloads/Парк/АВР 1 П 240 ДС2 АР полный и ПЗ счет.pdf` | `06-documents/.../legal/PARK.DOC.017-avr1-invoices (...).md` | ok |
+| PARK.DOC.015 | ДС2 АР полный и ПЗ | `06-documents/.../legal/PARK.DOC.015-ds2-ar-full-pz (ДС2 АР полный и ПЗ 31 марта 2026).pdf` | `06-documents/.../legal/PARK.DOC.015-ds2-ar-full-pz (...).md` | ok |
+| PARK.DOC.016 | ДС3 пакет РНС | `06-documents/.../legal/PARK.DOC.016-ds3-rns-package (ДС3 пакет документов для РНС 07 апреля 2026).docx`, `06-documents/.../legal/PARK.DOC.016-ds3-rns-package-and-invoice (ДС3 пакет документов и счёт 02 апреля 2026).pdf` | `06-documents/.../legal/PARK.DOC.016-ds3-rns-package (...).md` | ok |
+| PARK.DOC.017 | АВР1 и счета 74/75 | `06-documents/.../legal/PARK.DOC.017-avr1-and-invoices (АВР1 и счета 74 75 от 02 апреля 2026).pdf` | `06-documents/.../legal/PARK.DOC.017-avr1-invoices (...).md` | ok |
 | PARK.DOC.018 | Выжимка разговора с Еленой | источник в переписке | `06-documents/.../legal/PARK.DOC.018-elena-conversation-summary.md` | card-only |
-| PARK.DOC.019 | ДС1 расчёт конструкций | `/Users/alexander/Downloads/Парк/П 240 ДС1 расчет конструкций.pdf`, `/Users/alexander/Downloads/Парк/П_240_ДС_1_Счет_аванс_расчет_конструкций.pdf` | `06-documents/.../legal/PARK.DOC.019-ds1-construction-calculation (...).md` | ok |
-| PARK.DOC.020 | Оригинальный договор П240 | вероятный оригинал: `/Users/alexander/Downloads/Telegram Desktop/П_240_Голубинка_подпись_Лукс_счет_аванс.pdf` | `06-documents/.../legal/PARK.DOC.020-original-contract-p240 (...).md` | mixed |
+| PARK.DOC.019 | ДС1 расчёт конструкций | `06-documents/.../legal/PARK.DOC.019-ds1-construction-calculation (ДС1 расчёт конструкций 03 февраля 2026).pdf`, `06-documents/.../legal/PARK.DOC.019-ds1-advance-invoice (Счёт аванс расчёт конструкций 05 февраля 2026).pdf` | `06-documents/.../legal/PARK.DOC.019-ds1-construction-calculation (...).md` | ok |
+| PARK.DOC.020 | Оригинальный договор П240 | `06-documents/.../legal/PARK.DOC.020-original-contract-p240 (Оригинальный договор П240 от 21 июля 2025).pdf` | `06-documents/.../legal/PARK.DOC.020-original-contract-p240 (...).md` | ok |
 | PARK.WP.017 | Договор аренды земли | `06-documents/.../legal/PARK.WP.017-land-lease-contract.pdf` | `06-documents/.../legal/PARK.WP.017-land-lease-contract (Договор аренды земли).md` | ok |
 | PARK.WP.018 | Выписка ЕГРН | `06-documents/.../legal/PARK.WP.018-egrn-extract.pdf` | `06-documents/.../legal/PARK.WP.018-egrn-extract (Выписка ЕГРН).md` | ok |
 
@@ -33,8 +33,8 @@
 
 Для этих позиций на текущий момент установлено:
 - карточки есть и содержат анализ
-- оригиналы `ДС1/ДС2/ДС3/АВР1` найдены в `/Users/alexander/Downloads/Парк`
-- вероятный исходный `П240` найден в `/Users/alexander/Downloads/Telegram Desktop`
+- оригиналы `ДС1/ДС2/ДС3/АВР1` найдены и зеркально сохранены в `06-documents (...)/legal/`
+- исходный `П240` найден, подтверждён и зеркально сохранён в `06-documents (...)/legal/`
 - в `04-work-products/PARK.WP.005-telegram-export/files/` явных файлов `ДС1/ДС2/ДС3/П240/АВР` нет
 - основными источниками сейчас выступают:
   - `PARK.COMM.011`
@@ -49,8 +49,8 @@
 - `2026-02-24` есть сообщения о том, что расчёт конструкций на финальном этапе и затем начнётся стадия П
 
 Вывод:
-- физические оригиналы `ДС1/ДС2/ДС3/АВР1` уже локализованы, следующий шаг — перенести или зеркально зафиксировать их в Pack
-- по `П240` нужно отдельно подтвердить, что найденный 11-страничный PDF действительно является исходным договором, а не смешанным пакетом "договор + счёт + подпись"
+- физические оригиналы `ДС1/ДС2/ДС3/АВР1/П240` уже лежат внутри Pack
+- для юридического блока ЛУКС Pack теперь самодостаточен: есть и оригиналы, и карточки, и OCR-слой
 
 ## Архитектурные документы
 
@@ -63,6 +63,8 @@
 | PARK.DOC.011 | Карта зонирования | `06-documents/.../architectural/PARK.WP.013-zoning-map (Карта градостроительного зонирования).pdf` | `06-documents/.../architectural/PARK.DOC.011-zoning-map (...).md` | ok |
 | PARK.DOC.014 | Эскизы кофейни 1-10 | `06-documents/.../architectural/eskizy/*.jpg` | `06-documents/.../architectural/PARK.DOC.014-sketches (...).md` | ok |
 | PARK.WP.020 | Отдел архитектуры | `06-documents/.../architectural/PARK.WP.020-architecture-department.pdf` | `06-documents/.../architectural/PARK.WP.020-architecture-department (Отдел архитектуры).md` | ok |
+| PARK.WP.027 | Подсчёт площадей 1 этаж | `06-documents/.../architectural/PARK.WP.027-area-calculation-floor-1 (Подсчёт площадей 1 этаж).pdf` | `06-documents/.../architectural/PARK.WP.027-area-calculation-floor-1 (...).md` | ok |
+| PARK.WP.028 | Подсчёт площадей 2 этаж | `06-documents/.../architectural/PARK.WP.028-area-calculation-floor-2 (Подсчёт площадей 2 этаж).pdf` | `06-documents/.../architectural/PARK.WP.028-area-calculation-floor-2 (...).md` | ok |
 
 ## Административные документы и рабочие продукты
 
@@ -112,8 +114,7 @@
 
 ## Следующий слой доработки
 
-1. Перенести или отзеркалить найденные оригиналы `ДС1/ДС2/ДС3/АВР1` в нормализованные папки Pack
-2. Подтвердить и привязать исходный `П240`
-3. Досоздать карточки для `original-only`
-4. Развести `PARK.WP.019` и `PARK.WP.026`, где под одним номером сейчас больше одного файла
-5. Добавить столбец `source` / `superseded` / `active`
+1. Досоздать карточки для `original-only`
+2. Развести `PARK.WP.019` и `PARK.WP.026`, где под одним номером сейчас больше одного файла
+3. Добавить столбец `source` / `superseded` / `active`
+4. Перейти к полной `TELEGRAM-TIMELINE` из сырого экспорта
