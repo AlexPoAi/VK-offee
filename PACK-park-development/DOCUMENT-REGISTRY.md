@@ -74,6 +74,7 @@
 | PARK.DOC.012 | График РНС без АГО | `06-documents/.../administrative/График_для_получения_РНС_без_АГО_.xlsx` | `06-documents/.../administrative/PARK.DOC.012-schedule-rns-no-ago (...).md` | ok |
 | PARK.DOC.013 | График РНС с АГО | `06-documents/.../administrative/График для получения РНС АГО..xlsx` | `06-documents/.../administrative/PARK.DOC.013-schedule-rns-with-ago (...).md` | ok |
 | PARK.DOC.014 | График РНС скорректированный | `06-documents/.../administrative/PARK.WP.019-construction-schedule-golubinka.xlsx` | `06-documents/.../administrative/PARK.DOC.014-schedule-updated-march26 (...).md` | ok |
+| PARK.DOC.021 | График РНС с АГО 08 апреля 2026 | `06-documents/.../administrative/PARK.DOC.021-schedule-rns-with-ago-april8 (График РНС с АГО 08 апреля 2026).xlsx` | `06-documents/.../administrative/PARK.DOC.021-schedule-rns-with-ago-april8 (...).md` | ok |
 | PARK.WP.005 | Telegram correspondence JSON | `06-documents/.../administrative/PARK.WP.005-telegram-correspondence (Переписка Telegram).json` | нет | original-only |
 | PARK.WP.007 | Пояснительная записка | `06-documents/.../administrative/PARK.WP.007-explanatory-note (Пояснительная записка).docx` | нет | original-only |
 | PARK.WP.010 | Градостроительные регламенты | `06-documents/.../administrative/PARK.WP.010-urban-regulations (Градостроительные регламенты).docx` | нет | original-only |
