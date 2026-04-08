@@ -4,6 +4,10 @@
 
 Точка оформлена как отдельный operational hub. Основной активный проектный контур сейчас связан с рекламной конструкцией и будущим согласованием вывески.
 
+Активные РП:
+- [CO.WP.003-samokisha-signage-design-contract-review (Проверка договора на архитектурное решение рекламной конструкции Самокиша).md](/Users/alexander/Github/VK-offee/PACK-cafe-operations/04-work-products%20%28%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B5%20%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B%29/CO.WP.003-samokisha-signage-design-contract-review%20%28%D0%9F%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0%20%D0%B4%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%B0%20%D0%BD%D0%B0%20%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D0%BE%D0%B5%20%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%80%D0%B5%D0%BA%D0%BB%D0%B0%D0%BC%D0%BD%D0%BE%D0%B9%20%D0%BA%D0%BE%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0%29.md)
+- [CO.WP.004-point-knowledge-hub-pilot-samokisha (Point-level knowledge hub для точки Самокиша).md](/Users/alexander/Github/VK-offee/PACK-cafe-operations/04-work-products%20%28%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B5%20%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B%29/CO.WP.004-point-knowledge-hub-pilot-samokisha%20%28Point-level%20knowledge%20hub%20%D0%B4%D0%BB%D1%8F%20%D1%82%D0%BE%D1%87%D0%BA%D0%B8%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BA%D0%B8%D1%88%D0%B0%29.md)
+
 ## Активные направления
 
 ### 1. Вывеска и архитектурное решение
@@ -21,6 +25,7 @@
 Текущее состояние:
 - создан point-level hub;
 - собраны основные ссылки на документы Самокиша;
+- structural pilot оформлен как отдельный рабочий продукт `CO.WP.004`;
 - подготовлена база для последующей структуризации Тургенева и Луговой по тому же шаблону.
 
 Следующий шаг:
