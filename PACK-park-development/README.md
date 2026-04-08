@@ -2,6 +2,13 @@
 
 > Входная точка для любого агента, который начинает работу с проектом парка Голубинка.
 
+## Обязательный вход
+
+Первый файл для любого нового агента:
+`START-HERE.md`
+
+Без его прохождения нельзя считать, что агент вошёл в контекст корректно.
+
 ## Что это
 
 `PACK-park-development` — домен проекта новой точки VK-offee в парке Голубинка:
@@ -13,17 +20,22 @@
 
 ## С чего начинать новому агенту
 
-Порядок чтения:
-1. `PROJECT-STATUS.md`
-2. `CONTEXT.md`
-3. `DECISIONS-AND-QUESTIONS.md`
-4. `DOCUMENT-REGISTRY.md`
-5. `COMMUNICATION-REGISTRY.md`
-6. `TELEGRAM-TIMELINE.md`
-7. После этого — нужные `PARK.DOC.*`, `PARK.COMM.*`, `PARK.WP.*`
+Жёсткий маршрут чтения вынесен в:
+`START-HERE.md`
+
+Коротко:
+1. `START-HERE.md`
+2. `PROJECT-STATUS.md`
+3. `CONTEXT.md`
+4. `DECISIONS-AND-QUESTIONS.md`
+5. `TELEGRAM-TIMELINE.md`
+6. `DOCUMENT-REGISTRY.md`
+7. `COMMUNICATION-REGISTRY.md`
+8. После этого — нужные `PARK.DOC.*`, `PARK.COMM.*`, `PARK.WP.*`
 
 ## Главные навигационные файлы
 
+- `START-HERE.md` — обязательный входной коридор агента
 - `PROJECT-STATUS.md` — что происходит сейчас
 - `CONTEXT.md` — короткий session-entry
 - `DOCUMENT-REGISTRY.md` — реестр оригиналов и карточек
@@ -31,6 +43,7 @@
 - `TELEGRAM-TIMELINE.md` — лента переговоров и событий
 - `DECISIONS-AND-QUESTIONS.md` — решения, блокеры, открытые вопросы
 - `SOURCE-MAP.md` — где физически лежат источники
+- `04-work-products (...) / PARK.WP.029` — формальное закрытие текущего цикла
 
 ## Как устроен пакет
 

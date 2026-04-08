@@ -31,7 +31,8 @@
 | PARK.COMM.011 | source | 2026-04-03 | Елена / Александр | Telegram | Ответ на юридические вопросы | in_progress | `04-communications/PARK.COMM.011-elena-response-legal-questions (...).md` |
 | PARK.COMM.012 | source | 2026-04-04 | Елена / Александр | Telegram | Спор по расчёту конструкций | in_progress | `04-communications/PARK.COMM.012-elena-response-april4 (...).md` |
 | PARK.COMM.013 | source | 2026-04-02 | Елена / Александр | Telegram | Запрос графика сроков | waiting | `04-communications/PARK.COMM.013-schedule-request-april2 (...).md` |
-| PARK.COMM.014 | source | 2026-04-07 | Елена / Александр | Telegram | Новый вариант ДС3 | next-action | `04-communications/PARK.COMM.014-elena-april7-ds3-update (...).md` |
+| PARK.COMM.014 | source | 2026-04-07 | Елена / Александр | Telegram | Новый вариант ДС3 | confirmed | `04-communications/PARK.COMM.014-elena-april7-ds3-update (...).md` |
+| PARK.COMM.015 | source | 2026-04-08 | Елена / Александр | Telegram | Условное принятие ДС3, позиция по ДС1, дедлайн графика | next-action | `04-communications/PARK.COMM.015-april8-response-on-ds3-and-deadline (...).md` |
 
 ## Активная цепочка переговоров
 
@@ -40,11 +41,12 @@
 2. `PARK.COMM.012`
 3. `PARK.COMM.013`
 4. `PARK.COMM.014`
-5. `PARK.WP.026-draft-message-luks`
+5. `PARK.COMM.015`
+6. `PARK.WP.026-draft-message-luks`
 
 ## Привязка к документам
 
-- `PARK.COMM.011-014` связаны с:
+- `PARK.COMM.011-015` связаны с:
   - `PARK.DOC.015`
   - `PARK.DOC.016`
   - `PARK.DOC.017`
