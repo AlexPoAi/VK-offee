@@ -33,6 +33,13 @@
 | PARK.COMM.013 | source | 2026-04-02 | Елена / Александр | Telegram | Запрос графика сроков | waiting | `04-communications/PARK.COMM.013-schedule-request-april2 (...).md` |
 | PARK.COMM.014 | source | 2026-04-07 | Елена / Александр | Telegram | Новый вариант ДС3 | confirmed | `04-communications/PARK.COMM.014-elena-april7-ds3-update (...).md` |
 | PARK.COMM.015 | source | 2026-04-08 | Елена / Александр | Telegram | Условное принятие ДС3, позиция по ДС1, дедлайн графика | next-action | `04-communications/PARK.COMM.015-april8-response-on-ds3-and-deadline (...).md` |
+| PARK.COMM.016 | source | 2026-04-08 | Елена / Александр | Telegram | Эскалация по графику, срокам и дисциплине ответов | sent | `04-communications/PARK.COMM.016-april8-escalation-on-schedule-and-response-discipline (...).md` |
+| PARK.COMM.017 | source | 2026-04-09 | Елена / Александр | Telegram | Пакет документов ЛУКС: график, ДС3, ДС2 | in_progress | `04-communications/PARK.COMM.017-april9-luks-package-documents (...).md` |
+| PARK.COMM.018 | source | 2026-04-09 | Александр / Елена | Telegram | Ответ по графику, срокам после АГО и юридической формулировке | next-action | `04-communications/PARK.COMM.018-april9-reply-on-graph-and-legal-wording (...).md` |
+| PARK.COMM.019 | source | 2026-04-09 | Елена / Александр | Telegram | Подтверждение: все уточнения уже есть в графике | next-action | `04-communications/PARK.COMM.019-april9-elena-confirms-graph-signed (...).md` |
+| PARK.COMM.020 | source | 2026-04-09 | Александр / Елена | Telegram | Организация оплаты, забора пакета АГО и подписания оригиналов | next-action | `04-communications/PARK.COMM.020-april9-office-pickup-and-signing (...).md` |
+| PARK.COMM.021 | source | 2026-04-10 | Александр / ЛУКС | internal-fixation | Оплачены предоплата по ДС3 и остаток по ДС2 | confirmed | `04-communications/PARK.COMM.021-april10-payments-ds3-and-ds2 (...).md` |
+| PARK.COMM.022 | source | 2026-04-11 | Главный инженер ЛУКС / Александр | image-message | Фото-ответ по составу расчёта конструкций ДС1 | in_progress | `04-communications/PARK.COMM.022-chief-engineer-ds1-photo-response-april11 (...).md` |
 
 ## Активная цепочка переговоров
 
@@ -42,13 +49,23 @@
 3. `PARK.COMM.013`
 4. `PARK.COMM.014`
 5. `PARK.COMM.015`
-6. `PARK.WP.026-draft-message-luks`
+6. `PARK.COMM.016`
+7. `PARK.COMM.017`
+8. `PARK.COMM.018`
+9. `PARK.COMM.019`
+10. `PARK.COMM.020`
+11. `PARK.COMM.021`
+12. `PARK.COMM.022`
+13. `PARK.WP.026-draft-message-luks`
 
 ## Привязка к документам
 
-- `PARK.COMM.011-015` связаны с:
+- `PARK.COMM.011-022` связаны с:
   - `PARK.DOC.015`
   - `PARK.DOC.016`
+  - `PARK.DOC.022`
+  - `PARK.DOC.023`
+  - `PARK.DOC.024`
   - `PARK.DOC.017`
   - `PARK.DOC.019`
   - `PARK.DOC.020`

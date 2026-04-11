@@ -26,6 +26,13 @@
 | PARK.DOC.018 | Выжимка разговора с Еленой | источник в переписке | `06-documents/.../legal/PARK.DOC.018-elena-conversation-summary.md` | card-only |
 | PARK.DOC.019 | ДС1 расчёт конструкций | `06-documents/.../legal/PARK.DOC.019-ds1-construction-calculation (ДС1 расчёт конструкций 03 февраля 2026).pdf`, `06-documents/.../legal/PARK.DOC.019-ds1-advance-invoice (Счёт аванс расчёт конструкций 05 февраля 2026).pdf` | `06-documents/.../legal/PARK.DOC.019-ds1-construction-calculation (...).md` | ok |
 | PARK.DOC.020 | Оригинальный договор П240 | `06-documents/.../legal/PARK.DOC.020-original-contract-p240 (Оригинальный договор П240 от 21 июля 2025).pdf` | `06-documents/.../legal/PARK.DOC.020-original-contract-p240 (...).md` | ok |
+| PARK.DOC.023 | ДС3 пакет РНС 09 апреля 2026 | `06-documents/.../legal/PARK.DOC.023-ds3-rns-package-april9 (ДС3 пакет документов для РНС 09 апреля 2026).pdf` | `06-documents/.../legal/PARK.DOC.023-ds3-rns-package-april9 (...).md` | ok |
+| PARK.DOC.024 | ДС2 повторно от 09 апреля 2026 | `06-documents/.../legal/PARK.DOC.024-ds2-ar-full-pz-resend-april9 (ДС2 АР полный и ПЗ повторно от 09 апреля 2026).pdf` | `06-documents/.../legal/PARK.DOC.024-ds2-ar-full-pz-resend-april9 (...).md` | ok |
+| PARK.DOC.025 | Черновик заявления на согласование АГО | рабочий черновик под Бахчисарай и ООО «ТЕРРА» | `06-documents/.../administrative/PARK.DOC.025-draft-ago-application-bahchisaray (...).md` | draft |
+| PARK.DOC.026 | Перечень приложений к заявлению на АГО | рабочий список для подачи | `06-documents/.../administrative/PARK.DOC.026-ago-submission-attachments-list (...).md` | draft |
+| PARK.DOC.027 | Заявление на АГО для печати | локальная print-ready версия заявления | `06-documents/.../administrative/PARK.DOC.027-ago-application-print-ready (...).md` | draft |
+| PARK.DOC.028 | Приложения к заявлению на АГО для печати | локальная print-ready версия списка приложений | `06-documents/.../administrative/PARK.DOC.028-ago-attachments-print-ready (...).md` | draft |
+| PARK.DOC.029 | Google Doc заявления на АГО | `Google Doc`: `19kceQ7z7xRDJ-asfcqhh9ma-HO-VkrmCO3-GiYlJYTs` | `06-documents/.../administrative/PARK.DOC.029-ago-application-google-doc (...).md` | active |
 | PARK.WP.017 | Договор аренды земли | `06-documents/.../legal/PARK.WP.017-land-lease-contract.pdf` | `06-documents/.../legal/PARK.WP.017-land-lease-contract (Договор аренды земли).md` | ok |
 | PARK.WP.018 | Выписка ЕГРН | `06-documents/.../legal/PARK.WP.018-egrn-extract.pdf` | `06-documents/.../legal/PARK.WP.018-egrn-extract (Выписка ЕГРН).md` | ok |
 
@@ -75,6 +82,7 @@
 | PARK.DOC.013 | График РНС с АГО | `06-documents/.../administrative/График для получения РНС АГО..xlsx` | `06-documents/.../administrative/PARK.DOC.013-schedule-rns-with-ago (...).md` | ok |
 | PARK.DOC.014 | График РНС скорректированный | `06-documents/.../administrative/PARK.WP.019-construction-schedule-golubinka.xlsx` | `06-documents/.../administrative/PARK.DOC.014-schedule-updated-march26 (...).md` | ok |
 | PARK.DOC.021 | График РНС с АГО 08 апреля 2026 | `06-documents/.../administrative/PARK.DOC.021-schedule-rns-with-ago-april8 (График РНС с АГО 08 апреля 2026).xlsx` | `06-documents/.../administrative/PARK.DOC.021-schedule-rns-with-ago-april8 (...).md` | ok |
+| PARK.DOC.022 | График РНС с АГО 09 апреля 2026 | `06-documents/.../administrative/PARK.DOC.022-schedule-rns-with-ago-april9 (График РНС с АГО 09 апреля 2026).pdf` | `06-documents/.../administrative/PARK.DOC.022-schedule-rns-with-ago-april9 (...).md` | ok |
 | PARK.WP.005 | Telegram correspondence JSON | `06-documents/.../administrative/PARK.WP.005-telegram-correspondence (Переписка Telegram).json` | нет | original-only |
 | PARK.WP.007 | Пояснительная записка | `06-documents/.../administrative/PARK.WP.007-explanatory-note (Пояснительная записка).docx` | нет | original-only |
 | PARK.WP.010 | Градостроительные регламенты | `06-documents/.../administrative/PARK.WP.010-urban-regulations (Градостроительные регламенты).docx` | нет | original-only |
