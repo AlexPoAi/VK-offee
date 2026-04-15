@@ -269,23 +269,41 @@ def resolve_telegram_credentials() -> tuple[str, str]:
     aist_env = read_key_value_env(Path.home() / ".config" / "aist" / "env")
     exocortex_chat = read_first_line(Path.home() / ".config" / "exocortex" / "telegram-chat-id")
     exocortex_token = read_first_line(Path.home() / ".config" / "exocortex" / "telegram-token")
+    # 1) Явные env (без смешивания со сторонними источниками).
+    env_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    env_chat = (
+        os.getenv("WAREHOUSE_REPORT_CHAT_ID", "").strip()
+        or os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    )
+    if env_token and env_chat:
+        return env_token, env_chat
 
-    token = (
-        os.getenv("TELEGRAM_BOT_TOKEN")
-        or env_file.get("TELEGRAM_BOT_TOKEN")
-        or aist_env.get("TELEGRAM_BOT_TOKEN")
-        or exocortex_token
+    # 2) telegram-bot/.env (локальный продуктовый контур).
+    bot_token = env_file.get("TELEGRAM_BOT_TOKEN", "").strip()
+    bot_chat = (
+        env_file.get("WAREHOUSE_REPORT_CHAT_ID", "").strip()
+        or env_file.get("TELEGRAM_CHAT_ID", "").strip()
     )
-    chat_id = (
-        os.getenv("WAREHOUSE_REPORT_CHAT_ID")
-        or os.getenv("TELEGRAM_CHAT_ID")
-        or env_file.get("WAREHOUSE_REPORT_CHAT_ID")
-        or env_file.get("TELEGRAM_CHAT_ID")
-        or aist_env.get("WAREHOUSE_REPORT_CHAT_ID")
-        or aist_env.get("TELEGRAM_CHAT_ID")
-        or exocortex_chat
+    if bot_token and bot_chat:
+        return bot_token, bot_chat
+
+    # 3) ~/.config/aist/env (каноничный инженерный env).
+    aist_token = aist_env.get("TELEGRAM_BOT_TOKEN", "").strip()
+    aist_chat = (
+        aist_env.get("WAREHOUSE_REPORT_CHAT_ID", "").strip()
+        or aist_env.get("TELEGRAM_CHAT_ID", "").strip()
     )
-    return token or "", chat_id or ""
+    if aist_token and aist_chat:
+        return aist_token, aist_chat
+
+    # 4) ~/.config/exocortex/* (legacy fallback, но пара сохраняется из одного слоя).
+    if exocortex_token and exocortex_chat:
+        return exocortex_token, exocortex_chat
+
+    # 5) Последний fallback на случай частично заполненного окружения.
+    token = env_token or bot_token or aist_token or exocortex_token
+    chat_id = env_chat or bot_chat or aist_chat or exocortex_chat
+    return token, chat_id
 
 
 def send_telegram_message(text: str) -> tuple[bool, str]:

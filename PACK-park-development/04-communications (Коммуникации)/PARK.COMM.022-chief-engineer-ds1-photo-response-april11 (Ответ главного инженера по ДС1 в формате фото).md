@@ -20,7 +20,8 @@ source: /Users/alexander/Downloads/Парк/По дс 1.jpg
 
 ## Источник
 
-- Файл: `/Users/alexander/Downloads/Парк/По дс 1.jpg`
+- Файл: `PARK.COMM.022-ds1-photo.jpg` (в этой же папке)
+- Оригинал: `/Users/alexander/Downloads/Парк/По дс 1.jpg`
 - Формат: фото / скрин с перечислением разделов расчёта конструкций
 
 ## Снятый текст
