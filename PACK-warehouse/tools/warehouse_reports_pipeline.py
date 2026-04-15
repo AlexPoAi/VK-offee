@@ -35,6 +35,7 @@ WAREHOUSE_DIR = ROOT / "PACK-warehouse"
 CARDS_DIR = WAREHOUSE_DIR / "02-domain-entities" / "report-cards"
 WP_DIR = WAREHOUSE_DIR / "04-work-products"
 LATEST_REPORT = WP_DIR / "WH.REPORT.002-warehouse-sync-summary-latest.md"
+REGISTRY_FILE = WP_DIR / "WH.REGISTRY.001-documents.csv"
 BOT_REPORTS_DIR = KB_DIR / "Отчёты для бота" / "Склад"
 
 KEYWORDS = (
@@ -49,6 +50,71 @@ def sanitize_slug(text: str) -> str:
     out = re.sub(r"[^a-zа-я0-9]+", "-", out)
     out = out.strip("-")
     return out[:120] or "report"
+
+
+def detect_report_type(name: str) -> str:
+    low = name.lower()
+    if ("комментарий" in low) or ("комментари" in low):
+        return "comment"
+    if "инвентаризац" in low:
+        return "inventory"
+    if "зерна" in low:
+        return "beans"
+    if "остатки" in low:
+        return "stock"
+    return "other"
+
+
+def file_sha1(path: Path) -> str:
+    sha = hashlib.sha1()
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(1024 * 1024)
+            if not chunk:
+                break
+            sha.update(chunk)
+    return sha.hexdigest()
+
+
+def now_stamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def load_registry() -> dict[str, dict[str, str]]:
+    if not REGISTRY_FILE.exists():
+        return {}
+    rows: dict[str, dict[str, str]] = {}
+    with REGISTRY_FILE.open(encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            key = (row.get("record_key") or "").strip()
+            if key:
+                rows[key] = row
+    return rows
+
+
+def save_registry(rows: dict[str, dict[str, str]]) -> None:
+    REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "record_key",
+        "source_file",
+        "source_mtime",
+        "source_size_bytes",
+        "source_hash",
+        "report_type",
+        "status",
+        "first_seen_at",
+        "last_seen_at",
+        "last_processed_at",
+        "card_path",
+        "bot_card_path",
+        "error",
+    ]
+    with REGISTRY_FILE.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for key in sorted(rows.keys()):
+            writer.writerow(rows[key])
 
 
 def find_recent_reports(hours: int) -> list[Path]:
@@ -194,7 +260,12 @@ def make_card(source: Path) -> tuple[Path, Path]:
     return card_path, bot_path
 
 
-def build_latest_summary(cards: Iterable[Path], bot_cards: Iterable[Path], hours: int) -> str:
+def build_latest_summary(
+    cards: Iterable[Path],
+    bot_cards: Iterable[Path],
+    hours: int,
+    run_stats: dict[str, int],
+) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     cards = sorted(set(cards))
     bot_cards = sorted(set(bot_cards))
@@ -207,8 +278,13 @@ def build_latest_summary(cards: Iterable[Path], bot_cards: Iterable[Path], hours
         "# Warehouse Sync Summary",
         "",
         f"- Окно анализа: последние `{hours}` ч",
+        f"- Входящих документов: **{run_stats['received']}**",
+        f"- Обработано: **{run_stats['processed']}**",
+        f"- Дубликатов: **{run_stats['duplicate']}**",
+        f"- Ошибок: **{run_stats['error']}**",
         f"- Карточек сформировано: **{len(cards)}**",
         f"- Карточек для бота: **{len(bot_cards)}**",
+        f"- Реестр: `{REGISTRY_FILE.relative_to(ROOT).as_posix()}`",
         "",
         "## Карточки",
     ]
@@ -368,17 +444,63 @@ def main() -> int:
     CARDS_DIR.mkdir(parents=True, exist_ok=True)
 
     sources = find_recent_reports(hours=args.hours)
+    registry = load_registry()
+    stamp = now_stamp()
+    run_stats = {"received": len(sources), "processed": 0, "duplicate": 0, "error": 0}
     cards: list[Path] = []
     bot_cards: list[Path] = []
     for src in sources:
-        card, bot_card = make_card(src)
-        cards.append(card)
-        bot_cards.append(bot_card)
+        rel = src.relative_to(ROOT).as_posix()
+        src_stat = src.stat()
+        src_mtime = datetime.fromtimestamp(src_stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        src_hash = file_sha1(src)
+        record_key = f"{rel}|{src_stat.st_size}|{int(src_stat.st_mtime)}|{src_hash[:12]}"
 
-    build_latest_summary(cards, bot_cards, args.hours)
+        existing = registry.get(record_key)
+        if existing:
+            run_stats["duplicate"] += 1
+            existing["status"] = "duplicate"
+            existing["last_seen_at"] = stamp
+            continue
+
+        row = {
+            "record_key": record_key,
+            "source_file": rel,
+            "source_mtime": src_mtime,
+            "source_size_bytes": str(src_stat.st_size),
+            "source_hash": src_hash,
+            "report_type": detect_report_type(src.name),
+            "status": "new",
+            "first_seen_at": stamp,
+            "last_seen_at": stamp,
+            "last_processed_at": "",
+            "card_path": "",
+            "bot_card_path": "",
+            "error": "",
+        }
+
+        try:
+            card, bot_card = make_card(src)
+            cards.append(card)
+            bot_cards.append(bot_card)
+            row["status"] = "processed"
+            row["last_processed_at"] = stamp
+            row["card_path"] = card.relative_to(ROOT).as_posix()
+            row["bot_card_path"] = bot_card.relative_to(ROOT).as_posix()
+            run_stats["processed"] += 1
+        except Exception as exc:  # pragma: no cover
+            row["status"] = "error"
+            row["error"] = str(exc)[:500]
+            run_stats["error"] += 1
+
+        registry[record_key] = row
+
+    save_registry(registry)
+    build_latest_summary(cards, bot_cards, args.hours, run_stats)
     print(
         f"[warehouse] sources={len(sources)} cards={len(set(cards))} "
-        f"bot_cards={len(set(bot_cards))} summary={LATEST_REPORT}"
+        f"bot_cards={len(set(bot_cards))} duplicates={run_stats['duplicate']} "
+        f"errors={run_stats['error']} summary={LATEST_REPORT} registry={REGISTRY_FILE}"
     )
 
     if args.send_telegram:

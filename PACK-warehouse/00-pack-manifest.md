@@ -16,6 +16,7 @@
 2. `PACK-warehouse/tools/warehouse_reports_pipeline.py`:
    - создает карточку на каждый свежий складской отчет,
    - обновляет сводный отчет склада,
+   - ведёт реестр документов `PACK-warehouse/04-work-products/WH.REGISTRY.001-documents.csv` со статусами `new/processed/duplicate/error`,
    - публикует зеркальные карточки в `knowledge-base/Отчёты для бота/Склад` (доступно RAG/Telegram-боту),
    - отправляет краткий Telegram-отчет.
 3. Регулярный запуск full-loop:
