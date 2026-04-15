@@ -38,6 +38,16 @@ FOLDER_MAPPING = {
 
 stats = {'success': 0, 'failed': 0, 'sheets_read': 0, 'tables_found': 0}
 
+
+def sanitize_filename(name):
+    """Безопасное имя файла для macOS/Linux."""
+    forbidden = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+    safe = name
+    for ch in forbidden:
+        safe = safe.replace(ch, '-')
+    # Схлопываем повторяющиеся пробелы по краям
+    return safe.strip()
+
 def get_credentials():
     creds = None
     token_path = Path(__file__).parent / 'token.pickle'
@@ -187,8 +197,9 @@ def main():
                 continue
 
             # Сохранить CSV
-            safe_name = sheet_name.replace('/', '-').replace('\\', '-')
-            file_path = folder_path / f"{table_name} - {safe_name}.csv"
+            safe_table_name = sanitize_filename(table_name)
+            safe_name = sanitize_filename(sheet_name)
+            file_path = folder_path / f"{safe_table_name} - {safe_name}.csv"
             save_as_csv(data, file_path)
 
             print(f"✅ ({len(data)} строк)")
