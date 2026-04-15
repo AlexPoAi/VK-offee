@@ -245,15 +245,51 @@ def read_env_from_telegram_bot() -> dict[str, str]:
     return env
 
 
-def send_telegram_message(text: str) -> tuple[bool, str]:
+def read_key_value_env(path: Path) -> dict[str, str]:
+    env: dict[str, str] = {}
+    if not path.exists():
+        return env
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        env[k.strip()] = v.strip()
+    return env
+
+
+def read_first_line(path: Path) -> str:
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8", errors="ignore").strip()
+
+
+def resolve_telegram_credentials() -> tuple[str, str]:
     env_file = read_env_from_telegram_bot()
-    token = os.getenv("TELEGRAM_BOT_TOKEN") or env_file.get("TELEGRAM_BOT_TOKEN")
+    aist_env = read_key_value_env(Path.home() / ".config" / "aist" / "env")
+    exocortex_chat = read_first_line(Path.home() / ".config" / "exocortex" / "telegram-chat-id")
+    exocortex_token = read_first_line(Path.home() / ".config" / "exocortex" / "telegram-token")
+
+    token = (
+        os.getenv("TELEGRAM_BOT_TOKEN")
+        or env_file.get("TELEGRAM_BOT_TOKEN")
+        or aist_env.get("TELEGRAM_BOT_TOKEN")
+        or exocortex_token
+    )
     chat_id = (
         os.getenv("WAREHOUSE_REPORT_CHAT_ID")
         or os.getenv("TELEGRAM_CHAT_ID")
         or env_file.get("WAREHOUSE_REPORT_CHAT_ID")
         or env_file.get("TELEGRAM_CHAT_ID")
+        or aist_env.get("WAREHOUSE_REPORT_CHAT_ID")
+        or aist_env.get("TELEGRAM_CHAT_ID")
+        or exocortex_chat
     )
+    return token or "", chat_id or ""
+
+
+def send_telegram_message(text: str) -> tuple[bool, str]:
+    token, chat_id = resolve_telegram_credentials()
     if not token:
         return False, "skip: TELEGRAM_BOT_TOKEN missing"
     if not chat_id:

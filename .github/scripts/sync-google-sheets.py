@@ -7,6 +7,8 @@
 
 import os
 import sys
+import random
+import time
 from pathlib import Path
 import pickle
 import csv
@@ -15,6 +17,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -38,6 +41,33 @@ FOLDER_MAPPING = {
 }
 
 stats = {'success': 0, 'failed': 0, 'sheets_read': 0, 'tables_found': 0}
+
+
+def _is_retryable_http_error(exc):
+    """Проверяем, стоит ли повторять запрос (quota / transient)."""
+    status = getattr(exc, "status_code", None)
+    if status is None and getattr(exc, "resp", None) is not None:
+        status = getattr(exc.resp, "status", None)
+    if status in (429, 500, 502, 503, 504):
+        return True
+    text = str(exc).lower()
+    return ("quota" in text) or ("rate limit" in text) or ("backend error" in text)
+
+
+def execute_google_request(call, label, max_attempts=5, base_delay=1.5):
+    """Выполнить Google API запрос с экспоненциальным backoff."""
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return call.execute()
+        except HttpError as exc:
+            if (not _is_retryable_http_error(exc)) or (attempt == max_attempts):
+                raise
+            delay = base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.6)
+            print(f"  ⏳ Retry {attempt}/{max_attempts} [{label}] after {delay:.1f}s ({exc})")
+            time.sleep(delay)
+        except Exception:
+            # Не скрываем неизвестные ошибки.
+            raise
 
 
 def sanitize_filename(name):
@@ -76,11 +106,14 @@ def find_all_spreadsheets(drive_service, folder_id):
 
     def search_folder(folder_id, parent_path=""):
         query = f"'{folder_id}' in parents and trashed=false"
-        results = drive_service.files().list(
-            q=query,
-            fields="files(id, name, mimeType, parents)",
-            pageSize=1000
-        ).execute()
+        results = execute_google_request(
+            drive_service.files().list(
+                q=query,
+                fields="files(id, name, mimeType, parents)",
+                pageSize=1000
+            ),
+            label=f"drive.files.list:{parent_path or 'root'}",
+        )
 
         items = results.get('files', [])
 
@@ -106,7 +139,10 @@ def find_all_spreadsheets(drive_service, folder_id):
 def get_sheet_names(sheets_service, sheet_id):
     """Получить названия всех листов в таблице"""
     try:
-        sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        sheet_metadata = execute_google_request(
+            sheets_service.spreadsheets().get(spreadsheetId=sheet_id),
+            label=f"sheets.spreadsheets.get:{sheet_id}",
+        )
         sheets = sheet_metadata.get('sheets', [])
         return [sheet['properties']['title'] for sheet in sheets]
     except Exception as e:
@@ -116,10 +152,13 @@ def get_sheet_names(sheets_service, sheet_id):
 def read_sheet_data(sheets_service, sheet_id, sheet_name):
     """Чтение данных из конкретного листа"""
     try:
-        result = sheets_service.spreadsheets().values().get(
-            spreadsheetId=sheet_id,
-            range=f"'{sheet_name}'"
-        ).execute()
+        result = execute_google_request(
+            sheets_service.spreadsheets().values().get(
+                spreadsheetId=sheet_id,
+                range=f"'{sheet_name}'"
+            ),
+            label=f"sheets.values.get:{sheet_id}:{sheet_name}",
+        )
 
         values = result.get('values', [])
         return values

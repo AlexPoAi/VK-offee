@@ -18,3 +18,11 @@
    - обновляет сводный отчет склада,
    - публикует зеркальные карточки в `knowledge-base/Отчёты для бота/Склад` (доступно RAG/Telegram-боту),
    - отправляет краткий Telegram-отчет.
+3. Регулярный запуск full-loop:
+   - `PACK-warehouse/tools/warehouse_full_loop.sh` (entrypoint `sync -> cards -> telegram`);
+   - `PACK-warehouse/tools/com.vkoffee.warehouse-full-loop.plist` (шаблон launchd, каждые 30 минут).
+
+## Telegram env fallback
+- `WAREHOUSE_REPORT_CHAT_ID` (приоритетный chat для складского отчета),
+- `TELEGRAM_CHAT_ID`,
+- fallback на `~/.config/aist/env` и `~/.config/exocortex/telegram-chat-id`.
