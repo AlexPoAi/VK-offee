@@ -44,9 +44,6 @@ KEYWORDS = (
     "Список зерна Самокиша - Тургенева - Луговая - Комментарий",
 )
 
-DEFAULT_CHAT_ID = "-1002402720559"
-
-
 def sanitize_slug(text: str) -> str:
     out = text.lower()
     out = re.sub(r"[^a-zа-я0-9]+", "-", out)
@@ -256,10 +253,11 @@ def send_telegram_message(text: str) -> tuple[bool, str]:
         or os.getenv("TELEGRAM_CHAT_ID")
         or env_file.get("WAREHOUSE_REPORT_CHAT_ID")
         or env_file.get("TELEGRAM_CHAT_ID")
-        or DEFAULT_CHAT_ID
     )
     if not token:
         return False, "skip: TELEGRAM_BOT_TOKEN missing"
+    if not chat_id:
+        return False, "skip: WAREHOUSE_REPORT_CHAT_ID/TELEGRAM_CHAT_ID missing"
 
     payload = urlencode(
         {
