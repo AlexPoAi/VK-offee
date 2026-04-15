@@ -78,6 +78,8 @@ fi
 if [ ! -f /opt/vk-offee/VK-offee/telegram-bot/.env ]; then
     cat > /opt/vk-offee/VK-offee/telegram-bot/.env << 'ENVFILE'
 TELEGRAM_BOT_TOKEN=ВСТАВЬ_СЮДА
+WAREHOUSE_REPORT_CHAT_ID=ВСТАВЬ_СЮДА
+# или TELEGRAM_CHAT_ID=ВСТАВЬ_СЮДА
 RAG_API_URL=http://127.0.0.1:8000
 RAG_TIMEOUT=30
 BOT_RUNTIME_MODE=cloud
