@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 import pickle
 import csv
+import subprocess
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -214,6 +215,27 @@ def main():
     print(f"📄 Листов прочитано: {stats['sheets_read']}")
     print(f"❌ Ошибок: {stats['failed']}")
     print("="*70)
+
+    # Пост-обработка складского контура: карточки + Telegram summary
+    pipeline = REPO_PATH / "PACK-warehouse" / "tools" / "warehouse_reports_pipeline.py"
+    if pipeline.exists():
+        try:
+            result = subprocess.run(
+                [sys.executable, str(pipeline), "--hours", "6", "--send-telegram"],
+                cwd=str(REPO_PATH),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            print("\n[warehouse-pipeline]")
+            if result.stdout:
+                print(result.stdout.strip())
+            if result.stderr:
+                print(result.stderr.strip())
+            if result.returncode != 0:
+                print(f"[warehouse-pipeline] non-zero exit: {result.returncode}")
+        except Exception as e:
+            print(f"[warehouse-pipeline] failed: {e}")
 
 if __name__ == '__main__':
     main()
