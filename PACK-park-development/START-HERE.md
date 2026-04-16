@@ -12,7 +12,7 @@
 2. ✅ Прочитать `PROJECT-STATUS.md` — где проект сейчас, что блокирует
 3. ✅ Прочитать `CONTEXT.md` — живой контекст проекта
 4. ✅ Прочитать `DECISIONS-AND-QUESTIONS.md` — принятые решения и открытые вопросы
-5. ✅ Прочитать `TELEGRAM-TIMELINE.md` — полная хронология от 21.07.2025 до сегодня
+5. ✅ Прочитать `PROJECT-TIMELINE.md` — полная хронология от 21.07.2025 до сегодня
 6. ✅ Прочитать `DOCUMENT-REGISTRY.md` — реестр всех документов с датами и статусами
 7. ✅ Прочитать `COMMUNICATION-REGISTRY.md` — реестр всех переговоров с ЛУКС
 8. ✅ Только после этого открывать нужные `PARK.DOC.*`, `PARK.COMM.*`, `PARK.WP.*`
@@ -114,7 +114,7 @@
 
 Читать дальше в таком порядке:
 
-1. `TELEGRAM-TIMELINE.md` — полная хронология
+1. `PROJECT-TIMELINE.md` — полная хронология
 2. `COMMUNICATION-REGISTRY.md` — все переговоры
 3. `DOCUMENT-REGISTRY.md` — все документы
 4. `PARK.WP.005-telegram-export/result.json` — сырой экспорт

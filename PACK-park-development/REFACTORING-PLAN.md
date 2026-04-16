@@ -42,7 +42,7 @@ PACK-park-development/
 ├── PROJECT-STATUS.md                ← текущий статус проекта
 ├── CONTEXT.md                       ← живой контекст
 ├── DECISIONS-AND-QUESTIONS.md       ← решения и вопросы
-├── TELEGRAM-TIMELINE.md             ← полная хронология 21.07.2025 - сегодня
+├── PROJECT-TIMELINE.md             ← полная хронология 21.07.2025 - сегодня
 ├── DOCUMENT-REGISTRY.md             ← реестр всех документов
 ├── COMMUNICATION-REGISTRY.md        ← реестр всех переговоров
 ├── REFACTORING-PLAN.md              ← этот файл
@@ -194,7 +194,7 @@ status: ok/draft/active
   - Обновить статусы
   - Добавить текущий статус переговоров
 
-- [ ] 4.3. Обновить TELEGRAM-TIMELINE.md:
+- [ ] 4.3. Обновить PROJECT-TIMELINE.md:
   - Добавить событие 21.07.2025 (подписание П240)
   - Добавить событие 15.04.2026 (встреча)
   - Проверить все ссылки на документы
@@ -238,7 +238,7 @@ status: ok/draft/active
   - Прочитать PROJECT-STATUS.md
   - Прочитать CONTEXT.md
   - Прочитать DECISIONS-AND-QUESTIONS.md
-  - Прочитать TELEGRAM-TIMELINE.md
+  - Прочитать PROJECT-TIMELINE.md
   - Прочитать DOCUMENT-REGISTRY.md
   - Прочитать COMMUNICATION-REGISTRY.md
 

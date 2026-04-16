@@ -10,7 +10,7 @@
 - `PROJECT-STATUS.md` — оперативная сводка
 - `DOCUMENT-REGISTRY.md` — реестр документов
 - `COMMUNICATION-REGISTRY.md` — реестр коммуникаций
-- `TELEGRAM-TIMELINE.md` — нормализованная лента событий
+- `PROJECT-TIMELINE.md` — нормализованная лента событий
 - `DECISIONS-AND-QUESTIONS.md` — решения и блокеры
 
 ## 2. Сырые Telegram-источники

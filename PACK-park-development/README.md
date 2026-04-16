@@ -28,7 +28,7 @@
 2. `PROJECT-STATUS.md`
 3. `CONTEXT.md`
 4. `DECISIONS-AND-QUESTIONS.md`
-5. `TELEGRAM-TIMELINE.md`
+5. `PROJECT-TIMELINE.md`
 6. `DOCUMENT-REGISTRY.md`
 7. `COMMUNICATION-REGISTRY.md`
 8. После этого — нужные `PARK.DOC.*`, `PARK.COMM.*`, `PARK.WP.*`
@@ -40,7 +40,7 @@
 - `CONTEXT.md` — короткий session-entry
 - `DOCUMENT-REGISTRY.md` — реестр оригиналов и карточек
 - `COMMUNICATION-REGISTRY.md` — карта всех коммуникаций
-- `TELEGRAM-TIMELINE.md` — лента переговоров и событий
+- `PROJECT-TIMELINE.md` — лента переговоров и событий
 - `DECISIONS-AND-QUESTIONS.md` — решения, блокеры, открытые вопросы
 - `SOURCE-MAP.md` — где физически лежат источники
 - `04-work-products (...) / PARK.WP.029` — формальное закрытие текущего цикла
@@ -61,7 +61,7 @@
 2. Создать или обновить `PARK.COMM.*` / `PARK.DOC.*`
 3. Обновить `PROJECT-STATUS.md`, если изменилась текущая ситуация
 4. Обновить `COMMUNICATION-REGISTRY.md` или `DOCUMENT-REGISTRY.md`
-5. Обновить `TELEGRAM-TIMELINE.md`, если событие меняет хронологию
+5. Обновить `PROJECT-TIMELINE.md`, если событие меняет хронологию
 6. Обновить `DECISIONS-AND-QUESTIONS.md`, если появилось решение или новый блокер
 
 ## Ограничение
