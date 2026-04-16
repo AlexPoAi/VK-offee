@@ -16,6 +16,7 @@ import csv
 import hashlib
 import os
 import re
+import shutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -36,6 +37,8 @@ CARDS_DIR = WAREHOUSE_DIR / "02-domain-entities" / "report-cards"
 WP_DIR = WAREHOUSE_DIR / "04-work-products"
 LATEST_REPORT = WP_DIR / "WH.REPORT.002-warehouse-sync-summary-latest.md"
 REGISTRY_FILE = WP_DIR / "WH.REGISTRY.001-documents.csv"
+DLQ_DIR = WAREHOUSE_DIR / "03-quarantine" / "dlq-files"
+DLQ_REPORT = WP_DIR / "WH.DLQ.001-quarantine-report.md"
 BOT_REPORTS_DIR = KB_DIR / "Отчёты для бота" / "Склад"
 
 KEYWORDS = (
@@ -108,6 +111,7 @@ def save_registry(rows: dict[str, dict[str, str]]) -> None:
         "last_processed_at",
         "card_path",
         "bot_card_path",
+        "dlq_path",
         "error",
     ]
     with REGISTRY_FILE.open("w", encoding="utf-8", newline="") as f:
@@ -135,7 +139,10 @@ def find_recent_reports(hours: int) -> list[Path]:
 
 def parse_csv_rows(path: Path) -> list[list[str]]:
     with path.open(encoding="utf-8") as f:
-        return list(csv.reader(f))
+        rows = list(csv.reader(f))
+    if not rows:
+        raise ValueError("empty csv")
+    return rows
 
 
 def parse_stock_metrics(rows: list[list[str]]) -> dict:
@@ -282,9 +289,11 @@ def build_latest_summary(
         f"- Обработано: **{run_stats['processed']}**",
         f"- Дубликатов: **{run_stats['duplicate']}**",
         f"- Ошибок: **{run_stats['error']}**",
+        f"- DLQ: **{run_stats['dlq']}**",
         f"- Карточек сформировано: **{len(cards)}**",
         f"- Карточек для бота: **{len(bot_cards)}**",
         f"- Реестр: `{REGISTRY_FILE.relative_to(ROOT).as_posix()}`",
+        f"- Quarantine report: `{DLQ_REPORT.relative_to(ROOT).as_posix()}`",
         "",
         "## Карточки",
     ]
@@ -305,6 +314,55 @@ def build_latest_summary(
     text = "\n".join(lines)
     LATEST_REPORT.write_text(text, encoding="utf-8")
     return text
+
+
+def append_dlq_entry(source: Path, record_key: str, reason: str) -> str:
+    DLQ_DIR.mkdir(parents=True, exist_ok=True)
+    DLQ_REPORT.parent.mkdir(parents=True, exist_ok=True)
+
+    stamp = now_stamp()
+    rel = source.relative_to(ROOT).as_posix()
+    slug = hashlib.sha1(record_key.encode("utf-8")).hexdigest()[:10]
+    copy_name = f"{source.stem}-{slug}{source.suffix}"
+    dlq_copy = DLQ_DIR / copy_name
+    shutil.copy2(source, dlq_copy)
+
+    if not DLQ_REPORT.exists():
+        DLQ_REPORT.write_text(
+            "\n".join(
+                [
+                    "---",
+                    "type: warehouse-dlq-report",
+                    f"updated: {stamp}",
+                    "---",
+                    "",
+                    "# Warehouse DLQ Report",
+                    "",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    existing = DLQ_REPORT.read_text(encoding="utf-8")
+    updated = re.sub(
+        r"^updated: .*$",
+        f"updated: {stamp}",
+        existing,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    entry = "\n".join(
+        [
+            f"## {stamp} — {source.name}",
+            f"- Source: `{rel}`",
+            f"- DLQ copy: `{dlq_copy.relative_to(ROOT).as_posix()}`",
+            f"- Reason: `{reason}`",
+            "",
+        ]
+    )
+    DLQ_REPORT.write_text(updated + entry, encoding="utf-8")
+    return dlq_copy.relative_to(ROOT).as_posix()
 
 
 def read_env_from_telegram_bot() -> dict[str, str]:
@@ -442,11 +500,12 @@ def main() -> int:
 
     WP_DIR.mkdir(parents=True, exist_ok=True)
     CARDS_DIR.mkdir(parents=True, exist_ok=True)
+    DLQ_DIR.mkdir(parents=True, exist_ok=True)
 
     sources = find_recent_reports(hours=args.hours)
     registry = load_registry()
     stamp = now_stamp()
-    run_stats = {"received": len(sources), "processed": 0, "duplicate": 0, "error": 0}
+    run_stats = {"received": len(sources), "processed": 0, "duplicate": 0, "error": 0, "dlq": 0}
     cards: list[Path] = []
     bot_cards: list[Path] = []
     for src in sources:
@@ -476,6 +535,7 @@ def main() -> int:
             "last_processed_at": "",
             "card_path": "",
             "bot_card_path": "",
+            "dlq_path": "",
             "error": "",
         }
 
@@ -491,7 +551,9 @@ def main() -> int:
         except Exception as exc:  # pragma: no cover
             row["status"] = "error"
             row["error"] = str(exc)[:500]
+            row["dlq_path"] = append_dlq_entry(src, record_key, row["error"])
             run_stats["error"] += 1
+            run_stats["dlq"] += 1
 
         registry[record_key] = row
 

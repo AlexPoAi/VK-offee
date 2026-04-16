@@ -37,6 +37,15 @@ class RAGClient:
         except Exception:
             return False
 
+    def health(self) -> Optional[Dict]:
+        """Возвращает health payload RAG API либо None."""
+        try:
+            response = requests.get(f"{self.base_url}/health", timeout=5)
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            return None
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=5),

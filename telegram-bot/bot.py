@@ -62,7 +62,9 @@ async def rag_reply(update: Update, query: str) -> None:
     if result is None:
         await update.message.reply_text(
             "⚠️ RAG API недоступен.\n"
-            "Попросите администратора запустить: cd VK-offee-rag && python src/api.py"
+            f"Текущий endpoint: `{rag.base_url}`\n"
+            "Для локального запуска: `cd ~/Github/VK-offee-rag && python src/api.py`",
+            parse_mode="Markdown",
         )
         return
     answer = rag.format_answer(result, show_sources=True)
@@ -98,27 +100,24 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/status — проверка RAG API и индекса."""
-    available = rag.is_available()
-    if available:
-        # Получаем количество документов из health endpoint
-        import requests
-        try:
-            data = requests.get("http://127.0.0.1:8000/health", timeout=5).json()
-            docs = data.get("documents_indexed", "?")
-            await update.message.reply_text(
-                f"🟢 *RAG API работает*\n"
-                f"📚 Документов в индексе: {docs}\n"
-                f"🗂️ Pack: bar, kitchen, service, hr, management, cafe-ops, park",
-                parse_mode="Markdown",
-            )
-        except Exception:
-            await update.message.reply_text("🟢 RAG API работает")
-    else:
+    data = rag.health()
+    if data:
+        docs = data.get("documents_indexed", "?")
         await update.message.reply_text(
-            "🔴 *RAG API недоступен*\n\n"
-            "Запустите: `cd VK-offee-rag && python src/api.py`",
+            f"🟢 *RAG API работает*\n"
+            f"🌐 Endpoint: `{rag.base_url}`\n"
+            f"📚 Документов в индексе: {docs}\n"
+            f"🗂️ Pack: bar, kitchen, service, hr, management, cafe-ops, park",
             parse_mode="Markdown",
         )
+        return
+
+    await update.message.reply_text(
+        "🔴 *RAG API недоступен*\n\n"
+        f"Endpoint: `{rag.base_url}`\n"
+        "Локальный старт: `cd ~/Github/VK-offee-rag && python src/api.py`",
+        parse_mode="Markdown",
+    )
 
 
 async def reindex_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

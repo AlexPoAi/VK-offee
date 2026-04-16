@@ -17,6 +17,7 @@
    - создает карточку на каждый свежий складской отчет,
    - обновляет сводный отчет склада,
    - ведёт реестр документов `PACK-warehouse/04-work-products/WH.REGISTRY.001-documents.csv` со статусами `new/processed/duplicate/error`,
+   - отправляет проблемные файлы в quarantine `PACK-warehouse/03-quarantine/dlq-files/` и пишет `WH.DLQ.001-quarantine-report.md`,
    - публикует зеркальные карточки в `knowledge-base/Отчёты для бота/Склад` (доступно RAG/Telegram-боту),
    - отправляет краткий Telegram-отчет.
 3. Регулярный запуск full-loop:
