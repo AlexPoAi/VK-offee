@@ -10,8 +10,8 @@ if [ -f "$HOME/.config/aist/env" ]; then
     set +a
 fi
 
-if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
-    echo "❌ TELEGRAM_BOT_TOKEN не установлен"
+if [ -z "$MONITOR_BOT_TOKEN" ]; then
+    echo "❌ MONITOR_BOT_TOKEN не установлен"
     exit 1
 fi
 

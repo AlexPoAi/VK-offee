@@ -19,9 +19,9 @@ STATUS_DIR = HOME / ".local" / "state" / "exocortex" / "status"
 LOGS_DIR = HOME / "logs"
 
 # Env
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TOKEN = os.getenv("MONITOR_BOT_TOKEN")
 if not TOKEN:
-    print("ERROR: TELEGRAM_BOT_TOKEN not set")
+    print("ERROR: MONITOR_BOT_TOKEN not set")
     sys.exit(1)
 
 
