@@ -19,10 +19,13 @@
    - ведёт реестр документов `PACK-warehouse/04-work-products/WH.REGISTRY.001-documents.csv` со статусами `new/processed/duplicate/error`,
    - отправляет проблемные файлы в quarantine `PACK-warehouse/03-quarantine/dlq-files/` и пишет `WH.DLQ.001-quarantine-report.md`,
    - публикует зеркальные карточки в `knowledge-base/Отчёты для бота/Склад` (доступно RAG/Telegram-боту),
-   - отправляет краткий Telegram-отчет.
+   - по ручному запуску отправляет аналитический Telegram-отчет (с выжимкой и ссылками на карточки).
 3. Регулярный запуск full-loop:
-   - `PACK-warehouse/tools/warehouse_full_loop.sh` (entrypoint `sync -> cards -> telegram`);
+   - `PACK-warehouse/tools/warehouse_full_loop.sh` (entrypoint `sync -> cards`, без авто-спама в Telegram);
    - `PACK-warehouse/tools/com.vkoffee.warehouse-full-loop.plist` (шаблон launchd, каждые 30 минут).
+
+## Ручной запуск Telegram отчета
+- `PACK-warehouse/tools/warehouse_full_loop.sh --manual-report` — принудительно запускает `sync -> cards -> telegram` и отправляет отчет даже если новых карточек нет.
 
 ## Telegram env fallback
 - `WAREHOUSE_REPORT_CHAT_ID` (приоритетный chat для складского отчета),

@@ -17,11 +17,12 @@ import hashlib
 import os
 import re
 import shutil
+import subprocess
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 
@@ -81,6 +82,66 @@ def file_sha1(path: Path) -> str:
 
 def now_stamp() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def escape_html(text: str) -> str:
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def detect_github_repo_web_url() -> str:
+    try:
+        remote = (
+            subprocess.check_output(
+                ["git", "-C", str(ROOT), "remote", "get-url", "origin"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            .strip()
+            .rstrip("/")
+        )
+    except Exception:
+        return ""
+
+    if remote.startswith("git@github.com:"):
+        path = remote.split("git@github.com:", 1)[1]
+        if path.endswith(".git"):
+            path = path[:-4]
+        return f"https://github.com/{path}"
+    if remote.startswith("https://github.com/"):
+        if remote.endswith(".git"):
+            remote = remote[:-4]
+        return remote
+    return ""
+
+
+def detect_git_branch() -> str:
+    try:
+        return (
+            subprocess.check_output(
+                ["git", "-C", str(ROOT), "rev-parse", "--abbrev-ref", "HEAD"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            .strip()
+            or "main"
+        )
+    except Exception:
+        return "main"
+
+
+def build_github_link(rel_path: str) -> str:
+    base = (
+        os.getenv("WAREHOUSE_REPORT_BASE_URL", "").strip()
+        or detect_github_repo_web_url()
+    )
+    branch = os.getenv("WAREHOUSE_REPORT_BRANCH", "").strip() or detect_git_branch()
+    if not base:
+        return ""
+    return f"{base}/blob/{branch}/{quote(rel_path, safe='/')}"
 
 
 def load_registry() -> dict[str, dict[str, str]]:
@@ -193,7 +254,7 @@ def parse_comment_bullets(rows: list[list[str]], max_lines: int = 12) -> list[st
     return lines[:max_lines]
 
 
-def make_card(source: Path) -> tuple[Path, Path]:
+def make_card(source: Path) -> tuple[Path, Path, dict]:
     CARDS_DIR.mkdir(parents=True, exist_ok=True)
     BOT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     rel = source.relative_to(ROOT)
@@ -219,8 +280,18 @@ def make_card(source: Path) -> tuple[Path, Path]:
         "",
     ]
 
+    insight: dict[str, object] = {
+        "title": source.name,
+        "report_type": detect_report_type(source.name),
+        "source_rel": rel.as_posix(),
+        "card_rel": "",
+        "bot_card_rel": "",
+    }
+
     if ("Комментарий" in source.name) or ("Комментари" in source.name):
         bullets = parse_comment_bullets(rows)
+        insight["comment_count"] = len(bullets)
+        insight["comment_preview"] = bullets[:3]
         body_lines.append("## Выжимка комментариев")
         if bullets:
             for b in bullets:
@@ -229,6 +300,9 @@ def make_card(source: Path) -> tuple[Path, Path]:
             body_lines.append("- Нет содержимого для выжимки.")
     else:
         metrics = parse_stock_metrics(rows)
+        insight["rows"] = metrics["rows"]
+        insight["low_stock_count"] = metrics["low_stock_count"]
+        insight["top_low_items"] = metrics["low_stock_items"][:3]
         body_lines.extend(
             [
                 "## Метрики",
@@ -264,7 +338,9 @@ def make_card(source: Path) -> tuple[Path, Path]:
     text = "\n".join(body_lines)
     card_path.write_text(text, encoding="utf-8")
     bot_path.write_text(text, encoding="utf-8")
-    return card_path, bot_path
+    insight["card_rel"] = card_path.relative_to(ROOT).as_posix()
+    insight["bot_card_rel"] = bot_path.relative_to(ROOT).as_posix()
+    return card_path, bot_path, insight
 
 
 def build_latest_summary(
@@ -470,25 +546,87 @@ def send_telegram_message(text: str) -> tuple[bool, str]:
         return False, f"send_failed:{detail}"
 
 
-def telegram_text(cards: list[Path], hours: int) -> str:
+def telegram_text(
+    cards: list[Path],
+    hours: int,
+    run_stats: dict[str, int],
+    insights: list[dict],
+    manual_run: bool,
+) -> str:
     ts = datetime.now().strftime("%d.%m.%Y %H:%M")
+    report_rel = LATEST_REPORT.relative_to(ROOT).as_posix()
+    report_url = build_github_link(report_rel)
+
+    mode = "manual" if manual_run else "auto"
     header = [
-        "📦 <b>Склад: автоотчёт</b>",
+        "📦 <b>Склад: аналитический отчёт</b>",
         f"Время: <code>{ts}</code>",
+        f"Режим: <b>{mode}</b>",
         f"Окно: последние <b>{hours}ч</b>",
+        (
+            "Документы: "
+            f"входящих <b>{run_stats['received']}</b>, "
+            f"обработано <b>{run_stats['processed']}</b>, "
+            f"дубликатов <b>{run_stats['duplicate']}</b>, "
+            f"ошибок <b>{run_stats['error']}</b>"
+        ),
         f"Карточек: <b>{len(cards)}</b>",
         "",
     ]
+
+    if report_url:
+        header.append(f"Сводка: <a href=\"{report_url}\">WH.REPORT.002</a>")
+    else:
+        header.append(f"Сводка: <code>{escape_html(report_rel)}</code>")
+    header.append("")
+
     if not cards:
         header.append("Новых складских отчётов не найдено.")
         return "\n".join(header)
 
-    header.append("Карточки:")
-    for c in cards[:12]:
-        rel = c.relative_to(ROOT).as_posix()
-        header.append(f"• <code>{rel}</code>")
-    if len(cards) > 12:
-        header.append(f"• … и ещё {len(cards)-12}")
+    header.append("<b>Новые карточки и выжимка:</b>")
+    for item in insights[:8]:
+        card_rel = str(item.get("card_rel", ""))
+        source_rel = str(item.get("source_rel", ""))
+        card_label = escape_html(Path(card_rel).name) if card_rel else "карточка"
+        source_label = escape_html(Path(source_rel).name) if source_rel else "источник"
+        card_url = build_github_link(card_rel) if card_rel else ""
+        source_url = build_github_link(source_rel) if source_rel else ""
+
+        refs = []
+        if card_url:
+            refs.append(f"<a href=\"{card_url}\">{card_label}</a>")
+        elif card_rel:
+            refs.append(f"<code>{escape_html(card_rel)}</code>")
+        if source_url:
+            refs.append(f"<a href=\"{source_url}\">{source_label}</a>")
+        elif source_rel:
+            refs.append(f"<code>{escape_html(source_rel)}</code>")
+
+        line = " • ".join(refs) if refs else escape_html(str(item.get("title", "отчёт")))
+        header.append(f"• {line}")
+
+        report_type = str(item.get("report_type", "other"))
+        if report_type in {"stock", "inventory", "beans"}:
+            low_stock_count = int(item.get("low_stock_count", 0) or 0)
+            top_low = item.get("top_low_items", []) or []
+            if top_low:
+                top_text = ", ".join(f"{escape_html(str(name))} ({qty})" for name, qty in top_low)
+                header.append(
+                    f"  Низкий остаток: <b>{low_stock_count}</b>; top: {top_text}"
+                )
+            else:
+                header.append(f"  Низкий остаток: <b>{low_stock_count}</b>")
+        elif report_type == "comment":
+            comment_count = int(item.get("comment_count", 0) or 0)
+            preview = item.get("comment_preview", []) or []
+            if preview:
+                preview_text = " | ".join(escape_html(str(x)) for x in preview)
+                header.append(f"  Комментариев: <b>{comment_count}</b>; {preview_text}")
+            else:
+                header.append(f"  Комментариев: <b>{comment_count}</b>")
+    if len(insights) > 8:
+        header.append(f"• … и ещё {len(insights)-8}")
     return "\n".join(header)
 
 
@@ -496,6 +634,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--hours", type=int, default=6)
     parser.add_argument("--send-telegram", action="store_true")
+    parser.add_argument("--telegram-on-empty", action="store_true")
+    parser.add_argument("--manual-run", action="store_true")
     args = parser.parse_args()
 
     WP_DIR.mkdir(parents=True, exist_ok=True)
@@ -508,6 +648,7 @@ def main() -> int:
     run_stats = {"received": len(sources), "processed": 0, "duplicate": 0, "error": 0, "dlq": 0}
     cards: list[Path] = []
     bot_cards: list[Path] = []
+    insights: list[dict] = []
     for src in sources:
         rel = src.relative_to(ROOT).as_posix()
         src_stat = src.stat()
@@ -540,9 +681,10 @@ def main() -> int:
         }
 
         try:
-            card, bot_card = make_card(src)
+            card, bot_card, insight = make_card(src)
             cards.append(card)
             bot_cards.append(bot_card)
+            insights.append(insight)
             row["status"] = "processed"
             row["last_processed_at"] = stamp
             row["card_path"] = card.relative_to(ROOT).as_posix()
@@ -566,7 +708,10 @@ def main() -> int:
     )
 
     if args.send_telegram:
-        text = telegram_text(cards, args.hours)
+        if (not cards) and (not args.telegram_on_empty):
+            print("[warehouse] telegram=skip:no-new-cards")
+            return 0
+        text = telegram_text(cards, args.hours, run_stats, insights, args.manual_run)
         ok, info = send_telegram_message(text)
         print(f"[warehouse] telegram={info}")
         if not ok:
