@@ -65,7 +65,6 @@ if [ ! -f /opt/vk-offee/VK-offee-rag/.env ]; then
     cat > /opt/vk-offee/VK-offee-rag/.env << 'ENVFILE'
 ANTHROPIC_API_KEY=ВСТАВЬ_СЮДА
 OPENAI_API_KEY=ВСТАВЬ_СЮДА
-ANTHROPIC_BASE_URL=https://dev.aiprime.store/api
 PACK_PATH=/opt/vk-offee/VK-offee
 CHROMA_PATH=/opt/vk-offee/VK-offee-rag/data/chroma
 API_HOST=127.0.0.1
