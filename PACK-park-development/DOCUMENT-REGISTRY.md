@@ -82,6 +82,8 @@
 | PARK.DOC.027 | 2026-04-11 | Заявление на АГО для печати | print-ready версия | `06-documents/.../administrative/PARK.DOC.027-ago-application-print-ready (...).md` | draft |
 | PARK.DOC.028 | 2026-04-11 | Приложения к заявлению на АГО для печати | print-ready версия | `06-documents/.../administrative/PARK.DOC.028-ago-attachments-print-ready (...).md` | draft |
 | PARK.DOC.029 | 2026-04-11 | Google Doc заявления на АГО | Google Doc: `19kceQ7z7xRDJ-asfcqhh9ma-HO-VkrmCO3-GiYlJYTs` | `06-documents/.../administrative/PARK.DOC.029-ago-application-google-doc (...).md` | active |
+| PARK.DOC.033 | 2026-04-16 | **Заявление на АГО финальное** | Google Doc: `1_7KGTFFi6tDw_S4Bf-FGmbEsfLQIhkHP3LHMHTZPC2A` | `06-documents/.../administrative/PARK.DOC.033-ago-application-final (...).md` | submitted |
+| PARK.DOC.034 | 2026-04-16 | **Сопроводительное письмо АГО финальное** | Google Doc: `1iREjRjFoKq1CEUKJDZTqHBVlYpodX1uMh11VVXQkPyM` | `06-documents/.../administrative/PARK.DOC.034-ago-cover-letter-final (...).md` | submitted |
 
 ## Финансовые документы (счета, платежи)
 
