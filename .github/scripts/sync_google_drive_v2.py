@@ -21,7 +21,7 @@ import chardet
 
 # Настройки
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX')
+DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
 REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
 SYNC_REPORTS_PATH = KNOWLEDGE_BASE_PATH / "sync-reports"

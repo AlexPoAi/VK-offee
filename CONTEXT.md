@@ -301,7 +301,8 @@ VK-offee/
 
 ### Статус: ✅ Работает
 
-**Папка Google Drive:** `1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX`
+**Папка Google Drive (общая кофейня):** `120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC`
+**Папка Google Drive (отчёты склада Жанны):** `1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX` — ABC-анализ, остатки, заявки
 
 **Скрипт:** `.github/scripts/sync_google_drive_v2.py`
 
