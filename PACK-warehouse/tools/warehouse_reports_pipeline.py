@@ -47,6 +47,12 @@ KEYWORDS = (
     "Отчет по инвентаризации",
     "Список зерна Самокиша - Тургенева - Луговая - Склад",
     "Список зерна Самокиша - Тургенева - Луговая - Комментарий",
+    "АБС анализ",
+    "АБС-анализ",
+    "ABC анализ",
+    "ABC-анализ",
+    "Abc",
+    "АБС",
 )
 
 def sanitize_slug(text: str) -> str:
@@ -66,6 +72,8 @@ def detect_report_type(name: str) -> str:
         return "beans"
     if "остатки" in low:
         return "stock"
+    if ("абс" in low) or ("abc" in low):
+        return "abc"
     return "other"
 
 
@@ -254,6 +262,96 @@ def parse_comment_bullets(rows: list[list[str]], max_lines: int = 12) -> list[st
     return lines[:max_lines]
 
 
+def parse_abc_categories(rows: list[list[str]]) -> dict[str, str]:
+    """Извлечь маппинг {название_позиции: категория A/B/C} из ABC-анализа."""
+    result: dict[str, str] = {}
+    if not rows:
+        return result
+    # Ищем заголовок: столбец с названием и столбец с категорией
+    header = [c.strip().lower() for c in rows[0]]
+    name_col = -1
+    cat_col = -1
+    for i, h in enumerate(header):
+        if any(kw in h for kw in ("наимен", "товар", "позиц", "продукт", "name")):
+            if name_col == -1:
+                name_col = i
+        if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")):
+            if cat_col == -1:
+                cat_col = i
+    if name_col == -1:
+        name_col = 0
+    if cat_col == -1:
+        # Ищем столбец где есть значения A/B/C
+        for i in range(len(rows[0])):
+            vals = {r[i].strip().upper() for r in rows[1:] if len(r) > i and r[i].strip()}
+            if vals and vals.issubset({"A", "B", "C", "А", "В", "С"}):
+                cat_col = i
+                break
+    if cat_col == -1:
+        return result
+    for r in rows[1:]:
+        if len(r) <= max(name_col, cat_col):
+            continue
+        name = r[name_col].strip()
+        cat = r[cat_col].strip().upper()
+        # Нормализуем кириллические буквы к латинице
+        cat = cat.replace("А", "A").replace("В", "B").replace("С", "C")
+        if name and cat in ("A", "B", "C"):
+            result[name.lower()] = cat
+    return result
+
+
+def build_smart_analytics(insights: list[dict]) -> dict:
+    """Кросс-анализ остатков + ABC категорий."""
+    # Собираем все остатки (позиция -> остаток)
+    stock_map: dict[str, int] = {}
+    for item in insights:
+        if item.get("report_type") in ("stock", "inventory", "beans"):
+            for name, qty in (item.get("top_low_items") or []):
+                key = name.lower().strip()
+                if key not in stock_map or stock_map[key] > qty:
+                    stock_map[key] = qty
+
+    # Собираем ABC категории
+    abc_map: dict[str, str] = {}
+    for item in insights:
+        if item.get("report_type") == "abc":
+            abc_map.update(item.get("abc_categories") or {})
+
+    if not stock_map:
+        return {}
+
+    urgent: list[str] = []    # A + мало
+    attention: list[str] = [] # B + мало
+    excess: list[str] = []    # C + много
+    no_abc: list[str] = []    # мало, но ABC нет
+
+    for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
+        cat = abc_map.get(name_low)
+        display = f"{name_low.title()}: {qty} шт"
+        if cat == "A":
+            urgent.append(display)
+        elif cat == "B":
+            attention.append(display)
+        elif cat == "C":
+            excess.append(display)
+        else:
+            no_abc.append(display)
+
+    # Позиции C категории с нормальными остатками
+    for name_low, cat in abc_map.items():
+        if cat == "C" and name_low not in stock_map:
+            excess.append(f"{name_low.title()} (C-категория, в реестре)")
+
+    return {
+        "urgent": urgent[:8],
+        "attention": attention[:6],
+        "excess": excess[:5],
+        "no_abc": no_abc[:5],
+        "has_abc": bool(abc_map),
+    }
+
+
 def make_card(source: Path) -> tuple[Path, Path, dict]:
     CARDS_DIR.mkdir(parents=True, exist_ok=True)
     BOT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -288,6 +386,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
         "bot_card_rel": "",
     }
 
+    report_type = detect_report_type(source.name)
     if ("Комментарий" in source.name) or ("Комментари" in source.name):
         bullets = parse_comment_bullets(rows)
         insight["comment_count"] = len(bullets)
@@ -298,6 +397,26 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                 body_lines.append(f"- {b}")
         else:
             body_lines.append("- Нет содержимого для выжимки.")
+    elif report_type == "abc":
+        categories = parse_abc_categories(rows)
+        insight["abc_categories"] = categories
+        counts = {"A": 0, "B": 0, "C": 0}
+        for cat in categories.values():
+            if cat in counts:
+                counts[cat] += 1
+        body_lines.extend([
+            "## ABC Анализ",
+            f"- Позиций A (приоритет): **{counts['A']}**",
+            f"- Позиций B (средние): **{counts['B']}**",
+            f"- Позиций C (низкий приоритет): **{counts['C']}**",
+            "",
+            "## Топ категории A",
+        ])
+        a_items = [name for name, cat in categories.items() if cat == "A"][:10]
+        for name in a_items:
+            body_lines.append(f"- {name.title()}")
+        if not a_items:
+            body_lines.append("- Не найдено.")
     else:
         metrics = parse_stock_metrics(rows)
         insight["rows"] = metrics["rows"]
@@ -627,6 +746,36 @@ def telegram_text(
                 header.append(f"  Комментариев: <b>{comment_count}</b>")
     if len(insights) > 8:
         header.append(f"• … и ещё {len(insights)-8}")
+
+    # Умная аналитика (ABC + остатки)
+    analytics = build_smart_analytics(insights)
+    if analytics:
+        header.append("")
+        if analytics.get("has_abc"):
+            header.append("📊 <b>Аналитика (ABC + остатки):</b>")
+        else:
+            header.append("📊 <b>Остатки (ABC не загружен):</b>")
+
+        if analytics.get("urgent"):
+            header.append("🔴 <b>Срочно заказать (A + мало):</b>")
+            for item in analytics["urgent"]:
+                header.append(f"  • {escape_html(item)}")
+
+        if analytics.get("attention"):
+            header.append("🟡 <b>Обратить внимание (B + мало):</b>")
+            for item in analytics["attention"]:
+                header.append(f"  • {escape_html(item)}")
+
+        if analytics.get("no_abc") and not analytics.get("has_abc"):
+            header.append("⚠️ <b>Мало на складе:</b>")
+            for item in analytics["no_abc"]:
+                header.append(f"  • {escape_html(item)}")
+
+        if analytics.get("excess"):
+            header.append("🟢 <b>Снизить заказ (C-категория):</b>")
+            for item in analytics["excess"]:
+                header.append(f"  • {escape_html(item)}")
+
     return "\n".join(header)
 
 

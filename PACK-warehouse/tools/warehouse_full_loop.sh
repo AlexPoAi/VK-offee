@@ -40,7 +40,7 @@ fi
         --manual-run \
         --telegram-on-empty
     else
-      "$PYTHON_BIN" "$PIPELINE_SCRIPT" --hours "$PIPELINE_HOURS"
+      "$PYTHON_BIN" "$PIPELINE_SCRIPT" --hours "$PIPELINE_HOURS" --send-telegram
     fi
   else
     echo "[warehouse] pipeline script not found: $PIPELINE_SCRIPT"
