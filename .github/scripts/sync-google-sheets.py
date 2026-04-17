@@ -26,8 +26,8 @@ SCOPES = [
 REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
 
-# ID папки Google Drive
-DRIVE_FOLDER_ID = "120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC"
+# ID папки Google Drive (можно переопределить через env GOOGLE_DRIVE_FOLDER_ID)
+DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
 
 # Маппинг папок (куда сохранять таблицы)
 FOLDER_MAPPING = {

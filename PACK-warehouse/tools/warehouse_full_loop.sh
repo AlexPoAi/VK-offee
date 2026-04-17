@@ -18,13 +18,20 @@ PIPELINE_SCRIPT="$ROOT_DIR/PACK-warehouse/tools/warehouse_reports_pipeline.py"
 PIPELINE_HOURS="${WAREHOUSE_PIPELINE_HOURS:-336}"
 MANUAL_REPORT=0
 
+# Папка Google Drive с отчётами склада (Жанна: ABC-анализ, остатки, заявки)
+WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX}"
+
 if [[ "${1:-}" == "--manual-report" ]]; then
   MANUAL_REPORT=1
 fi
 
 {
   echo "========== $(date '+%Y-%m-%d %H:%M:%S') warehouse_full_loop start =========="
+  # Синк общей папки кофейни
   "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"
+  # Синк папки склада Жанны (ABC-анализ, остатки, заявки)
+  echo "[warehouse] syncing Zhanna reports folder: $WAREHOUSE_DRIVE_FOLDER_ID"
+  GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"
   if [[ -f "$PIPELINE_SCRIPT" ]]; then
     if [[ "$MANUAL_REPORT" -eq 1 ]]; then
       "$PYTHON_BIN" "$PIPELINE_SCRIPT" \
