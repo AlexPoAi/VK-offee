@@ -27,7 +27,7 @@ REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
 
 # ID папки Google Drive
-DRIVE_FOLDER_ID = "120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC"
+DRIVE_FOLDER_ID = "1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX"
 
 # Маппинг папок (куда сохранять таблицы)
 FOLDER_MAPPING = {

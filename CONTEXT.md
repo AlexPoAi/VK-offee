@@ -301,7 +301,7 @@ VK-offee/
 
 ### Статус: ✅ Работает
 
-**Папка Google Drive:** `120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC`
+**Папка Google Drive:** `1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX`
 
 **Скрипт:** `.github/scripts/sync_google_drive_v2.py`
 
@@ -391,7 +391,7 @@ cd ~/VK-offee/telegram-bot
 
 - **Репозиторий:** `/Users/alexander/VK-offee`
 - **GitHub:** https://github.com/alexpoaiagent-sudo/VK-offee
-- **Google Drive:** `120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC`
+- **Google Drive:** `1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX`
 
 ### API и токены:
 

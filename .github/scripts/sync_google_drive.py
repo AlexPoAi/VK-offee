@@ -19,7 +19,7 @@ import io
 
 # Настройки
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
+DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX')
 REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
 REPORT_PATH = KNOWLEDGE_BASE_PATH / f"Отчет синхронизации {datetime.now().strftime('%d.%m.%Y')}.md"
