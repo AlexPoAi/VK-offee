@@ -149,7 +149,7 @@ VK-offee/
 - **Ветка интеграции:** feature/fpf-srt-integration
 - **Telegram бот:** @Vkusniykofebot
 - **Google Drive (общая кофейня):** 120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC
-- **Google Drive (склад / отчёты Жанны):** 1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX
+- **Google Drive (склад Жанны):** 1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX (Новое: 1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92, Обработано: 1pHugGbDKpyXqAvGjULiNIMOl64vCc29V)
 - **SPF Personal:** https://github.com/alexpoaiagent-sudo/spf-personal
 - **Творческий конвейер:** ~/Documents/creativ-convector.nocloud/
 

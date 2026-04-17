@@ -12,22 +12,35 @@
 - `tools/` — автоматизация складского контура (pipeline карточек и Telegram-отчётов)
 
 ## Автоконтур склада
-1. `sync-google-sheets.py` подтягивает данные из Google Drive папки для бота в `knowledge-base/`.
-2. `PACK-warehouse/tools/warehouse_reports_pipeline.py`:
-   - создает карточку на каждый свежий складской отчет,
-   - обновляет сводный отчет склада,
-   - ведёт реестр документов `PACK-warehouse/04-work-products/WH.REGISTRY.001-documents.csv` со статусами `new/processed/duplicate/error`,
-   - отправляет проблемные файлы в quarantine `PACK-warehouse/03-quarantine/dlq-files/` и пишет `WH.DLQ.001-quarantine-report.md`,
-   - публикует зеркальные карточки в `knowledge-base/Отчёты для бота/Склад` (доступно RAG/Telegram-боту),
-   - по ручному запуску отправляет аналитический Telegram-отчет (с выжимкой и ссылками на карточки).
-3. Регулярный запуск full-loop:
-   - `PACK-warehouse/tools/warehouse_full_loop.sh` (entrypoint `sync -> cards`, без авто-спама в Telegram);
-   - `PACK-warehouse/tools/com.vkoffee.warehouse-full-loop.plist` (шаблон launchd, каждые 30 минут).
 
-## Ручной запуск Telegram отчета
-- `PACK-warehouse/tools/warehouse_full_loop.sh --manual-report` — принудительно запускает `sync -> cards -> telegram` и отправляет отчет даже если новых карточек нет.
+### Google Drive — структура папок
+```
+Складские отчёты (1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX)
+├── Новое       (1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92) <- Жанна кладёт сюда
+└── Обработано  (1pHugGbDKpyXqAvGjULiNIMOl64vCc29V) <- скрипт перемещает
+```
 
-## Telegram env fallback
-- `WAREHOUSE_REPORT_CHAT_ID` (приоритетный chat для складского отчета),
-- `TELEGRAM_CHAT_ID`,
-- fallback на `~/.config/aist/env` и `~/.config/exocortex/telegram-chat-id`.
+### Режим: ручной запуск
+Склад обрабатывается по команде пользователя, НЕ автоматически.
+Триггер: Жанна прислала отчёт -> пользователь говорит агенту «обнови склад».
+
+### Pipeline
+1. `sync-google-sheets.py` скачивает файлы из папки «Новое» в `knowledge-base/`
+2. `warehouse_reports_pipeline.py`:
+   - создаёт карточку на каждый отчёт (остатки, ABC, инвентаризация)
+   - ведёт реестр `WH.REGISTRY.001-documents.csv`
+   - ABC-анализ: парсит категории A/B/C и кросс-сверяет с остатками
+   - отправляет аналитический Telegram-отчёт с рекомендациями
+   - проблемные файлы -> quarantine `03-quarantine/dlq-files/`
+3. После обработки файлы перемещаются из «Новое» в «Обработано»
+
+### Запуск
+```bash
+cd ~/Github/VK-offee && bash PACK-warehouse/tools/warehouse_full_loop.sh
+```
+
+### Env-переменные
+- `WAREHOUSE_DRIVE_FOLDER_ID` — папка «Новое»
+- `WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID` — папка «Обработано»
+- `WAREHOUSE_REPORT_BASE_URL` — GitHub URL для кликабельных ссылок
+- `WAREHOUSE_REPORT_CHAT_ID` / `TELEGRAM_CHAT_ID` — Telegram chat
