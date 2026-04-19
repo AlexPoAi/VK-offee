@@ -105,6 +105,12 @@
 | PARK.WP.015 | Отчёт по геологии | `06-documents/.../technical/PARK.WP.015-geology-report.pdf` | `06-documents/.../technical/PARK.WP.015-geology-report (Отчёт по геологии).md` | ok |
 | PARK.WP.016 | Акт геологических изысканий | `06-documents/.../technical/PARK.WP.016-geology-act.docx` | `06-documents/.../technical/PARK.WP.016-geology-act (Акт геологических изысканий).md` | ok |
 
+## Рабочие продукты по активным блокерам
+
+| ID | Дата | Тема | Оригинал | Карточка | Статус |
+|---|---|---|---|---|---|
+| PARK.WP.041 | 2026-04-19 | Канализационная труба — статус, официальный verdict, следующий шаг | — | `04-work-products/.../PARK.WP.041-sewage-pipe-status-and-expert-next-step (...).md` | active |
+
 ## Внешние и не-нормализованные оригиналы
 
 Есть ещё важные оригиналы без нормализованных карточек или с неочевидной связью:
