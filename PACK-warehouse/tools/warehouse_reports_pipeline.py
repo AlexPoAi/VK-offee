@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -246,16 +247,17 @@ def save_registry(rows: dict[str, dict[str, str]]) -> None:
 def find_recent_reports(hours: int) -> list[Path]:
     cutoff = datetime.now() - timedelta(hours=hours)
     items: list[Path] = []
-    for p in KB_DIR.rglob("*.csv"):
-        try:
-            mtime = datetime.fromtimestamp(p.stat().st_mtime)
-        except FileNotFoundError:
-            continue
-        if mtime < cutoff:
-            continue
-        name = p.name
-        if any(k in name for k in KEYWORDS):
-            items.append(p)
+    for ext in ("*.csv", "*.pdf"):
+        for p in KB_DIR.rglob(ext):
+            try:
+                mtime = datetime.fromtimestamp(p.stat().st_mtime)
+            except FileNotFoundError:
+                continue
+            if mtime < cutoff:
+                continue
+            name = p.name
+            if any(k in name for k in KEYWORDS):
+                items.append(p)
     return sorted(items)
 
 
@@ -265,6 +267,86 @@ def parse_csv_rows(path: Path) -> list[list[str]]:
     if not rows:
         raise ValueError("empty csv")
     return rows
+
+
+def extract_pdf_payload(path: Path) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "text": "",
+        "pages": 0,
+        "method": "",
+        "error": "",
+    }
+
+    # 1) Pure-Python parser (предпочтительно для portability).
+    try:
+        from pypdf import PdfReader  # type: ignore
+
+        reader = PdfReader(str(path))
+        texts: list[str] = []
+        for page in reader.pages:
+            try:
+                texts.append((page.extract_text() or "").strip())
+            except Exception:
+                texts.append("")
+        text = "\n".join(t for t in texts if t)
+        if text.strip():
+            payload["text"] = text
+            payload["pages"] = len(reader.pages)
+            payload["method"] = "pypdf"
+            return payload
+    except Exception as exc:
+        payload["error"] = str(exc)
+
+    # 2) Fallback to pdftotext CLI (если доступен в окружении).
+    try:
+        proc = subprocess.run(
+            ["pdftotext", "-layout", str(path), "-"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+            text=True,
+        )
+        text = (proc.stdout or "").strip()
+        if text:
+            payload["text"] = text
+            payload["method"] = "pdftotext"
+            return payload
+    except Exception as exc:
+        payload["error"] = f"{payload.get('error', '')}; {exc}".strip("; ")
+
+    return payload
+
+
+def parse_invoice_pdf_metrics(text: str) -> dict[str, object]:
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    money_raw = re.findall(r"\b\d{1,3}(?:[ \u00a0]\d{3})*(?:[.,]\d{2})\b", text)
+    money_vals: list[float] = []
+    for m in money_raw:
+        val = m.replace("\u00a0", "").replace(" ", "").replace(",", ".")
+        try:
+            money_vals.append(float(val))
+        except ValueError:
+            continue
+
+    invoice_numbers = re.findall(r"(?:накладн\w*\s*№?\s*|№\s*)(\d{4,})", text, flags=re.IGNORECASE)
+    dates = re.findall(r"\b\d{2}[./]\d{2}[./]\d{4}\b", text)
+    vendors: list[str] = []
+    for ln in lines[:250]:
+        low = ln.lower()
+        if any(k in low for k in ("ип ", "ооо ", "зао ", "поставщик", "продавец")):
+            vendors.append(ln)
+    vendors = list(dict.fromkeys(vendors))[:5]
+
+    return {
+        "line_count": len(lines),
+        "char_count": len(text),
+        "money_count": len(money_vals),
+        "money_top": sorted(money_vals, reverse=True)[:8],
+        "invoice_numbers": sorted(set(invoice_numbers))[:20],
+        "dates": sorted(set(dates))[:10],
+        "vendors": vendors,
+        "preview_lines": lines[:12],
+    }
 
 
 def parse_stock_metrics(rows: list[list[str]]) -> dict:
@@ -408,6 +490,40 @@ def parse_table_profile(rows: list[list[str]]) -> dict[str, object]:
     }
 
 
+def parse_non_stock_inventory_metrics(rows: list[list[str]]) -> dict[str, object]:
+    names: list[str] = []
+    debt_notes: list[str] = []
+    money_vals: list[float] = []
+
+    money_re = re.compile(r"\d{1,3}(?:[ \u00a0]\d{3})*(?:[.,]\d{2})\s*₽?")
+    for r in rows:
+        if len(r) > 1:
+            candidate = (r[1] or "").strip()
+            if candidate and not re.search(r"\d", candidate) and len(candidate) >= 3:
+                names.append(candidate)
+        for c in r:
+            cell = (c or "").strip()
+            if not cell:
+                continue
+            if "долг" in cell.lower():
+                debt_notes.append(cell)
+            for m in money_re.findall(cell):
+                raw = m.replace("₽", "").replace("\u00a0", "").replace(" ", "").replace(",", ".").strip()
+                try:
+                    money_vals.append(float(raw))
+                except ValueError:
+                    continue
+    names = list(dict.fromkeys(names))
+    debt_notes = list(dict.fromkeys(debt_notes))
+    return {
+        "people_count": len(names),
+        "people_top": names[:10],
+        "money_cells_count": len(money_vals),
+        "money_cells_sum": round(sum(money_vals), 2) if money_vals else 0.0,
+        "debt_notes": debt_notes[:6],
+    }
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
@@ -490,7 +606,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
     card_path = CARDS_DIR / f"WH.CARD.{slug}.md"
     bot_path = BOT_REPORTS_DIR / f"WH.BOT.{slug}.md"
 
-    rows = parse_csv_rows(source)
+    suffix = source.suffix.lower()
     body_lines = [
         "---",
         "type: warehouse-report-card",
@@ -515,101 +631,190 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
     }
 
     report_type = detect_report_type(source.name)
-    if ("Комментарий" in source.name) or ("Комментари" in source.name):
-        bullets = parse_comment_bullets(rows)
-        insight["comment_count"] = len(bullets)
-        insight["comment_preview"] = bullets[:3]
-        body_lines.append("## Выжимка комментариев")
-        if bullets:
-            for b in bullets:
-                body_lines.append(f"- {b}")
-        else:
-            body_lines.append("- Нет содержимого для выжимки.")
-    elif report_type == "abc":
-        categories = parse_abc_categories(rows)
-        insight["abc_categories"] = categories
-        counts = {"A": 0, "B": 0, "C": 0}
-        for cat in categories.values():
-            if cat in counts:
-                counts[cat] += 1
-        body_lines.extend([
-            "## ABC Анализ",
-            f"- Позиций A (приоритет): **{counts['A']}**",
-            f"- Позиций B (средние): **{counts['B']}**",
-            f"- Позиций C (низкий приоритет): **{counts['C']}**",
-            "",
-            "## Топ категории A",
-        ])
-        a_items = [name for name, cat in categories.items() if cat == "A"][:10]
-        for name in a_items:
-            body_lines.append(f"- {name.title()}")
-        if not a_items:
-            body_lines.append("- Не найдено.")
-    elif report_type in {"stock", "inventory", "beans"}:
-        metrics = parse_stock_metrics(rows)
-        insight["rows"] = metrics["rows"]
-        insight["low_stock_count"] = metrics["low_stock_count"]
-        insight["top_low_items"] = metrics["low_stock_items"][:3]
-        body_lines.extend(
-            [
-                "## Метрики",
-                f"- Учетных позиций: **{metrics['rows']}**",
-                f"- Низкие остатки (<=3): **{metrics['low_stock_count']}**",
-                (
-                    "- Сумма по точкам: "
-                    f"Тургенева={metrics['totals_by_location']['Тургенева']}, "
-                    f"Луговая={metrics['totals_by_location']['Луговая']}, "
-                    f"Самокиша={metrics['totals_by_location']['Самокиша']}"
-                ),
-                "",
-                "## Низкий остаток (top 12)",
-            ]
-        )
-        low_items = metrics["low_stock_items"][:12]
-        if low_items:
-            for name, total in low_items:
-                body_lines.append(f"- {name}: {total}")
-        else:
-            body_lines.append("- Низких остатков не найдено.")
-    else:
-        profile = parse_table_profile(rows)
+    if (suffix == ".pdf") and (report_type == "invoice"):
+        payload = extract_pdf_payload(source)
+        text = str(payload.get("text", "") or "")
+        metrics = parse_invoice_pdf_metrics(text) if text else {}
         period = extract_period_from_text(source.name)
-        insight["rows"] = int(profile["rows_data"])
-        insight["low_stock_count"] = 0
-        insight["top_low_items"] = []
-        insight["period"] = period
-        insight["table_headers"] = profile["headers"]
-        insight["top_numeric"] = profile["top_numeric"]
 
-        type_human = {
-            "sales": "Продажи",
-            "revenue": "Выручка",
-            "catalog": "Каталог",
-            "invoice": "Накладные",
-            "other": "Табличный отчёт",
-        }.get(report_type, "Табличный отчёт")
+        insight["report_type"] = "invoice"
+        insight["rows"] = int(metrics.get("line_count", 0) or 0)
+        insight["period"] = period
+        insight["invoice_numbers"] = metrics.get("invoice_numbers", [])
+        insight["invoice_money_top"] = metrics.get("money_top", [])
 
         body_lines.extend(
             [
-                f"## {type_human}: структурная выжимка",
+                "## Накладные (PDF): авторазбор",
                 f"- Период: **{period}**",
-                f"- Строк данных: **{profile['rows_data']}**",
-                f"- Столбцов: **{profile['cols']}**",
+                f"- Метод извлечения: **{payload.get('method') or 'n/a'}**",
+                f"- Страниц: **{payload.get('pages') or 0}**",
+                f"- Извлечено строк: **{metrics.get('line_count', 0) if metrics else 0}**",
+                f"- Извлечено символов: **{metrics.get('char_count', 0) if metrics else 0}**",
             ]
         )
-        headers = profile.get("headers") or []
-        if headers:
-            body_lines.append(f"- Ключевые колонки: **{', '.join(str(h) for h in headers)}**")
-        top_numeric = profile.get("top_numeric") or []
-        if top_numeric:
-            body_lines.append("")
-            body_lines.append("## Числовые итоги (автооценка)")
-            for _, label, total in top_numeric:
-                body_lines.append(f"- {label}: **{total:,.2f}**".replace(",", " "))
-        if report_type == "invoice":
-            body_lines.append("")
-            body_lines.append("## Важно")
-            body_lines.append("- Для PDF-накладных нужна OCR-нормализация для SKU-level аналитики (в этом цикле только базовая выжимка).")
+        if metrics:
+            nums = metrics.get("invoice_numbers") or []
+            if nums:
+                body_lines.append(f"- Номера накладных: **{', '.join(str(x) for x in nums[:10])}**")
+            dts = metrics.get("dates") or []
+            if dts:
+                body_lines.append(f"- Обнаруженные даты: **{', '.join(str(x) for x in dts[:8])}**")
+            vendors = metrics.get("vendors") or []
+            if vendors:
+                body_lines.append("- Поставщики (по тексту):")
+                for v in vendors:
+                    body_lines.append(f"  - {v}")
+            mtop = metrics.get("money_top") or []
+            if mtop:
+                body_lines.append("- Крупные суммы (по тексту, авто):")
+                for m in mtop[:6]:
+                    body_lines.append(f"  - {m:,.2f}".replace(",", " "))
+            preview = metrics.get("preview_lines") or []
+            if preview:
+                body_lines.append("")
+                body_lines.append("## Превью извлечённого текста")
+                for ln in preview[:10]:
+                    body_lines.append(f"- {ln}")
+        if not text:
+            body_lines.append("- Не удалось извлечь текст из PDF автоматически.")
+            if payload.get("error"):
+                body_lines.append(f"- Ошибка: `{payload.get('error')}`")
+    else:
+        rows = parse_csv_rows(source)
+        if ("Комментарий" in source.name) or ("Комментари" in source.name):
+            bullets = parse_comment_bullets(rows)
+            insight["comment_count"] = len(bullets)
+            insight["comment_preview"] = bullets[:3]
+            body_lines.append("## Выжимка комментариев")
+            if bullets:
+                for b in bullets:
+                    body_lines.append(f"- {b}")
+            else:
+                body_lines.append("- Нет содержимого для выжимки.")
+        else:
+            if report_type == "abc":
+                categories = parse_abc_categories(rows)
+                insight["abc_categories"] = categories
+                counts = {"A": 0, "B": 0, "C": 0}
+                for cat in categories.values():
+                    if cat in counts:
+                        counts[cat] += 1
+                body_lines.extend([
+                    "## ABC Анализ",
+                    f"- Позиций A (приоритет): **{counts['A']}**",
+                    f"- Позиций B (средние): **{counts['B']}**",
+                    f"- Позиций C (низкий приоритет): **{counts['C']}**",
+                    "",
+                    "## Топ категории A",
+                ])
+                a_items = [name for name, cat in categories.items() if cat == "A"][:10]
+                for name in a_items:
+                    body_lines.append(f"- {name.title()}")
+                if not a_items:
+                    body_lines.append("- Не найдено.")
+            elif report_type in {"stock", "inventory", "beans"}:
+                metrics = parse_stock_metrics(rows)
+                if metrics["rows"] > 0:
+                    insight["rows"] = metrics["rows"]
+                    insight["low_stock_count"] = metrics["low_stock_count"]
+                    insight["top_low_items"] = metrics["low_stock_items"][:3]
+                    body_lines.extend(
+                        [
+                            "## Метрики",
+                            f"- Учетных позиций: **{metrics['rows']}**",
+                            f"- Низкие остатки (<=3): **{metrics['low_stock_count']}**",
+                            (
+                                "- Сумма по точкам: "
+                                f"Тургенева={metrics['totals_by_location']['Тургенева']}, "
+                                f"Луговая={metrics['totals_by_location']['Луговая']}, "
+                                f"Самокиша={metrics['totals_by_location']['Самокиша']}"
+                            ),
+                            "",
+                            "## Низкий остаток (top 12)",
+                        ]
+                    )
+                    low_items = metrics["low_stock_items"][:12]
+                    if low_items:
+                        for name, total in low_items:
+                            body_lines.append(f"- {name}: {total}")
+                    else:
+                        body_lines.append("- Низких остатков не найдено.")
+                else:
+                    # Файл помечен как инвентаризация, но не является SKU-остатками.
+                    # Делаем понятную бизнес-выжимку вместо пустых нулей.
+                    profile = parse_table_profile(rows)
+                    extra = parse_non_stock_inventory_metrics(rows)
+                    insight["report_type"] = "inventory_non_stock"
+                    insight["rows"] = int(profile["rows_data"])
+                    insight["low_stock_count"] = 0
+                    insight["top_low_items"] = []
+                    insight["inventory_people_count"] = int(extra.get("people_count", 0) or 0)
+                    insight["inventory_money_cells_count"] = int(extra.get("money_cells_count", 0) or 0)
+                    insight["inventory_debt_notes"] = extra.get("debt_notes", [])
+
+                    body_lines.extend(
+                        [
+                            "## Тип файла",
+                            "- Это не карточка товарных остатков по SKU.",
+                            "- Это сводная инвентаризационно-финансовая таблица (по сотрудникам/периодам).",
+                            "",
+                            "## Выжимка по данным",
+                            f"- Строк данных: **{profile['rows_data']}**",
+                            f"- Столбцов: **{profile['cols']}**",
+                            f"- Сотрудников в таблице (по автоопределению): **{extra['people_count']}**",
+                            f"- Денежных значений: **{extra['money_cells_count']}**",
+                            f"- Сумма денежных значений (справочно): **{float(extra['money_cells_sum']):,.2f} ₽**".replace(",", " "),
+                        ]
+                    )
+                    people = extra.get("people_top") or []
+                    if people:
+                        body_lines.append(f"- Имена (пример): **{', '.join(str(x) for x in people[:8])}**")
+                    debts = extra.get("debt_notes") or []
+                    if debts:
+                        body_lines.append("")
+                        body_lines.append("## Пометки по долгам/корректировкам")
+                        for d in debts:
+                            body_lines.append(f"- {d}")
+            else:
+                profile = parse_table_profile(rows)
+                period = extract_period_from_text(source.name)
+                insight["rows"] = int(profile["rows_data"])
+                insight["low_stock_count"] = 0
+                insight["top_low_items"] = []
+                insight["period"] = period
+                insight["table_headers"] = profile["headers"]
+                insight["top_numeric"] = profile["top_numeric"]
+
+                type_human = {
+                    "sales": "Продажи",
+                    "revenue": "Выручка",
+                    "catalog": "Каталог",
+                    "invoice": "Накладные",
+                    "other": "Табличный отчёт",
+                }.get(report_type, "Табличный отчёт")
+
+                body_lines.extend(
+                    [
+                        f"## {type_human}: структурная выжимка",
+                        f"- Период: **{period}**",
+                        f"- Строк данных: **{profile['rows_data']}**",
+                        f"- Столбцов: **{profile['cols']}**",
+                    ]
+                )
+                headers = profile.get("headers") or []
+                if headers:
+                    body_lines.append(f"- Ключевые колонки: **{', '.join(str(h) for h in headers)}**")
+                top_numeric = profile.get("top_numeric") or []
+                if top_numeric:
+                    body_lines.append("")
+                    body_lines.append("## Числовые итоги (автооценка)")
+                    for _, label, total in top_numeric:
+                        body_lines.append(f"- {label}: **{total:,.2f}**".replace(",", " "))
+                if report_type == "invoice":
+                    body_lines.append("")
+                    body_lines.append("## Важно")
+                    body_lines.append("- Для PDF-накладных нужна OCR-нормализация для SKU-level аналитики (в этом цикле только базовая выжимка).")
 
     body_lines.extend(
         [
@@ -935,19 +1140,9 @@ def telegram_text(
     queue_url = build_github_link(queue_rel)
 
     mode = "manual" if manual_run else "auto"
-    header = [
-        "📦 <b>Склад: управленческий отчёт</b>",
-        f"Время: <code>{ts}</code>",
-        f"Режим: <b>{mode}</b>",
-        f"Окно: последние <b>{hours}ч</b>",
-        (
-            "Документы: "
-            f"входящих <b>{run_stats['received']}</b>, "
-            f"обработано <b>{run_stats['processed']}</b>, "
-            f"дубликатов <b>{run_stats['duplicate']}</b>, "
-            f"ошибок <b>{run_stats['error']}</b>"
-        ),
-        f"Карточек: <b>{len(cards)}</b>",
+    lines = [
+        "📦 <b>Manager Digest · Склад</b>",
+        f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Окно: <b>{hours}ч</b>",
     ]
 
     analytics = build_smart_analytics(insights)
@@ -957,123 +1152,89 @@ def telegram_text(
         verdict = "🟡 Есть риск дефицита"
     else:
         verdict = "🟢 Стабильно"
-    header.extend(["", f"Вердикт: <b>{verdict}</b>"])
+    lines.extend(
+        [
+            f"Вердикт: <b>{verdict}</b>",
+            (
+                "Поток: "
+                f"входящих <b>{run_stats['received']}</b> · "
+                f"обработано <b>{run_stats['processed']}</b> · "
+                f"ошибок <b>{run_stats['error']}</b>"
+            ),
+        ]
+    )
 
-    action_items: list[str] = []
-    if analytics.get("urgent"):
-        first = analytics["urgent"][:3]
-        action_items.extend([f"Заказать срочно: {x}" for x in first])
-    if analytics.get("attention"):
-        for x in analytics["attention"][:2]:
-            action_items.append(f"Проверить остаток/спрос: {x}")
-    for it in insights:
-        t = str(it.get("report_type", ""))
-        if t == "invoice":
-            action_items.append("Проверить накладные: сверка цены закупа с каталогом.")
-            break
-    if not action_items:
-        action_items.append("Подтвердить, что заказ на период не требуется.")
+    # Раздел 1: Срочно (до 24ч)
+    urgent_items: list[str] = []
+    for item in analytics.get("urgent", [])[:5]:
+        urgent_items.append(f"Заказать: {item}")
+    if run_stats["error"] > 0:
+        urgent_items.append(f"Разобрать ошибки обработки: {run_stats['error']}")
+    if not urgent_items:
+        urgent_items.append("Критичных дефицитов на 24ч не выявлено.")
+    urgent_items = urgent_items[:5]
 
-    if report_url:
-        header.append(f"Сводка: <a href=\"{report_url}\">WH.REPORT.002</a>")
-    else:
-        header.append(f"Сводка: <code>{escape_html(report_rel)}</code>")
-    if queue_url:
-        header.append(f"Сессии: <a href=\"{queue_url}\">WH.SESSION.001 queue</a>")
-    else:
-        header.append(f"Сессии: <code>{escape_html(queue_rel)}</code>")
-    header.append("")
+    # Раздел 2: Планово (2-7 дней)
+    planned_items: list[str] = []
+    for item in analytics.get("attention", [])[:5]:
+        planned_items.append(f"Проверить спрос/остаток: {item}")
+    has_invoices = any(str(it.get("report_type", "")) == "invoice" for it in insights)
+    if has_invoices and len(planned_items) < 5:
+        planned_items.append("Сверить закупочные цены из накладных с каталогом (2-7 дней).")
+    if not planned_items:
+        planned_items.append("Плановых действий на 2-7 дней не выявлено.")
+    planned_items = planned_items[:5]
 
-    if not cards:
-        header.append("Новых складских отчётов не найдено.")
-        return "\n".join(header)
+    # Раздел 3: Что не заказывать/сократить
+    reduce_items: list[str] = []
+    for item in analytics.get("excess", [])[:5]:
+        reduce_items.append(f"Сократить дозакупку: {item}")
+    if not reduce_items:
+        reduce_items.append("Явных позиций для сокращения закупки не выявлено.")
+    reduce_items = reduce_items[:5]
 
-    header.append("")
-    header.append("<b>Что сделать сейчас:</b>")
-    for item in action_items[:6]:
-        header.append(f"• {escape_html(item)}")
-
+    # Раздел 4: Риски данных (чего не хватает)
+    data_risks: list[str] = []
     gaps = detect_data_gaps(insights)
-    if gaps:
-        header.append("")
-        header.append("<b>Каких данных не хватает для сильного отчёта:</b>")
-        for g in gaps:
-            header.append(f"• {escape_html(g)}")
+    for g in gaps[:5]:
+        data_risks.append(g)
+    if not analytics.get("has_abc"):
+        data_risks.append("Приоритизация A/B/C недоступна, решения приняты по остаткам/движению.")
+    if not data_risks:
+        data_risks.append("Критичных пробелов данных не обнаружено.")
+    data_risks = data_risks[:5]
 
-    header.append("")
-    header.append("<b>Новые карточки и выжимка:</b>")
-    for item in insights[:12]:
-        card_rel = str(item.get("card_rel", ""))
-        source_rel = str(item.get("source_rel", ""))
-        card_label = escape_html(Path(card_rel).name) if card_rel else "карточка"
-        source_label = escape_html(Path(source_rel).name) if source_rel else "источник"
-        card_url = build_github_link(card_rel) if card_rel else ""
-        source_url = build_github_link(source_rel) if source_rel else ""
+    lines.append("")
+    lines.append("<b>Срочно (до 24ч)</b>")
+    for item in urgent_items:
+        lines.append(f"• {escape_html(item)}")
 
-        refs = []
-        if card_url:
-            refs.append(f"<a href=\"{card_url}\">{card_label}</a>")
-        elif card_rel:
-            refs.append(f"<code>{escape_html(card_rel)}</code>")
-        if source_url:
-            refs.append(f"<a href=\"{source_url}\">{source_label}</a>")
-        elif source_rel:
-            refs.append(f"<code>{escape_html(source_rel)}</code>")
+    lines.append("")
+    lines.append("<b>Планово (2-7 дней)</b>")
+    for item in planned_items:
+        lines.append(f"• {escape_html(item)}")
 
-        line = " • ".join(refs) if refs else escape_html(str(item.get("title", "отчёт")))
-        header.append(f"• {line}")
+    lines.append("")
+    lines.append("<b>Что не заказывать/сократить</b>")
+    for item in reduce_items:
+        lines.append(f"• {escape_html(item)}")
 
-        report_type = str(item.get("report_type", "other"))
-        if report_type in {"stock", "inventory", "beans"}:
-            low_stock_count = int(item.get("low_stock_count", 0) or 0)
-            top_low = item.get("top_low_items", []) or []
-            if top_low:
-                top_text = ", ".join(f"{escape_html(str(name))} ({qty})" for name, qty in top_low)
-                header.append(
-                    f"  Низкий остаток: <b>{low_stock_count}</b>; top: {top_text}"
-                )
-            else:
-                header.append(f"  Низкий остаток: <b>{low_stock_count}</b>")
-        elif report_type == "comment":
-            comment_count = int(item.get("comment_count", 0) or 0)
-            preview = item.get("comment_preview", []) or []
-            if preview:
-                preview_text = " | ".join(escape_html(str(x)) for x in preview)
-                header.append(f"  Комментариев: <b>{comment_count}</b>; {preview_text}")
-            else:
-                header.append(f"  Комментариев: <b>{comment_count}</b>")
-    if len(insights) > 12:
-        header.append(f"• … и ещё {len(insights)-12}")
+    lines.append("")
+    lines.append("<b>Риски данных (чего не хватает)</b>")
+    for item in data_risks:
+        lines.append(f"• {escape_html(item)}")
 
-    # Умная аналитика (ABC + остатки)
-    if analytics:
-        header.append("")
-        if analytics.get("has_abc"):
-            header.append("📊 <b>Аналитика (ABC + остатки):</b>")
-        else:
-            header.append("📊 <b>Остатки (ABC не загружен):</b>")
+    lines.append("")
+    if report_url:
+        lines.append(f"Полный отчёт: <a href=\"{report_url}\">WH.REPORT.002</a>")
+    else:
+        lines.append(f"Полный отчёт: <code>{escape_html(report_rel)}</code>")
+    if queue_url:
+        lines.append(f"Очередь решений: <a href=\"{queue_url}\">WH.SESSION.001</a>")
+    else:
+        lines.append(f"Очередь решений: <code>{escape_html(queue_rel)}</code>")
 
-        if analytics.get("urgent"):
-            header.append("🔴 <b>Срочно заказать (A + мало):</b>")
-            for item in analytics["urgent"]:
-                header.append(f"  • {escape_html(item)}")
-
-        if analytics.get("attention"):
-            header.append("🟡 <b>Обратить внимание (B + мало):</b>")
-            for item in analytics["attention"]:
-                header.append(f"  • {escape_html(item)}")
-
-        if analytics.get("no_abc") and not analytics.get("has_abc"):
-            header.append("⚠️ <b>Мало на складе:</b>")
-            for item in analytics["no_abc"]:
-                header.append(f"  • {escape_html(item)}")
-
-        if analytics.get("excess"):
-            header.append("🟢 <b>Снизить заказ (C-категория):</b>")
-            for item in analytics["excess"]:
-                header.append(f"  • {escape_html(item)}")
-
-    return "\n".join(header)
+    return "\n".join(lines)
 
 
 def main() -> int:
