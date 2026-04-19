@@ -37,6 +37,7 @@ WAREHOUSE_DIR = ROOT / "PACK-warehouse"
 CARDS_DIR = WAREHOUSE_DIR / "02-domain-entities" / "report-cards"
 WP_DIR = WAREHOUSE_DIR / "04-work-products"
 LATEST_REPORT = WP_DIR / "WH.REPORT.002-warehouse-sync-summary-latest.md"
+DECISION_QUEUE = WP_DIR / "WH.SESSION.001-decision-queue-latest.md"
 REGISTRY_FILE = WP_DIR / "WH.REGISTRY.001-documents.csv"
 DLQ_DIR = WAREHOUSE_DIR / "03-quarantine" / "dlq-files"
 DLQ_REPORT = WP_DIR / "WH.DLQ.001-quarantine-report.md"
@@ -45,6 +46,14 @@ BOT_REPORTS_DIR = KB_DIR / "Отчёты для бота" / "Склад"
 KEYWORDS = (
     "Остатки по складам",
     "Отчет по инвентаризации",
+    "Продажи_",
+    "Выручка_",
+    "Каталог_",
+    "Накладные_",
+    "Продажи ",
+    "Выручка ",
+    "Каталог ",
+    "Накладные ",
     "Список зерна Самокиша - Тургенева - Луговая - Склад",
     "Список зерна Самокиша - Тургенева - Луговая - Комментарий",
     "АБС анализ",
@@ -64,6 +73,14 @@ def sanitize_slug(text: str) -> str:
 
 def detect_report_type(name: str) -> str:
     low = name.lower()
+    if "продаж" in low:
+        return "sales"
+    if "выруч" in low:
+        return "revenue"
+    if "каталог" in low:
+        return "catalog"
+    if "накладн" in low:
+        return "invoice"
     if ("комментарий" in low) or ("комментари" in low):
         return "comment"
     if "инвентаризац" in low:
@@ -301,6 +318,60 @@ def parse_abc_categories(rows: list[list[str]]) -> dict[str, str]:
     return result
 
 
+def parse_number(value: str) -> float | None:
+    raw = value.strip().replace("\u00a0", "").replace(" ", "")
+    if not raw:
+        return None
+    raw = raw.replace(",", ".")
+    if not re.fullmatch(r"-?\d+(\.\d+)?", raw):
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def extract_period_from_text(text: str) -> str:
+    dates = re.findall(r"\d{2}\.\d{2}\.\d{4}", text)
+    if len(dates) >= 2:
+        return f"{dates[0]} — {dates[1]}"
+    dates_iso = re.findall(r"\d{4}-\d{2}-\d{2}", text)
+    if len(dates_iso) >= 2:
+        return f"{dates_iso[0]} — {dates_iso[1]}"
+    return "n/a"
+
+
+def parse_table_profile(rows: list[list[str]]) -> dict[str, object]:
+    max_cols = max((len(r) for r in rows), default=0)
+    data_rows = rows[1:] if len(rows) > 1 else []
+    non_empty_rows = sum(1 for r in data_rows if any(c.strip() for c in r))
+    headers = [c.strip() for c in (rows[0] if rows else []) if c.strip()]
+
+    numeric_col_stats: list[tuple[int, str, float]] = []
+    if rows:
+        width = len(rows[0])
+        for i in range(width):
+            vals = []
+            for r in data_rows:
+                if len(r) <= i:
+                    continue
+                num = parse_number(r[i])
+                if num is not None:
+                    vals.append(num)
+            if vals:
+                label = rows[0][i].strip() if i < len(rows[0]) else f"col_{i+1}"
+                numeric_col_stats.append((i, label or f"col_{i+1}", sum(vals)))
+    numeric_col_stats.sort(key=lambda x: abs(x[2]), reverse=True)
+
+    return {
+        "rows_total": len(rows),
+        "rows_data": non_empty_rows,
+        "cols": max_cols,
+        "headers": headers[:8],
+        "top_numeric": numeric_col_stats[:3],
+    }
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
@@ -417,7 +488,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
             body_lines.append(f"- {name.title()}")
         if not a_items:
             body_lines.append("- Не найдено.")
-    else:
+    elif report_type in {"stock", "inventory", "beans"}:
         metrics = parse_stock_metrics(rows)
         insight["rows"] = metrics["rows"]
         insight["low_stock_count"] = metrics["low_stock_count"]
@@ -443,6 +514,45 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                 body_lines.append(f"- {name}: {total}")
         else:
             body_lines.append("- Низких остатков не найдено.")
+    else:
+        profile = parse_table_profile(rows)
+        period = extract_period_from_text(source.name)
+        insight["rows"] = int(profile["rows_data"])
+        insight["low_stock_count"] = 0
+        insight["top_low_items"] = []
+        insight["period"] = period
+        insight["table_headers"] = profile["headers"]
+        insight["top_numeric"] = profile["top_numeric"]
+
+        type_human = {
+            "sales": "Продажи",
+            "revenue": "Выручка",
+            "catalog": "Каталог",
+            "invoice": "Накладные",
+            "other": "Табличный отчёт",
+        }.get(report_type, "Табличный отчёт")
+
+        body_lines.extend(
+            [
+                f"## {type_human}: структурная выжимка",
+                f"- Период: **{period}**",
+                f"- Строк данных: **{profile['rows_data']}**",
+                f"- Столбцов: **{profile['cols']}**",
+            ]
+        )
+        headers = profile.get("headers") or []
+        if headers:
+            body_lines.append(f"- Ключевые колонки: **{', '.join(str(h) for h in headers)}**")
+        top_numeric = profile.get("top_numeric") or []
+        if top_numeric:
+            body_lines.append("")
+            body_lines.append("## Числовые итоги (автооценка)")
+            for _, label, total in top_numeric:
+                body_lines.append(f"- {label}: **{total:,.2f}**".replace(",", " "))
+        if report_type == "invoice":
+            body_lines.append("")
+            body_lines.append("## Важно")
+            body_lines.append("- Для PDF-накладных нужна OCR-нормализация для SKU-level аналитики (в этом цикле только базовая выжимка).")
 
     body_lines.extend(
         [
@@ -509,6 +619,95 @@ def build_latest_summary(
     text = "\n".join(lines)
     LATEST_REPORT.write_text(text, encoding="utf-8")
     return text
+
+
+def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual_run: bool) -> str:
+    """Очередь управленческих сессий по свежим складским артефактам."""
+    ts = now_stamp()
+    mode = "manual" if manual_run else "auto"
+    lines = [
+        "---",
+        "type: warehouse-decision-queue",
+        f"updated: {ts}",
+        f"mode: {mode}",
+        "---",
+        "",
+        "# Warehouse Decision Queue",
+        "",
+        "## Сводка цикла",
+        f"- Входящих: **{run_stats['received']}**",
+        f"- Обработано: **{run_stats['processed']}**",
+        f"- Дубликатов: **{run_stats['duplicate']}**",
+        f"- Ошибок: **{run_stats['error']}**",
+        "",
+        "## Сессии к разбору",
+    ]
+
+    if not insights:
+        lines.append("- Новых сессий нет: в текущем окне не сформированы новые карточки.")
+    else:
+        for idx, item in enumerate(insights, start=1):
+            title = str(item.get("title", "warehouse-report"))
+            card_rel = str(item.get("card_rel", ""))
+            source_rel = str(item.get("source_rel", ""))
+            report_type = str(item.get("report_type", "other"))
+
+            if report_type in {"stock", "inventory", "beans"}:
+                action = "Проверить дефицитные SKU и сформировать заказ-лист."
+            elif report_type == "abc":
+                action = "Обновить приоритеты A/B/C и reorder-план."
+            elif report_type == "comment":
+                action = "Разобрать комментарии и зафиксировать операционные задачи."
+            else:
+                action = "Сверить данные и вынести решение по закупке/остаткам."
+
+            lines.extend(
+                [
+                    f"### WH.SESSION.{idx:03d} — {title}",
+                    f"- Тип: `{report_type}`",
+                    f"- Статус: `pending_owner_review`",
+                    f"- Карточка: `{card_rel}`" if card_rel else "- Карточка: `n/a`",
+                    f"- Источник: `{source_rel}`" if source_rel else "- Источник: `n/a`",
+                    f"- Следующее действие: {action}",
+                    "",
+                ]
+            )
+
+    text = "\n".join(lines) + "\n"
+    DECISION_QUEUE.write_text(text, encoding="utf-8")
+    return text
+
+
+def replay_insights_from_registry(registry: dict[str, dict[str, str]], limit: int = 10) -> list[dict]:
+    """Собрать demo-выжимку из уже обработанных карточек, если новых входящих нет."""
+    rows = []
+    for row in registry.values():
+        if (row.get("status") or "").strip() not in {"processed", "duplicate"}:
+            continue
+        card_rel = (row.get("card_path") or "").strip()
+        if not card_rel:
+            continue
+        try:
+            ts = datetime.strptime((row.get("last_processed_at") or "").strip(), "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            ts = datetime.min
+        rows.append((ts, row))
+    rows.sort(key=lambda x: x[0], reverse=True)
+
+    insights: list[dict] = []
+    for _, row in rows[: max(1, limit)]:
+        source_file = (row.get("source_file") or "").strip()
+        title = Path(source_file).name if source_file else Path(row.get("card_path") or "report").name
+        insights.append(
+            {
+                "title": title,
+                "report_type": (row.get("report_type") or "other").strip(),
+                "source_rel": source_file,
+                "card_rel": (row.get("card_path") or "").strip(),
+                "bot_card_rel": (row.get("bot_card_path") or "").strip(),
+            }
+        )
+    return insights
 
 
 def append_dlq_entry(source: Path, record_key: str, reason: str) -> str:
@@ -675,6 +874,8 @@ def telegram_text(
     ts = datetime.now().strftime("%d.%m.%Y %H:%M")
     report_rel = LATEST_REPORT.relative_to(ROOT).as_posix()
     report_url = build_github_link(report_rel)
+    queue_rel = DECISION_QUEUE.relative_to(ROOT).as_posix()
+    queue_url = build_github_link(queue_rel)
 
     mode = "manual" if manual_run else "auto"
     header = [
@@ -697,6 +898,10 @@ def telegram_text(
         header.append(f"Сводка: <a href=\"{report_url}\">WH.REPORT.002</a>")
     else:
         header.append(f"Сводка: <code>{escape_html(report_rel)}</code>")
+    if queue_url:
+        header.append(f"Сессии: <a href=\"{queue_url}\">WH.SESSION.001 queue</a>")
+    else:
+        header.append(f"Сессии: <code>{escape_html(queue_rel)}</code>")
     header.append("")
 
     if not cards:
@@ -704,7 +909,7 @@ def telegram_text(
         return "\n".join(header)
 
     header.append("<b>Новые карточки и выжимка:</b>")
-    for item in insights[:8]:
+    for item in insights[:12]:
         card_rel = str(item.get("card_rel", ""))
         source_rel = str(item.get("source_rel", ""))
         card_label = escape_html(Path(card_rel).name) if card_rel else "карточка"
@@ -744,8 +949,8 @@ def telegram_text(
                 header.append(f"  Комментариев: <b>{comment_count}</b>; {preview_text}")
             else:
                 header.append(f"  Комментариев: <b>{comment_count}</b>")
-    if len(insights) > 8:
-        header.append(f"• … и ещё {len(insights)-8}")
+    if len(insights) > 12:
+        header.append(f"• … и ещё {len(insights)-12}")
 
     # Умная аналитика (ABC + остатки)
     analytics = build_smart_analytics(insights)
@@ -785,6 +990,8 @@ def main() -> int:
     parser.add_argument("--send-telegram", action="store_true")
     parser.add_argument("--telegram-on-empty", action="store_true")
     parser.add_argument("--manual-run", action="store_true")
+    parser.add_argument("--refresh-duplicates", action="store_true")
+    parser.add_argument("--replay-latest-cards", type=int, default=0)
     args = parser.parse_args()
 
     WP_DIR.mkdir(parents=True, exist_ok=True)
@@ -807,9 +1014,28 @@ def main() -> int:
 
         existing = registry.get(record_key)
         if existing:
-            run_stats["duplicate"] += 1
-            existing["status"] = "duplicate"
-            existing["last_seen_at"] = stamp
+            if args.refresh_duplicates:
+                try:
+                    card, bot_card, insight = make_card(src)
+                    cards.append(card)
+                    bot_cards.append(bot_card)
+                    insights.append(insight)
+                    existing["status"] = "refreshed"
+                    existing["last_seen_at"] = stamp
+                    existing["last_processed_at"] = stamp
+                    existing["card_path"] = card.relative_to(ROOT).as_posix()
+                    existing["bot_card_path"] = bot_card.relative_to(ROOT).as_posix()
+                    existing["error"] = ""
+                    run_stats["processed"] += 1
+                except Exception as exc:  # pragma: no cover
+                    existing["status"] = "error"
+                    existing["last_seen_at"] = stamp
+                    existing["error"] = str(exc)
+                    run_stats["error"] += 1
+            else:
+                run_stats["duplicate"] += 1
+                existing["status"] = "duplicate"
+                existing["last_seen_at"] = stamp
             continue
 
         row = {
@@ -849,7 +1075,11 @@ def main() -> int:
         registry[record_key] = row
 
     save_registry(registry)
+    if not insights and args.replay_latest_cards > 0:
+        insights = replay_insights_from_registry(registry, limit=args.replay_latest_cards)
+
     build_latest_summary(cards, bot_cards, args.hours, run_stats)
+    build_decision_queue(insights, run_stats, args.manual_run)
     print(
         f"[warehouse] sources={len(sources)} cards={len(set(cards))} "
         f"bot_cards={len(set(bot_cards))} duplicates={run_stats['duplicate']} "

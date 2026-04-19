@@ -59,8 +59,12 @@ files = drive.files().list(
     fields='files(id, name)'
 ).execute().get('files', [])
 for f in files:
-    drive.files().update(fileId=f['id'], addParents=dst, removeParents=src, fields='id').execute()
-    print(f'  moved: {f[\"name\"]}')
+    try:
+        drive.files().update(fileId=f['id'], addParents=dst, removeParents=src, fields='id').execute()
+        print(f'  moved: {f[\"name\"]}')
+    except Exception as e:
+        # Не валим весь цикл из-за проблем со scope/правами у токена.
+        print(f'  move_failed: {f[\"name\"]} :: {e}')
 if not files:
     print('  nothing to move')
 "
