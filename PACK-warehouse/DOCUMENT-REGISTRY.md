@@ -7,7 +7,7 @@
 - **Источник** — файл от Жанны (Google Drive → папка «Новое»)
 - **Карточка** — MD-описание в `02-domain-entities/report-cards/WH.CARD.*.md`
 - **Бот-копия** — зеркало в `knowledge-base/Отчёты для бота/Склад/WH.BOT.*.md` (RAG Telegram-бот)
-- **Тип**: `stock` (остатки), `inventory` (инвентаризация), `beans` (зерно), `comment` (комментарии к заявке), `abc` (ABC-анализ)
+- **Тип**: `stock` (остатки), `inventory` (инвентаризация), `beans` (зерно), `comment` (комментарии к заявке), `abc` (ABC-анализ), `invoice` (накладные), `supplier_directory` (справочник поставщиков), `supplier_card` (карточка поставщика)
 - **Статус**: `processed` (обработан), `duplicate` (повторная обработка пропущена), `error` (ошибка → DLQ)
 
 ## Google Drive — архитектура
@@ -85,6 +85,31 @@
 | WH.CARD.018 | 2026-03-30—04-13 | Накладные от поставщиков (19.6 МБ PDF) | `report-cards/WH.CARD.накладные-2026-03-30-2026-04-13.md` | invoice | processed |
 | WH.CARD.019 | 2026-03-12—03-29 | Накладные от поставщиков (10.3 МБ PDF) | `report-cards/WH.CARD.накладные-2026-03-12-2026-03-29.md` | invoice | processed |
 
+## Справочники поставщиков и контактов
+
+| ID | Дата | Тема | Путь | Тип | Статус |
+|---|---|---|---|---|---|
+| WH.SRC.001 | 2026-02-28 | Поставщики информация 2.0 (телефоны, каналы заказа, график заявок) | `../knowledge-base/БАР/Поставщики (контакты, прайс-листы)/Поставщики информация 2.0.xlsx` | supplier_directory | active-source |
+| WH.SRC.002 | 2026-02-28 | Поставщики Информация (базовая версия) | `../knowledge-base/БАР/Поставщики (контакты, прайс-листы)/Поставщики Информация.xlsx` | supplier_directory | active-source |
+| WH.SRC.003 | 2026-02-28 | На печать поставщики | `../knowledge-base/БАР/Поставщики (контакты, прайс-листы)/На печать поставщики.xlsx` | supplier_directory | reference-copy |
+| WH.SUPPLIER.001 | 2026-04-19 | Справочник поставщиков и типов продукции | `02-domain-entities/WH.SUPPLIER.001-directory.md` | supplier_directory | active |
+| WH.SUPPLIER.002 | 2026-04-19 | Индекс актуальных карточек поставщиков | `02-domain-entities/WH.SUPPLIER.CARDS.INDEX.md` | supplier_directory | active |
+
+## Карточки поставщиков
+
+| ID | Дата | Поставщик | Путь | Тип | Статус |
+|---|---|---|---|---|---|
+| WH.SUPPLIER.CARD.001 | 2026-04-19 | Дмитрий (Десерты) | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.дмитрий-десерты.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.002 | 2026-04-19 | МФУД | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.мфуд.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.003 | 2026-04-19 | Барсервис | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.барсервис.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.004 | 2026-04-19 | ИП Шипилов Сергей Николаевич | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.ип-шипилов-сергей-николаевич.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.005 | 2026-04-19 | UNICAVA | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.unicava.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.006 | 2026-04-19 | Тэйсти Кофе | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.тэйсти-кофе.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.007 | 2026-04-19 | КАМЕЛОТ | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.камелот.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.008 | 2026-04-19 | Кухня ВКУСНЫЙ КОФЕ | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.кухня-вкусный-кофе.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.009 | 2026-04-19 | Ритейл Проперти 6 | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.ритейл-проперти-6.md` | supplier_card | generated |
+| WH.SUPPLIER.CARD.010 | 2026-04-19 | Смакотерия | `02-domain-entities/suppliers/WH.SUPPLIER.CARD.смакотерия.md` | supplier_card | generated |
+
 ## ABC-анализ (в Drive, ожидают обработки)
 
 | Файл | Тип | Статус |
@@ -103,6 +128,9 @@
 | WH.DLQ.001 | Отчёт quarantine (проблемные файлы) | `04-work-products/WH.DLQ.001-quarantine-report.md` |
 | WH.WP.003 | Приоритетный анализ остатков и продаж по свежим файлам Жанны | `04-work-products/WH.WP.003-stock-sales-priority-analysis-2026-04-19 (Приоритетный анализ остатков и продаж по свежим файлам Жанны).md` |
 | WH.WP.004 | Склад как домен: baseline и roadmap автоматизации бизнеса | `04-work-products/WH.WP.004-warehouse-domain-baseline-and-business-automation-roadmap-2026-04-19 (Склад как домен: baseline и roadmap автоматизации бизнеса).md` |
+| WH.WP.005 | Структура управленческого отчёта и протокол работы кладовщика | `04-work-products/WH.WP.005-manager-report-structure-and-warehouse-agent-operating-protocol-2026-04-19 (Структура управленческого отчёта и протокол работы кладовщика).md` |
+| WH.WP.006 | Архитектура полного цикла кладовщика | `04-work-products/WH.WP.006-warehouse-full-cycle-architecture-2026-04-19 (Архитектура полного цикла кладовщика: document flow, processing, reporting contract).md` |
+| WH.WP.007 | Карта поставщиков и закупочный контур по PDF-накладным | `04-work-products/WH.WP.007-invoice-procurement-supplier-map-2026-04-19 (Карта поставщиков и закупочный контур по PDF-накладным).md` |
 
 ## Контекст изменений
 
@@ -112,6 +140,7 @@
 | 2026-04-16 | Добавлен DLQ/quarantine контур. Реестр с идемпотентностью (дубли не плодятся). VPS systemd timer. |
 | 2026-04-17 | Зафиксированы 2 папки Drive: общая кофейни + склад Жанны. Создана структура Новое/Обработано. 11 старых файлов перемещены. Google Drive auth с правами записи. Pipeline переведён на ручной режим. Добавлен ABC-анализ (keywords + парсер + аналитика). |
 | 2026-04-17 | Полная обработка: 9 файлов из knowledge-base/Отчёты для бота → 9 карточек (остатки 15.04 + 30.03, каталоги, выручка, продажи, накладные). Исходники в Обработано. Управленческий отчёт WH.WP.002. |
+| 2026-04-19 | Добавлен supplier-layer: найден баристский справочник поставщиков с телефонами и каналами заказа, создана карта поставщиков по PDF-накладным, заведены отдельные supplier cards и индекс карточек. |
 
 ---
 

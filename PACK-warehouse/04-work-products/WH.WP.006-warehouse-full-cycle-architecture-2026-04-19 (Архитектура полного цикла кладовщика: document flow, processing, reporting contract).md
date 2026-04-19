@@ -65,6 +65,15 @@ status: active
 - Telegram digest: краткая выжимка + ссылки на полный отчёт и очередь решений.
 - Дальше работа ведётся по очереди решений: назначение ответственных, сроки, статусы.
 
+### Этап 7. Architecture Delta Review
+- После каждой итерации агент фиксирует, улучшилась ли архитектура склада относительно прошлого состояния.
+- Формат review:
+  - что стало лучше;
+  - что осталось слабым звеном;
+  - каких данных по-прежнему не хватает;
+  - какой следующий узкий участок нужно усиливать.
+- Этот review обязателен и хранится вместе с результатами итерации.
+
 ## Reporting Contract (обязательный состав управленческого отчёта)
 - `report_id`, `report_period`, `generated_at`.
 - `verdict` (green/yellow/red) + обоснование.
@@ -75,6 +84,7 @@ status: active
 - `supplier_procurement_plan[]` (закупка по поставщикам и типам товаров).
 - `loss_and_variance_signals[]` (потери, расхождения, рост цены закупа).
 - `source_links[]` (рабочие ссылки на source-of-truth).
+- `architecture_delta_review` (что улучшено в самом контуре за итерацию).
 
 ## Обязательные decision-поля (на каждую управленческую рекомендацию)
 - `decision_id`
@@ -82,6 +92,7 @@ status: active
 - `product_type`
 - `supplier_name`
 - `supplier_contact`
+- `supplier_contact_source`
 - `problem`
 - `action`
 - `priority` (`critical/high/normal`)
@@ -94,6 +105,28 @@ status: active
 - `expected_effect` (деньги/дефицит/оборачиваемость)
 - `status` (`open/in_progress/done`)
 - `evidence_link` (карточка/отчёт)
+
+## Supplier Card Contract
+- Каждому активному поставщику соответствует отдельная карточка.
+- Карточка поставщика должна содержать:
+  - `supplier_name`
+  - `supplier_legal_entity`
+  - `contact_person`
+  - `phone`
+  - `telegram`
+  - `whatsapp`
+  - `email`
+  - `order_channel`
+  - `product_types`
+  - `key_items`
+  - `turnover_period_amount`
+  - `invoice_count_period`
+  - `avg_invoice_amount`
+  - `last_invoice_date`
+  - `typical_lead_time_days`
+  - `order_cutoff_time`
+  - `source_of_contact`
+  - `notes_for_manager`
 
 ## Кто делает
 - Агент: `Warehouse Demand Analyst (Кладовщик-аналитик)`.
@@ -117,6 +150,7 @@ status: active
 5. В отчёте есть хотя бы 1 заполненный блок `поставщик -> товары -> дедлайн заказа`.
 6. Telegram digest содержит только короткую выжимку и рабочие ссылки.
 7. Исходники перемещены в `Обработано` без потери трассировки.
+8. Для активных поставщиков созданы supplier cards с оборотом за период и статусом полноты контактов.
 
 ## Границы ответственности
 - В зоне агента:

@@ -18,22 +18,33 @@ status: active
 ## Формат записи (обязательные поля)
 - `supplier_name`
 - `supplier_legal_entity`
+- `contact_person`
+- `phone`
+- `telegram`
+- `whatsapp`
+- `email`
 - `supplier_contact`
+- `source_of_contact`
 - `product_types`
 - `items_examples`
 - `order_channel` (телефон/whatsapp/telegram/email)
 - `order_cutoff_time` (до какого времени принимают заказ)
 - `typical_lead_time_days`
+- `turnover_period_amount`
+- `invoice_count_period`
+- `avg_invoice_amount`
+- `last_invoice_date`
 - `notes`
 
 ## Таблица поставщиков (заполняется из накладных + подтверждается менеджером)
 
-| supplier_name | supplier_legal_entity | supplier_contact | product_types | items_examples | order_channel | order_cutoff_time | typical_lead_time_days | notes |
-|---|---|---|---|---|---|---|---|---|
-| Testi Coffee | TBD | TBD | кофе_зерно, кофе_drip, чай | зерно 250г/1кг, drip, чай | TBD | TBD | TBD | Подтвердить фактом из накладных |
-| Unica | TBD | TBD | шоколад | белый/тёмный шоколад, какао | TBD | TBD | TBD | Подтвердить фактом из накладных |
+| supplier_name | supplier_legal_entity | contact_person | phone | telegram | whatsapp | email | supplier_contact | source_of_contact | product_types | items_examples | order_channel | order_cutoff_time | typical_lead_time_days | turnover_period_amount | invoice_count_period | avg_invoice_amount | last_invoice_date | notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---|---|
+| Testi Coffee | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | кофе_зерно, кофе_drip, чай | зерно 250г/1кг, drip, чай | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Подтвердить фактом из накладных и найти контакт у Жанны |
+| Unica | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | шоколад | белый/тёмный шоколад, какао | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Подтвердить фактом из накладных и найти контакт у Жанны |
 
 ## Правило обновления
 1. После каждого цикла накладных агент проверяет новые поставки.
 2. Если найден новый поставщик или новый тип товара — добавляет строку.
 3. Если в накладной нет контакта/юр.лица — ставит `TBD` и добавляет задачу на уточнение.
+4. После каждой итерации агент обновляет `turnover_period_amount`, `invoice_count_period`, `avg_invoice_amount`, `last_invoice_date`.
