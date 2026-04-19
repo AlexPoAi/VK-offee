@@ -145,17 +145,51 @@ def detect_github_repo_web_url() -> str:
 
 def detect_git_branch() -> str:
     try:
-        return (
+        branch = (
             subprocess.check_output(
                 ["git", "-C", str(ROOT), "rev-parse", "--abbrev-ref", "HEAD"],
                 text=True,
                 stderr=subprocess.DEVNULL,
             )
             .strip()
-            or "main"
         )
+        if branch and branch != "HEAD":
+            return branch
     except Exception:
-        return "main"
+        pass
+
+    # Detached HEAD fallback: пробуем origin/HEAD -> origin/main
+    try:
+        ref = (
+            subprocess.check_output(
+                ["git", "-C", str(ROOT), "symbolic-ref", "refs/remotes/origin/HEAD"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            .strip()
+        )
+        if ref.startswith("refs/remotes/origin/"):
+            cand = ref.split("refs/remotes/origin/", 1)[1].strip()
+            if cand:
+                return cand
+    except Exception:
+        pass
+
+    return "main"
+
+
+def path_exists_in_head(rel_path: str) -> bool:
+    if not rel_path:
+        return False
+    try:
+        subprocess.check_call(
+            ["git", "-C", str(ROOT), "cat-file", "-e", f"HEAD:{rel_path}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+    except Exception:
+        return False
 
 
 def build_github_link(rel_path: str) -> str:
@@ -165,6 +199,8 @@ def build_github_link(rel_path: str) -> str:
     )
     branch = os.getenv("WAREHOUSE_REPORT_BRANCH", "").strip() or detect_git_branch()
     if not base:
+        return ""
+    if not path_exists_in_head(rel_path):
         return ""
     return f"{base}/blob/{branch}/{quote(rel_path, safe='/')}"
 
@@ -421,6 +457,27 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         "no_abc": no_abc[:5],
         "has_abc": bool(abc_map),
     }
+
+
+def detect_data_gaps(insights: list[dict]) -> list[str]:
+    """Каких данных не хватает для управленческого отчёта руководителя."""
+    types = {str(item.get("report_type", "")) for item in insights}
+    gaps: list[str] = []
+
+    if "invoice" not in types:
+        gaps.append("Нет накладных в структурированном виде: не считаем точную закупочную себестоимость по SKU.")
+    else:
+        gaps.append("Накладные PDF требуют OCR-разбора до SKU-уровня (цена, поставщик, дата).")
+
+    if "sales" not in types:
+        gaps.append("Нет отчёта продаж по SKU за период: нельзя считать спрос и оборачиваемость по позициям.")
+
+    if "revenue" not in types:
+        gaps.append("Нет детальной выручки по точкам/дням: ограничен контроль динамики точек.")
+
+    gaps.append("Нет отчёта списаний/брака: не видно потери и причины перерасхода.")
+    gaps.append("Нет факта поставок (lead time, недопоставки): нельзя оценить надёжность поставщиков.")
+    return gaps[:5]
 
 
 def make_card(source: Path) -> tuple[Path, Path, dict]:
@@ -879,7 +936,7 @@ def telegram_text(
 
     mode = "manual" if manual_run else "auto"
     header = [
-        "📦 <b>Склад: аналитический отчёт</b>",
+        "📦 <b>Склад: управленческий отчёт</b>",
         f"Время: <code>{ts}</code>",
         f"Режим: <b>{mode}</b>",
         f"Окно: последние <b>{hours}ч</b>",
@@ -891,8 +948,31 @@ def telegram_text(
             f"ошибок <b>{run_stats['error']}</b>"
         ),
         f"Карточек: <b>{len(cards)}</b>",
-        "",
     ]
+
+    analytics = build_smart_analytics(insights)
+    if run_stats["error"] > 0:
+        verdict = "🔴 Требует внимания"
+    elif analytics.get("urgent"):
+        verdict = "🟡 Есть риск дефицита"
+    else:
+        verdict = "🟢 Стабильно"
+    header.extend(["", f"Вердикт: <b>{verdict}</b>"])
+
+    action_items: list[str] = []
+    if analytics.get("urgent"):
+        first = analytics["urgent"][:3]
+        action_items.extend([f"Заказать срочно: {x}" for x in first])
+    if analytics.get("attention"):
+        for x in analytics["attention"][:2]:
+            action_items.append(f"Проверить остаток/спрос: {x}")
+    for it in insights:
+        t = str(it.get("report_type", ""))
+        if t == "invoice":
+            action_items.append("Проверить накладные: сверка цены закупа с каталогом.")
+            break
+    if not action_items:
+        action_items.append("Подтвердить, что заказ на период не требуется.")
 
     if report_url:
         header.append(f"Сводка: <a href=\"{report_url}\">WH.REPORT.002</a>")
@@ -908,6 +988,19 @@ def telegram_text(
         header.append("Новых складских отчётов не найдено.")
         return "\n".join(header)
 
+    header.append("")
+    header.append("<b>Что сделать сейчас:</b>")
+    for item in action_items[:6]:
+        header.append(f"• {escape_html(item)}")
+
+    gaps = detect_data_gaps(insights)
+    if gaps:
+        header.append("")
+        header.append("<b>Каких данных не хватает для сильного отчёта:</b>")
+        for g in gaps:
+            header.append(f"• {escape_html(g)}")
+
+    header.append("")
     header.append("<b>Новые карточки и выжимка:</b>")
     for item in insights[:12]:
         card_rel = str(item.get("card_rel", ""))
@@ -953,7 +1046,6 @@ def telegram_text(
         header.append(f"• … и ещё {len(insights)-12}")
 
     # Умная аналитика (ABC + остатки)
-    analytics = build_smart_analytics(insights)
     if analytics:
         header.append("")
         if analytics.get("has_abc"):
