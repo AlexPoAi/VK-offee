@@ -52,3 +52,8 @@ cd ~/Github/VK-offee && bash PACK-warehouse/tools/warehouse_full_loop.sh
 - `WH.REPORT.002-warehouse-sync-summary-latest.md` — сводка последнего цикла
 - `WH.SESSION.001-decision-queue-latest.md` — очередь управленческих сессий
 - `WH.REQUEST.001-zhanna-data-supply-contract.md` — контракт данных (что догружаем от Жанны)
+- `WH.WP.005-manager-report-structure-and-warehouse-agent-operating-protocol-2026-04-19 (Структура управленческого отчёта и протокол работы кладовщика).md` — канон структуры управленческого отчёта
+
+### Ключевые методы
+- `WH.METHOD.001-zhanna-biweekly-intake-and-processing-skill (...)` — intake/обработка biweekly пакета Жанны
+- `WH.METHOD.002-report-first-manager-digest-skill (...)` — report-first протокол перед отправкой digest
