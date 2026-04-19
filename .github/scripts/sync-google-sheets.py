@@ -9,6 +9,7 @@ import os
 import sys
 import random
 import time
+import io
 from pathlib import Path
 import pickle
 import csv
@@ -18,6 +19,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseDownload
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -136,6 +138,62 @@ def find_all_spreadsheets(drive_service, folder_id):
     search_folder(folder_id)
     return spreadsheets
 
+
+def find_supported_files(drive_service, folder_id):
+    """
+    Найти поддерживаемые non-GoogleSheet файлы в папке и подпапках.
+    Сейчас поддерживаем:
+      - text/csv
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (.xlsx)
+    """
+    files = []
+    supported_mimes = {
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+
+    def search_folder(current_folder_id, parent_path=""):
+        query = f"'{current_folder_id}' in parents and trashed=false"
+        results = execute_google_request(
+            drive_service.files().list(
+                q=query,
+                fields="files(id, name, mimeType, parents)",
+                pageSize=1000
+            ),
+            label=f"drive.files.list:files:{parent_path or 'root'}",
+        )
+
+        items = results.get('files', [])
+        for item in items:
+            mime = item.get('mimeType')
+            if mime == 'application/vnd.google-apps.folder':
+                folder_name = item['name']
+                new_path = f"{parent_path}/{folder_name}" if parent_path else folder_name
+                search_folder(item['id'], new_path)
+                continue
+
+            if mime in supported_mimes:
+                files.append({
+                    'id': item['id'],
+                    'name': item['name'],
+                    'path': parent_path,
+                    'mimeType': mime,
+                })
+
+    search_folder(folder_id)
+    return files
+
+
+def download_drive_file_bytes(drive_service, file_id):
+    """Скачать файл из Google Drive в память."""
+    request = drive_service.files().get_media(fileId=file_id)
+    buf = io.BytesIO()
+    downloader = MediaIoBaseDownload(buf, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+    return buf.getvalue()
+
 def get_sheet_names(sheets_service, sheet_id):
     """Получить названия всех листов в таблице"""
     try:
@@ -172,6 +230,42 @@ def save_as_csv(data, file_path):
         writer = csv.writer(f)
         writer.writerows(data)
 
+
+def save_csv_bytes(raw_bytes, file_path):
+    """Сохранение CSV-байтов с мягкой декодировкой."""
+    text = None
+    for enc in ('utf-8-sig', 'utf-8', 'cp1251'):
+        try:
+            text = raw_bytes.decode(enc)
+            break
+        except Exception:
+            continue
+    if text is None:
+        text = raw_bytes.decode('utf-8', errors='replace')
+    with open(file_path, 'w', encoding='utf-8', newline='') as f:
+        f.write(text)
+
+
+def save_xlsx_bytes_as_csvs(raw_bytes, folder_path, base_name):
+    """Конвертировать XLSX в CSV по листам. Возвращает количество созданных CSV."""
+    try:
+        import openpyxl  # optional runtime dependency
+    except Exception as e:
+        print(f"  ⚠️ openpyxl недоступен, XLSX пропущен: {e}")
+        return 0
+
+    created = 0
+    wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True, read_only=True)
+    for ws in wb.worksheets:
+        safe_sheet = sanitize_filename(ws.title)
+        out = folder_path / f"{base_name} - {safe_sheet}.csv"
+        with open(out, 'w', encoding='utf-8', newline='') as f:
+            writer = csv.writer(f)
+            for row in ws.iter_rows(values_only=True):
+                writer.writerow(["" if v is None else v for v in row])
+        created += 1
+    return created
+
 def determine_folder(table_path):
     """Определить папку для сохранения на основе пути"""
     for key, value in FOLDER_MAPPING.items():
@@ -193,7 +287,7 @@ def main():
     print("✅ Авторизация успешна")
     print()
 
-    # Поиск всех таблиц
+    # Поиск всех Google Sheets
     print(f"🔍 Поиск Google Sheets в папке {DRIVE_FOLDER_ID}...")
     spreadsheets = find_all_spreadsheets(drive_service, DRIVE_FOLDER_ID)
     print(f"✅ Найдено таблиц: {len(spreadsheets)}")
@@ -246,6 +340,50 @@ def main():
             stats['sheets_read'] += 1
 
         stats['success'] += 1
+        print()
+
+    # Дополнительно: синк поддерживаемых файлов (CSV/XLSX), загруженных как файлы
+    print("📎 Поиск загруженных CSV/XLSX файлов...")
+    extra_files = find_supported_files(drive_service, DRIVE_FOLDER_ID)
+    print(f"✅ Найдено файлов: {len(extra_files)}")
+    print()
+
+    for item in extra_files:
+        file_id = item['id']
+        file_name = item['name']
+        file_path = item['path']
+        mime = item['mimeType']
+
+        print(f"📦 {file_name} ({file_path or 'root'})")
+        save_folder = determine_folder(file_path)
+        folder_path = KNOWLEDGE_BASE_PATH / save_folder
+        folder_path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            raw = download_drive_file_bytes(drive_service, file_id)
+            safe_base = sanitize_filename(file_name.replace('.xlsx', '').replace('.csv', ''))
+
+            if mime == 'text/csv':
+                out = folder_path / f"{safe_base}.csv"
+                save_csv_bytes(raw, out)
+                print(f"  ✅ CSV сохранён: {out.name}")
+                stats['sheets_read'] += 1
+                stats['success'] += 1
+            elif mime == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                created = save_xlsx_bytes_as_csvs(raw, folder_path, safe_base)
+                if created > 0:
+                    print(f"  ✅ XLSX конвертирован в {created} CSV")
+                    stats['sheets_read'] += created
+                    stats['success'] += 1
+                else:
+                    print("  ⚠️ XLSX не конвертирован (см. предупреждения выше)")
+                    stats['failed'] += 1
+            else:
+                print(f"  ⚠️ Неподдерживаемый mime: {mime}")
+                stats['failed'] += 1
+        except Exception as e:
+            print(f"  ❌ Ошибка обработки файла: {e}")
+            stats['failed'] += 1
         print()
 
     print("="*70)
