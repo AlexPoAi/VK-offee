@@ -102,6 +102,7 @@
 | WH.REPORT.002 | Сводный отчёт последнего синка | `04-work-products/WH.REPORT.002-warehouse-sync-summary-latest.md` |
 | WH.DLQ.001 | Отчёт quarantine (проблемные файлы) | `04-work-products/WH.DLQ.001-quarantine-report.md` |
 | WH.WP.003 | Приоритетный анализ остатков и продаж по свежим файлам Жанны | `04-work-products/WH.WP.003-stock-sales-priority-analysis-2026-04-19 (Приоритетный анализ остатков и продаж по свежим файлам Жанны).md` |
+| WH.WP.004 | Склад как домен: baseline и roadmap автоматизации бизнеса | `04-work-products/WH.WP.004-warehouse-domain-baseline-and-business-automation-roadmap-2026-04-19 (Склад как домен: baseline и roadmap автоматизации бизнеса).md` |
 
 ## Контекст изменений
 
