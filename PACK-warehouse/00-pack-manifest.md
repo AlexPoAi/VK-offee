@@ -53,7 +53,15 @@ cd ~/Github/VK-offee && bash PACK-warehouse/tools/warehouse_full_loop.sh
 - `WH.SESSION.001-decision-queue-latest.md` — очередь управленческих сессий
 - `WH.REQUEST.001-zhanna-data-supply-contract.md` — контракт данных (что догружаем от Жанны)
 - `WH.WP.005-manager-report-structure-and-warehouse-agent-operating-protocol-2026-04-19 (Структура управленческого отчёта и протокол работы кладовщика).md` — канон структуры управленческого отчёта
+- `WH.WP.006-warehouse-full-cycle-architecture-2026-04-19 (...)` — E2E архитектура цикла кладовщика и reporting contract
+
+### Ключевые сущности
+- `WH.SUPPLIER.001-directory.md` — справочник поставщиков и типов продукции
+- `WH.WP.006-warehouse-full-cycle-architecture-2026-04-19 (Архитектура полного цикла кладовщика: document flow, processing, reporting contract).md` — полная архитектура E2E-цикла кладовщика
 
 ### Ключевые методы
 - `WH.METHOD.001-zhanna-biweekly-intake-and-processing-skill (...)` — intake/обработка biweekly пакета Жанны
 - `WH.METHOD.002-report-first-manager-digest-skill (...)` — report-first протокол перед отправкой digest
+
+### Ключевой контракт домена
+- `01-domain-contract/WH.CONTRACT.001-warehouse-intake-processing-reporting-contract.md` — обязательный контракт этапов intake, обработки и руководительской отчётности
