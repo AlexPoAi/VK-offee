@@ -174,6 +174,14 @@ def normalize_ws(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def clean_item_label(text: str) -> str:
+    value = normalize_ws(text)
+    value = re.sub(r"^(?:1а\s+1б\s+2\s+2а\s+3\s+4\s+5\s+6\s+7\s+8\s+9\s+10\s+10а\s+11\s+)?", "", value, flags=re.IGNORECASE)
+    value = re.sub(r"^[A-ZА-Я0-9\"«»._/-]+\s+\d+\s+", "", value)
+    value = re.sub(r"\s+-\s+\d+.*$", "", value)
+    return value[:90].strip(" ,.-") or value[:90]
+
+
 def slugify(text: str) -> str:
     value = text.lower()
     value = re.sub(r"[^a-zа-я0-9]+", "-", value, flags=re.IGNORECASE)
@@ -478,14 +486,17 @@ def write_supplier_cards(records: list[InvoiceRecord]) -> None:
 
     for seller, recs in sorted(by_supplier.items()):
         item_names = []
+        seen_items = set()
         product_types = set()
         total_amount = 0.0
         for rec in recs:
             total_amount += rec.total
             for item in rec.items:
                 product_types.add(item.product_type)
-                if len(item_names) < 12:
-                    item_names.append(item.name)
+                cleaned = clean_item_label(item.name)
+                if cleaned not in seen_items and len(item_names) < 8:
+                    seen_items.add(cleaned)
+                    item_names.append(cleaned)
 
         invoice_count = len(recs)
         avg_invoice = total_amount / invoice_count if invoice_count else 0.0
@@ -507,40 +518,64 @@ def write_supplier_cards(records: list[InvoiceRecord]) -> None:
             "",
             f"# Supplier Card — {seller}",
             "",
-            "## Реквизиты",
-            f"- `supplier_name`: {seller}",
-            f"- `supplier_legal_entity`: {legal_entity}",
-            f"- `supplier_inn`: {seller_inn}",
-            f"- `contact_person`: {contacts['contact_person']}",
-            f"- `phone`: {contacts['phone']}",
-            f"- `telegram`: {contacts['telegram']}",
-            f"- `whatsapp`: {contacts['whatsapp']}",
-            f"- `email`: {contacts['email']}",
-            f"- `supplier_contact`: {contacts['supplier_contact']}",
-            f"- `source_of_contact`: {contacts['source_of_contact']}",
+            "## Executive Summary",
+            f"- Поставщик подтверждён по накладным: **да**",
+            f"- Оборот за период: **{f'{total_amount:,.2f}'.replace(',', ' ')} руб**",
+            f"- Последняя закупка: **{last_invoice}**",
+            f"- Основная категория: **{', '.join(sorted(product_types)) or 'TBD'}**",
             "",
-            "## Операционный профиль",
-            f"- `product_types`: {', '.join(sorted(product_types)) or 'TBD'}",
-            f"- `key_items`: {', '.join(item_names) or 'TBD'}",
-            f"- `order_channel`: {contacts['order_channel']}",
-            "- `order_cutoff_time`: TBD",
-            "- `typical_lead_time_days`: TBD",
+            "## Карточка",
+            "| Поле | Значение |",
+            "|---|---|",
+            f"| Поставщик | {seller} |",
+            f"| Юрлицо | {legal_entity} |",
+            f"| ИНН/КПП | {seller_inn} |",
+            f"| Категория | {', '.join(sorted(product_types)) or 'TBD'} |",
+            f"| Последняя закупка | {last_invoice} |",
+            f"| Оборот периода | {f'{total_amount:,.2f}'.replace(',', ' ')} руб |",
             "",
-            "## Метрики периода",
-            f"- `turnover_period_amount`: {total_amount:,.2f} руб".replace(",", " "),
-            f"- `invoice_count_period`: {invoice_count}",
-            f"- `avg_invoice_amount`: {avg_invoice:,.2f} руб".replace(",", " "),
-            f"- `last_invoice_date`: {last_invoice}",
+            "## Контакты",
+            "| Канал | Значение |",
+            "|---|---|",
+            f"| Контактное лицо | {contacts['contact_person']} |",
+            f"| Телефон | {contacts['phone']} |",
+            f"| Telegram | {contacts['telegram']} |",
+            f"| WhatsApp | {contacts['whatsapp']} |",
+            f"| Email | {contacts['email']} |",
+            f"| Основной канал заказа | {contacts['order_channel']} |",
+            f"| Источник контакта | {contacts['source_of_contact']} |",
             "",
-            "## Источники факта",
+            "## Закупочный профиль",
+            "| Поле | Значение |",
+            "|---|---|",
+            "| Cutoff для заказа | TBD |",
+            "| Типичный lead time | TBD |",
+            "| Статус контакта | частично подтверждён / требует дозаполнения |",
+            "",
+            "### Ключевые позиции",
         ]
+        lines.extend(f"- {item}" for item in item_names or ["TBD"])
+        lines.extend(
+            [
+                "",
+                "## Метрики периода",
+                "| Метрика | Значение |",
+                "|---|---:|",
+                f"| Оборот за период | {f'{total_amount:,.2f}'.replace(',', ' ')} руб |",
+                f"| Количество накладных | {invoice_count} |",
+                f"| Средний чек | {f'{avg_invoice:,.2f}'.replace(',', ' ')} руб |",
+                f"| Последняя закупка | {last_invoice} |",
+                "",
+                "## Источники",
+            ]
+        )
         lines.extend(f"- `{path}`" for path in source_files[:10])
         lines.extend(
             [
                 "",
                 "## Заметки для руководителя",
-                "- Карточка создана автоматически из PDF-накладных.",
-                "- Контакты пока не извлечены из факта закупок и должны быть подтверждены отдельным источником.",
+                "- Карточка создана автоматически из PDF-накладных и supplier-справочника.",
+                "- Если контакт не заполнен, значит он пока не подтверждён надёжным источником.",
             ]
         )
         filename = f"WH.SUPPLIER.CARD.{slugify(seller)}.md"
