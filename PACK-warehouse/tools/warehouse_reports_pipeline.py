@@ -206,6 +206,33 @@ def build_github_link(rel_path: str) -> str:
     return f"{base}/blob/{branch}/{quote(rel_path, safe='/')}"
 
 
+def report_type_human(report_type: str) -> str:
+    return {
+        "stock": "Остатки",
+        "inventory": "Инвентаризация",
+        "inventory_non_stock": "Инвентаризация (сводная)",
+        "beans": "Зерно",
+        "abc": "ABC-анализ",
+        "sales": "Продажи",
+        "revenue": "Выручка",
+        "catalog": "Каталог",
+        "invoice": "Накладные",
+        "comment": "Комментарии",
+        "other": "Отчёт",
+    }.get((report_type or "").strip(), "Отчёт")
+
+
+def telegram_item_title(item: dict) -> str:
+    source_rel = str(item.get("source_rel", "") or "")
+    source_name = Path(source_rel).name if source_rel else str(item.get("title", "Отчёт"))
+    source_name = re.sub(r"\.(csv|pdf)$", "", source_name, flags=re.IGNORECASE)
+    source_name = re.sub(r"\s+-\s+лист\d+$", "", source_name, flags=re.IGNORECASE)
+    source_name = re.sub(r"\s+-\s+таблица$", "", source_name, flags=re.IGNORECASE)
+    source_name = source_name.replace("_", " ").strip()
+    kind = report_type_human(str(item.get("report_type", "") or ""))
+    return f"{kind}: {source_name}" if source_name else kind
+
+
 def load_registry() -> dict[str, dict[str, str]]:
     if not REGISTRY_FILE.exists():
         return {}
@@ -839,6 +866,7 @@ def build_latest_summary(
     bot_cards: Iterable[Path],
     hours: int,
     run_stats: dict[str, int],
+    insights: list[dict],
 ) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     cards = sorted(set(cards))
@@ -870,6 +898,24 @@ def build_latest_summary(
             lines.append(f"- `{rel}`")
     else:
         lines.append("- Новых складских отчетов в окне не найдено.")
+    lines.extend(["", "## Новые карточки и выжимка (ссылки)"])
+    if insights:
+        for item in insights:
+            card_rel = str(item.get("card_rel", "") or "")
+            source_rel = str(item.get("source_rel", "") or "")
+            card_url = build_github_link(card_rel) if card_rel else ""
+            source_url = build_github_link(source_rel) if source_rel else ""
+            title = telegram_item_title(item)
+            if card_url and source_url:
+                lines.append(f"- [{title}]({card_url}) · [источник]({source_url})")
+            elif card_url:
+                lines.append(f"- [{title}]({card_url}) · источник: `{source_rel or 'n/a'}`")
+            elif source_url:
+                lines.append(f"- {title} · [источник]({source_url})")
+            else:
+                lines.append(f"- {title} · карточка: `{card_rel or 'n/a'}` · источник: `{source_rel or 'n/a'}`")
+    else:
+        lines.append("- Новых карточек в этом цикле нет.")
     lines.extend(["", "## Карточки для бота"])
     if bot_cards:
         for c in bot_cards:
@@ -1225,6 +1271,24 @@ def telegram_text(
         lines.append(f"• {escape_html(item)}")
 
     lines.append("")
+    if insights:
+        lines.append("<b>Новые карточки (кликабельно)</b>")
+        for item in insights[:8]:
+            card_rel = str(item.get("card_rel", "") or "")
+            source_rel = str(item.get("source_rel", "") or "")
+            card_url = build_github_link(card_rel) if card_rel else ""
+            source_url = build_github_link(source_rel) if source_rel else ""
+            title = escape_html(telegram_item_title(item))
+            if card_url and source_url:
+                lines.append(f"• <a href=\"{card_url}\">{title}</a> · <a href=\"{source_url}\">источник</a>")
+            elif card_url:
+                lines.append(f"• <a href=\"{card_url}\">{title}</a> · источник: <code>{escape_html(source_rel or 'n/a')}</code>")
+            elif source_url:
+                lines.append(f"• {title} · <a href=\"{source_url}\">источник</a>")
+            else:
+                lines.append(f"• {title} · карточка: <code>{escape_html(card_rel or 'n/a')}</code>")
+        lines.append("")
+
     if report_url:
         lines.append(f"Полный отчёт: <a href=\"{report_url}\">WH.REPORT.002</a>")
     else:
@@ -1331,7 +1395,7 @@ def main() -> int:
     if not insights and args.replay_latest_cards > 0:
         insights = replay_insights_from_registry(registry, limit=args.replay_latest_cards)
 
-    build_latest_summary(cards, bot_cards, args.hours, run_stats)
+    build_latest_summary(cards, bot_cards, args.hours, run_stats, insights)
     build_decision_queue(insights, run_stats, args.manual_run)
     print(
         f"[warehouse] sources={len(sources)} cards={len(set(cards))} "
@@ -1340,6 +1404,9 @@ def main() -> int:
     )
 
     if args.send_telegram:
+        if (not args.manual_run) and (os.getenv("WAREHOUSE_ALLOW_AUTO_TELEGRAM", "0").strip() != "1"):
+            print("[warehouse] telegram=skip:auto-disabled (use --manual-run or WAREHOUSE_ALLOW_AUTO_TELEGRAM=1)")
+            return 0
         if (not cards) and (not args.telegram_on_empty):
             print("[warehouse] telegram=skip:no-new-cards")
             return 0

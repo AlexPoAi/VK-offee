@@ -14,11 +14,8 @@
   <key>WorkingDirectory</key>
   <string>/Users/alexander/Github/VK-offee</string>
 
-  <key>StartInterval</key>
-  <integer>1800</integer>
-
   <key>RunAtLoad</key>
-  <true/>
+  <false/>
 
   <key>StandardOutPath</key>
   <string>/Users/alexander/Github/VK-offee/.github/scripts/sync.log</string>

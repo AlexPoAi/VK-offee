@@ -16,6 +16,9 @@ fi
 
 PIPELINE_SCRIPT="$ROOT_DIR/PACK-warehouse/tools/warehouse_reports_pipeline.py"
 PIPELINE_HOURS="${WAREHOUSE_PIPELINE_HOURS:-336}"
+# По умолчанию автоцикл НЕ отправляет Telegram (только обработка/архивация).
+# Для принудительной авто-отправки: WAREHOUSE_TELEGRAM_AUTOSEND=1
+WAREHOUSE_TELEGRAM_AUTOSEND="${WAREHOUSE_TELEGRAM_AUTOSEND:-0}"
 
 # Папка Google Drive «Новое» — куда Жанна кладёт файлы
 WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92}"
@@ -27,12 +30,13 @@ WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1pHu
   # Синк папки «Новое» Жанны (ABC-анализ, остатки, заявки)
   echo "[warehouse] syncing Zhanna 'Новое' folder: $WAREHOUSE_DRIVE_FOLDER_ID"
   GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"
-  # Pipeline: создать карточки + отправить Telegram-отчёт (только если есть новые)
+  # Pipeline: создать карточки (Telegram по умолчанию выключен в автоцикле)
   if [[ -f "$PIPELINE_SCRIPT" ]]; then
-    "$PYTHON_BIN" "$PIPELINE_SCRIPT" \
-      --hours "$PIPELINE_HOURS" \
-      --send-telegram \
-      --manual-run
+    PIPELINE_ARGS=(--hours "$PIPELINE_HOURS")
+    if [[ "$WAREHOUSE_TELEGRAM_AUTOSEND" == "1" ]]; then
+      PIPELINE_ARGS+=(--send-telegram)
+    fi
+    "$PYTHON_BIN" "$PIPELINE_SCRIPT" "${PIPELINE_ARGS[@]}"
   else
     echo "[warehouse] pipeline script not found: $PIPELINE_SCRIPT"
   fi
