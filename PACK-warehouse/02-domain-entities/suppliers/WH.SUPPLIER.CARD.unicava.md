@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: UNICAVA
-updated: 2026-04-20 23:14
+updated: 2026-04-20 23:20
 status: active
 ---
 
