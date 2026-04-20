@@ -633,6 +633,15 @@ def normalize_item_name(value: str) -> str:
     return s.strip()
 
 
+def canonical_item_label(value: str) -> str:
+    text = (value or "").strip()
+    low = text.lower()
+    low = low.replace("капельница", "дрип")
+    low = low.replace("капельный пакет", "дрип")
+    low = re.sub(r"\s+", " ", low).strip()
+    return low.title()
+
+
 def classify_item_product_type(item_name: str) -> str:
     low = normalize_item_name(item_name)
     if any(k in low for k in ("вупи", "чизкейк", "моти", "шу", "десерт", "пирож", "эклер")):
@@ -948,7 +957,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
 
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
         cat = abc_map.get(name_low)
-        display_name = stock_map_raw.get(name_low) or name_low.title()
+        display_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
         display = f"{display_name}: {qty} шт"
         if cat == "A":
             urgent.append(display)
@@ -989,7 +998,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         to_order = max(0, min_target - int(qty))
         if to_order <= 0:
             continue
-        raw_name = stock_map_raw.get(name_low) or name_low.title()
+        raw_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
         supplier = infer_supplier_for_item(raw_name)
         supplier_name = supplier.get("supplier_name", "Уточнить у Жанны")
         contact = supplier.get("supplier_contact", "TBD")
@@ -1062,7 +1071,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
             continue
         if name_low in sales_top_names:
             continue
-        display_name = stock_map_raw.get(name_low) or name_low.title()
+        display_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
         if name_low in sales_weak_names:
             reduce_or_stop.append(
                 f"{display_name}: слабая продажа + C-категория, не расширять закупку до следующего цикла"
@@ -1076,7 +1085,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         product_type = classify_item_product_type(weak_name)
         if product_type not in {"десерты", "кухня"}:
             continue
-        display_name = stock_map_raw.get(weak_name) or weak_name.title()
+        display_name = canonical_item_label(stock_map_raw.get(weak_name) or weak_name.title())
         reduce_or_stop.append(
             f"{display_name}: слабая продажа в десертном/кухонном контуре, проверить сокращение или снятие"
         )
@@ -1538,9 +1547,19 @@ def build_latest_summary(
 
 
 def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual_run: bool) -> str:
-    """Очередь управленческих сессий по свежим складским артефактам."""
+    """Очередь управленческих решений без документного шума."""
     ts = now_stamp()
     mode = "manual" if manual_run else "auto"
+    analytics = build_smart_analytics(insights)
+    sales_weak: list[str] = []
+    for item in insights:
+        if item.get("report_type") != "sales":
+            continue
+        sm = item.get("sales_metrics") or {}
+        for name, qty, rev in sm.get("weak", [])[:6]:
+            sales_weak.append(f"{canonical_item_label(str(name))}: {qty:.0f} шт / {format_money(float(rev))}")
+    sales_weak = list(dict.fromkeys(sales_weak))[:6]
+    gaps = detect_data_gaps(insights)
     lines = [
         "---",
         "type: warehouse-decision-queue",
@@ -1556,38 +1575,45 @@ def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual
         f"- Дубликатов: **{run_stats['duplicate']}**",
         f"- Ошибок: **{run_stats['error']}**",
         "",
-        "## Сессии к разбору",
+        "## WH.SESSION.001 — Что решить сейчас",
     ]
 
-    if not insights:
-        lines.append("- Новых сессий нет: в текущем окне не сформированы новые карточки.")
-    else:
-        for idx, item in enumerate(insights, start=1):
-            title = str(item.get("title", "warehouse-report"))
-            card_rel = str(item.get("card_rel", ""))
-            source_rel = str(item.get("source_rel", ""))
-            report_type = str(item.get("report_type", "other"))
-
-            if report_type in {"stock", "inventory", "beans"}:
-                action = "Проверить дефицитные SKU и сформировать заказ-лист."
-            elif report_type == "abc":
-                action = "Обновить приоритеты A/B/C и reorder-план."
-            elif report_type == "comment":
-                action = "Разобрать комментарии и зафиксировать операционные задачи."
-            else:
-                action = "Сверить данные и вынести решение по закупке/остаткам."
-
-            lines.extend(
-                [
-                    f"### WH.SESSION.{idx:03d} — {title}",
-                    f"- Тип: `{report_type}`",
-                    f"- Статус: `pending_owner_review`",
-                    f"- Карточка: `{card_rel}`" if card_rel else "- Карточка: `n/a`",
-                    f"- Источник: `{source_rel}`" if source_rel else "- Источник: `n/a`",
-                    f"- Следующее действие: {action}",
-                    "",
-                ]
+    critical_orders = analytics.get("critical_orders") or []
+    if critical_orders:
+        lines.append("- Срочные позиции к заказу:")
+        for item in critical_orders[:8]:
+            lines.append(
+                f"  - {item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт, "
+                f"{item['supplier_name']}, дедлайн {item['deadline']}"
             )
+    else:
+        lines.append("- Срочных позиций к заказу не выявлено.")
+
+    lines.extend(["", "## WH.SESSION.002 — Что проверить вручную"])
+    manual_review = analytics.get("manual_review") or []
+    if manual_review:
+        for item in manual_review[:8]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- Критичных ручных проверок нет.")
+
+    lines.extend(["", "## WH.SESSION.003 — Ассортимент и продажи"])
+    if sales_weak:
+        lines.append("- Слабые позиции для решения оставить / сокращать / снимать:")
+        for item in sales_weak:
+            lines.append(f"  - {item}")
+    else:
+        lines.append("- Слабых позиций по текущему набору продаж не выявлено.")
+
+    passive_monitoring = analytics.get("passive_monitoring") or []
+    if passive_monitoring:
+        lines.append("- Десерты и кухня: только аналитическое наблюдение:")
+        for item in passive_monitoring[:8]:
+            lines.append(f"  - {item}")
+
+    lines.extend(["", "## WH.SESSION.004 — Каких данных не хватает"])
+    for item in gaps[:5]:
+        lines.append(f"- {item}")
 
     text = "\n".join(lines) + "\n"
     DECISION_QUEUE.write_text(text, encoding="utf-8")
