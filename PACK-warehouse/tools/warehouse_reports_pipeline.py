@@ -289,8 +289,18 @@ def find_recent_reports(hours: int) -> list[Path]:
 
 
 def parse_csv_rows(path: Path) -> list[list[str]]:
-    with path.open(encoding="utf-8") as f:
-        rows = list(csv.reader(f))
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    sample = raw[:8000]
+    delimiter = ","
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        delimiter = dialect.delimiter
+    except Exception:
+        for cand in (";", "\t", "|", ","):
+            if sample.count(cand) >= 3:
+                delimiter = cand
+                break
+    rows = list(csv.reader(raw.splitlines(), delimiter=delimiter))
     if not rows:
         raise ValueError("empty csv")
     return rows
@@ -382,6 +392,7 @@ def parse_stock_metrics(rows: list[list[str]]) -> dict:
         "rows": 0,
         "low_stock_count": 0,
         "low_stock_items": [],
+        "item_totals": {},
         "totals_by_location": {"Тургенева": 0, "Луговая": 0, "Самокиша": 0},
     }
     if not rows:
@@ -397,6 +408,7 @@ def parse_stock_metrics(rows: list[list[str]]) -> dict:
             continue
         total = int(float(total_raw))
         metrics["rows"] += 1
+        metrics["item_totals"][normalize_item_name(name)] = total
 
         for idx, loc in ((2, "Тургенева"), (3, "Луговая"), (4, "Самокиша")):
             cell = row[idx].strip()
@@ -429,29 +441,38 @@ def parse_abc_categories(rows: list[list[str]]) -> dict[str, str]:
     result: dict[str, str] = {}
     if not rows:
         return result
-    # Ищем заголовок: столбец с названием и столбец с категорией
-    header = [c.strip().lower() for c in rows[0]]
+    # Ищем строку-заголовок в первых строках (в ABC часто есть "шапка" перед таблицей).
+    header_row_idx = 0
     name_col = -1
     cat_col = -1
-    for i, h in enumerate(header):
-        if any(kw in h for kw in ("наимен", "товар", "позиц", "продукт", "name")):
-            if name_col == -1:
-                name_col = i
-        if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")):
-            if cat_col == -1:
-                cat_col = i
+    scan_limit = min(len(rows), 12)
+    for ridx in range(scan_limit):
+        header = [c.strip().lower() for c in rows[ridx]]
+        local_name = -1
+        local_cat = -1
+        for i, h in enumerate(header):
+            if any(kw in h for kw in ("наимен", "товар", "позиц", "продукт", "name", "номенклат")) and local_name == -1:
+                local_name = i
+            if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")) and local_cat == -1:
+                local_cat = i
+        if local_name != -1 and local_cat != -1:
+            header_row_idx = ridx
+            name_col = local_name
+            cat_col = local_cat
+            break
     if name_col == -1:
         name_col = 0
     if cat_col == -1:
         # Ищем столбец где есть значения A/B/C
-        for i in range(len(rows[0])):
-            vals = {r[i].strip().upper() for r in rows[1:] if len(r) > i and r[i].strip()}
+        width = max(len(r) for r in rows)
+        for i in range(width):
+            vals = {r[i].strip().upper() for r in rows[header_row_idx + 1 :] if len(r) > i and r[i].strip()}
             if vals and vals.issubset({"A", "B", "C", "А", "В", "С"}):
                 cat_col = i
                 break
     if cat_col == -1:
         return result
-    for r in rows[1:]:
+    for r in rows[header_row_idx + 1 :]:
         if len(r) <= max(name_col, cat_col):
             continue
         name = r[name_col].strip()
@@ -551,22 +572,178 @@ def parse_non_stock_inventory_metrics(rows: list[list[str]]) -> dict[str, object
     }
 
 
+def normalize_item_name(value: str) -> str:
+    s = (value or "").lower().strip()
+    s = s.replace("ё", "е")
+    s = re.sub(r"\s+", " ", s)
+    s = re.sub(r"[^a-zа-я0-9 ]+", "", s)
+    return s.strip()
+
+
+def infer_supplier_for_item(item_name: str) -> str:
+    low = normalize_item_name(item_name)
+    if any(k in low for k in ("дрип", "эспрессо", "зерно", "кофе")):
+        return "ООО Тэйсти Кофе"
+    if "шоколад" in low:
+        return "Шоколад UNICAVA"
+    if any(k in low for k in ("сироп",)):
+        return "Барсервис"
+    if any(k in low for k in ("моющ", "хоз", "чист", "салфет", "перчат")):
+        return "Закуп-приход"
+    return "Уточнить у Жанны"
+
+
+def parse_sales_metrics(rows: list[list[str]]) -> dict[str, object]:
+    if not rows:
+        return {"top": [], "weak": []}
+    header_idx = 0
+    name_col = -1
+    qty_col = -1
+    rev_col = -1
+    for ridx in range(min(len(rows), 10)):
+        header = [c.strip().lower() for c in rows[ridx]]
+        for i, h in enumerate(header):
+            if name_col == -1 and any(k in h for k in ("наимен", "товар", "номенклат", "пози")):
+                name_col = i
+            if qty_col == -1 and any(k in h for k in ("кол", "шт", "qty", "кол-во")):
+                qty_col = i
+            if rev_col == -1 and any(k in h for k in ("выруч", "сумм", "оборот", "sales")):
+                rev_col = i
+        if name_col != -1 and (qty_col != -1 or rev_col != -1):
+            header_idx = ridx
+            break
+    if name_col == -1:
+        name_col = 0
+    items: list[tuple[str, float, float]] = []
+    for r in rows[header_idx + 1 :]:
+        if len(r) <= name_col:
+            continue
+        name = (r[name_col] or "").strip()
+        if not name:
+            continue
+        qty = 0.0
+        rev = 0.0
+        if qty_col != -1 and len(r) > qty_col:
+            qty = parse_number(r[qty_col] or "") or 0.0
+        if rev_col != -1 and len(r) > rev_col:
+            rev = parse_number(r[rev_col] or "") or 0.0
+        if qty <= 0 and rev <= 0:
+            continue
+        items.append((name, qty, rev))
+    if not items:
+        return {"top": [], "weak": []}
+    by_qty = sorted(items, key=lambda x: (x[1], x[2]), reverse=True)
+    weak = sorted(items, key=lambda x: (x[1], x[2]))[:5]
+    return {"top": by_qty[:5], "weak": weak}
+
+
+def parse_catalog_prices(rows: list[list[str]]) -> dict[str, float]:
+    if not rows:
+        return {}
+    name_col = -1
+    price_col = -1
+    header_idx = 0
+    for ridx in range(min(len(rows), 10)):
+        header = [c.strip().lower() for c in rows[ridx]]
+        for i, h in enumerate(header):
+            if name_col == -1 and any(k in h for k in ("наимен", "товар", "номенклат", "пози")):
+                name_col = i
+            if price_col == -1 and any(k in h for k in ("цена", "стоим", "price")):
+                price_col = i
+        if name_col != -1 and price_col != -1:
+            header_idx = ridx
+            break
+    if name_col == -1 or price_col == -1:
+        return {}
+    out: dict[str, float] = {}
+    for r in rows[header_idx + 1 :]:
+        if len(r) <= max(name_col, price_col):
+            continue
+        name = (r[name_col] or "").strip()
+        price = parse_number(r[price_col] or "")
+        if not name or price is None or price <= 0:
+            continue
+        out[normalize_item_name(name)] = float(price)
+    return out
+
+
+def price_delta_from_catalog(insights: list[dict]) -> dict[str, list[str]]:
+    catalogs = [i for i in insights if i.get("report_type") == "catalog" and i.get("catalog_prices")]
+    if len(catalogs) < 2:
+        return {"up": [], "down": []}
+    def _mtime(it: dict) -> float:
+        rel = str(it.get("source_rel") or "")
+        p = ROOT / rel if rel else None
+        return p.stat().st_mtime if p and p.exists() else 0.0
+    catalogs = sorted(catalogs, key=_mtime)
+    prev = catalogs[-2].get("catalog_prices") or {}
+    curr = catalogs[-1].get("catalog_prices") or {}
+    up: list[tuple[str, float]] = []
+    down: list[tuple[str, float]] = []
+    for name, new_price in curr.items():
+        old_price = prev.get(name)
+        if old_price is None or old_price <= 0:
+            continue
+        delta_pct = ((new_price - old_price) / old_price) * 100.0
+        if abs(delta_pct) < 0.5:
+            continue
+        if delta_pct > 0:
+            up.append((name, delta_pct))
+        else:
+            down.append((name, delta_pct))
+    up.sort(key=lambda x: x[1], reverse=True)
+    down.sort(key=lambda x: x[1])
+    return {
+        "up": [f"{n.title()} (+{d:.1f}%)" for n, d in up[:5]],
+        "down": [f"{n.title()} ({d:.1f}%)" for n, d in down[:5]],
+    }
+
+
+def consumption_alerts(insights: list[dict]) -> list[str]:
+    stocks = [i for i in insights if i.get("report_type") in {"stock", "inventory", "beans"} and i.get("stock_items")]
+    if len(stocks) < 2:
+        return []
+    def _mtime(it: dict) -> float:
+        rel = str(it.get("source_rel") or "")
+        p = ROOT / rel if rel else None
+        return p.stat().st_mtime if p and p.exists() else 0.0
+    stocks = sorted(stocks, key=_mtime)
+    prev = stocks[-2].get("stock_items") or {}
+    curr = stocks[-1].get("stock_items") or {}
+    alerts: list[tuple[str, int]] = []
+    for name, old_qty in prev.items():
+        new_qty = curr.get(name)
+        if new_qty is None:
+            continue
+        delta = int(old_qty) - int(new_qty)
+        if delta <= 0:
+            continue
+        if any(k in name for k in ("моющ", "хоз", "чист", "салфет", "перчат")) and delta >= 3:
+            alerts.append((name, delta))
+    alerts.sort(key=lambda x: x[1], reverse=True)
+    return [f"{n.title()}: расход {d} шт за период" for n, d in alerts[:5]]
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
     stock_map: dict[str, int] = {}
+    stock_map_raw: dict[str, str] = {}
     for item in insights:
         if item.get("report_type") in ("stock", "inventory", "beans"):
             for name, qty in (item.get("top_low_items") or []):
-                key = name.lower().strip()
+                key = normalize_item_name(name)
                 if key not in stock_map or stock_map[key] > qty:
                     stock_map[key] = qty
+                    stock_map_raw[key] = str(name).strip()
 
     # Собираем ABC категории
     abc_map: dict[str, str] = {}
     for item in insights:
         if item.get("report_type") == "abc":
-            abc_map.update(item.get("abc_categories") or {})
+            raw = item.get("abc_categories") or {}
+            for k, v in raw.items():
+                abc_map[normalize_item_name(str(k))] = str(v).strip().upper()
 
     if not stock_map:
         return {}
@@ -578,7 +755,8 @@ def build_smart_analytics(insights: list[dict]) -> dict:
 
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
         cat = abc_map.get(name_low)
-        display = f"{name_low.title()}: {qty} шт"
+        display_name = stock_map_raw.get(name_low) or name_low.title()
+        display = f"{display_name}: {qty} шт"
         if cat == "A":
             urgent.append(display)
         elif cat == "B":
@@ -593,12 +771,25 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         if cat == "C" and name_low not in stock_map:
             excess.append(f"{name_low.title()} (C-категория, в реестре)")
 
+    order_now: list[str] = []
+    for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1])[:12]:
+        cat = abc_map.get(name_low) or "A"
+        min_target = 10 if cat == "A" else 6 if cat == "B" else 4
+        to_order = max(0, min_target - int(qty))
+        if to_order <= 0:
+            continue
+        raw_name = stock_map_raw.get(name_low) or name_low.title()
+        supplier = infer_supplier_for_item(raw_name)
+        order_now.append(f"{raw_name}: заказать {to_order} шт у {supplier} (до 18:00)")
+    order_now = order_now[:8]
+
     return {
         "urgent": urgent[:8],
         "attention": attention[:6],
         "excess": excess[:5],
         "no_abc": no_abc[:5],
         "has_abc": bool(abc_map),
+        "order_now": order_now,
     }
 
 
@@ -746,6 +937,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                     insight["rows"] = metrics["rows"]
                     insight["low_stock_count"] = metrics["low_stock_count"]
                     insight["top_low_items"] = metrics["low_stock_items"][:3]
+                    insight["stock_items"] = metrics.get("item_totals") or {}
                     body_lines.extend(
                         [
                             "## Метрики",
@@ -812,6 +1004,10 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                 insight["period"] = period
                 insight["table_headers"] = profile["headers"]
                 insight["top_numeric"] = profile["top_numeric"]
+                if report_type == "sales":
+                    insight["sales_metrics"] = parse_sales_metrics(rows)
+                if report_type == "catalog":
+                    insight["catalog_prices"] = parse_catalog_prices(rows)
 
                 type_human = {
                     "sales": "Продажи",
@@ -1192,6 +1388,19 @@ def telegram_text(
     ]
 
     analytics = build_smart_analytics(insights)
+    price_delta = price_delta_from_catalog(insights)
+    sales_top: list[str] = []
+    sales_weak: list[str] = []
+    for item in insights:
+        if item.get("report_type") == "sales":
+            sm = item.get("sales_metrics") or {}
+            for name, qty, rev in sm.get("top", [])[:3]:
+                sales_top.append(f"{name}: {qty:.0f} шт / {rev:,.0f} ₽".replace(",", " "))
+            for name, qty, rev in sm.get("weak", [])[:3]:
+                sales_weak.append(f"{name}: {qty:.0f} шт / {rev:,.0f} ₽".replace(",", " "))
+    sales_top = list(dict.fromkeys(sales_top))[:5]
+    sales_weak = list(dict.fromkeys(sales_weak))[:5]
+    consumption = consumption_alerts(insights)
     if run_stats["error"] > 0:
         verdict = "🔴 Требует внимания"
     elif analytics.get("urgent"):
@@ -1252,7 +1461,10 @@ def telegram_text(
 
     lines.append("")
     lines.append("<b>Срочно (до 24ч)</b>")
-    for item in urgent_items:
+    order_now = analytics.get("order_now") or []
+    for item in order_now[:5]:
+        lines.append(f"• {escape_html(item)}")
+    for item in urgent_items[:3]:
         lines.append(f"• {escape_html(item)}")
 
     lines.append("")
@@ -1264,6 +1476,41 @@ def telegram_text(
     lines.append("<b>Что не заказывать/сократить</b>")
     for item in reduce_items:
         lines.append(f"• {escape_html(item)}")
+
+    lines.append("")
+    lines.append("<b>Изменение цен (каталог)</b>")
+    if price_delta.get("up") or price_delta.get("down"):
+        if price_delta.get("up"):
+            lines.append("• Рост цен:")
+            for item in price_delta.get("up", [])[:5]:
+                lines.append(f"• {escape_html(item)}")
+        if price_delta.get("down"):
+            lines.append("• Снижение цен:")
+            for item in price_delta.get("down", [])[:5]:
+                lines.append(f"• {escape_html(item)}")
+    else:
+        lines.append("• Недостаточно данных для сравнения цен (нужны 2 каталога с колонкой цены).")
+
+    lines.append("")
+    lines.append("<b>ABC и продажи</b>")
+    if sales_top:
+        lines.append("• Топ продаж:")
+        for item in sales_top:
+            lines.append(f"• {escape_html(item)}")
+    if sales_weak:
+        lines.append("• Слабые позиции:")
+        for item in sales_weak:
+            lines.append(f"• {escape_html(item)}")
+    if (not sales_top) and (not sales_weak):
+        lines.append("• Не удалось извлечь топ/слабые позиции из текущих файлов продаж.")
+
+    lines.append("")
+    lines.append("<b>Расход (моющие/хоз)</b>")
+    if consumption:
+        for item in consumption:
+            lines.append(f"• {escape_html(item)}")
+    else:
+        lines.append("• Аномальный расход по моющим/хоз не выявлен или не хватает сопоставимых срезов.")
 
     lines.append("")
     lines.append("<b>Риски данных (чего не хватает)</b>")
