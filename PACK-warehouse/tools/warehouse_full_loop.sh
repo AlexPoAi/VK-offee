@@ -20,17 +20,18 @@ PIPELINE_HOURS="${WAREHOUSE_PIPELINE_HOURS:-336}"
 # Для принудительной авто-отправки: WAREHOUSE_TELEGRAM_AUTOSEND=1
 WAREHOUSE_TELEGRAM_AUTOSEND="${WAREHOUSE_TELEGRAM_AUTOSEND:-0}"
 
-# Папка Google Drive «Новое» — куда Жанна кладёт файлы
-WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92}"
+# Папка Google Drive intake — куда Жанна кладёт новые файлы
+# Рабочая ветка: root `Отчёты для бота` -> intake `Новые документы`.
+WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1Jg1Zgj2_ueTV6-NQamAU8XCPalFNhO8W}"
 # Папка Google Drive «Обработано» — куда перемещаем после обработки
-WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1pHugGbDKpyXqAvGjULiNIMOl64vCc29V}"
+WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1WanukzWeuqJgUQ7N8YkG9oC23-DIRGjT}"
 
 {
   echo "========== $(date '+%Y-%m-%d %H:%M:%S') warehouse_full_loop start =========="
   sync_ok=0
   pipeline_ok=0
-  # Синк папки «Новое» Жанны (ABC-анализ, остатки, заявки)
-  echo "[warehouse] syncing Zhanna 'Новое' folder: $WAREHOUSE_DRIVE_FOLDER_ID"
+  # Синк intake-папки Жанны (ABC-анализ, остатки, заявки)
+  echo "[warehouse] syncing Zhanna intake folder: $WAREHOUSE_DRIVE_FOLDER_ID"
   if GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"; then
     sync_ok=1
     echo "[warehouse] sync status=ok"
@@ -52,7 +53,7 @@ WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1pHu
   else
     echo "[warehouse] pipeline script not found: $PIPELINE_SCRIPT"
   fi
-  # Переместить обработанные файлы из «Новое» в «Обработано»
+  # Переместить обработанные файлы из intake-папки в «Обработано»
   if [[ "$sync_ok" == "1" ]]; then
     echo "[warehouse] moving processed files to 'Обработано'..."
     "$PYTHON_BIN" -c "

@@ -302,9 +302,9 @@ VK-offee/
 ### Статус: ✅ Работает
 
 **Папка Google Drive (общая кофейня):** `120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC`
-**Папка Google Drive (склад Жанны):** `1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX`
-  - **Новое:** `1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92` — Жанна кладёт сюда
-  - **Обработано:** `1pHugGbDKpyXqAvGjULiNIMOl64vCc29V` — файлы после обработки
+**Папка Google Drive (склад Жанны):** `1I_aWEHvGVI5c-aAEM03erNZj7HGXtJPf`
+  - **Новые документы:** `1Jg1Zgj2_ueTV6-NQamAU8XCPalFNhO8W` — Жанна кладёт сюда
+  - **Обработано:** `1WanukzWeuqJgUQ7N8YkG9oC23-DIRGjT` — файлы после обработки
 
 **Скрипт:** `.github/scripts/sync_google_drive_v2.py`
 

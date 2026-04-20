@@ -17,8 +17,8 @@
 ### Google Drive — структура папок
 ```
 Складские отчёты (1oo1j86l7hGZ-E1HIbAApc3PdCA3o80GX)
-├── Новое       (1LcTqSJ7n8bl70Ifk0crcL2dYKp3qhL92) <- Жанна кладёт сюда
-└── Обработано  (1pHugGbDKpyXqAvGjULiNIMOl64vCc29V) <- скрипт перемещает
+├── Новые документы (1Jg1Zgj2_ueTV6-NQamAU8XCPalFNhO8W) <- Жанна кладёт сюда
+└── Обработано      (1WanukzWeuqJgUQ7N8YkG9oC23-DIRGjT) <- скрипт перемещает
 ```
 
 ### Режим: ручной запуск
