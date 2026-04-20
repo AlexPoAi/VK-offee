@@ -637,6 +637,8 @@ def classify_item_product_type(item_name: str) -> str:
     low = normalize_item_name(item_name)
     if any(k in low for k in ("вупи", "чизкейк", "моти", "шу", "десерт", "пирож", "эклер")):
         return "десерты"
+    if any(k in low for k in ("блин", "ролл", "киш", "боул", "сэндвич", "онигур", "онигуру", "удон", "суп", "сырник", "чиабат", "салат", "гречк", "рис ", "соба", "том ям")):
+        return "кухня"
     if any(k in low for k in ("дрип",)):
         return "кофе_drip"
     if any(k in low for k in ("зерно", "эспрессо", "кофе")):
@@ -704,6 +706,7 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
                 "supplier_contact": row.get("supplier_contact", "TBD"),
                 "order_channel": row.get("order_channel", "TBD"),
                 "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "typical_lead_time_days": row.get("typical_lead_time_days", "TBD"),
                 "product_type": product_type,
             }
         if product_type in type_fragments and any(frag in product_types for frag in type_fragments[product_type]):
@@ -712,14 +715,17 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
                 "supplier_contact": row.get("supplier_contact", "TBD"),
                 "order_channel": row.get("order_channel", "TBD"),
                 "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "typical_lead_time_days": row.get("typical_lead_time_days", "TBD"),
                 "product_type": product_type,
             }
     fallback_by_type = {
         "кофе_drip": "Тэйсти Кофе",
         "кофе_зерно": "Тэйсти Кофе",
+        "чай": "Тэйсти Кофе",
         "шоколад": "UNICAVA",
         "сиропы": "Барсервис",
         "десерты": "Дмитрий (Десерты)",
+        "кухня": "Уточнить у Жанны",
     }
     fallback_name = fallback_by_type.get(product_type, "Уточнить у Жанны")
     for row in suppliers:
@@ -729,6 +735,7 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
                 "supplier_contact": row.get("supplier_contact", "TBD"),
                 "order_channel": row.get("order_channel", "TBD"),
                 "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "typical_lead_time_days": row.get("typical_lead_time_days", "TBD"),
                 "product_type": product_type,
             }
     return {
@@ -736,6 +743,7 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
         "supplier_contact": "TBD",
         "order_channel": "TBD",
         "order_cutoff_time": "TBD",
+        "typical_lead_time_days": "TBD",
         "product_type": product_type,
     }
 
@@ -891,12 +899,7 @@ def consumption_alerts(insights: list[dict]) -> list[str]:
 
 
 def target_stock_level(abc: str) -> int:
-    abc_norm = (abc or "").strip().upper()
-    if abc_norm == "A":
-        return 10
-    if abc_norm == "B":
-        return 6
-    return 4
+    return 10
 
 
 def order_urgency(qty_now: int, abc: str) -> tuple[str, str]:
@@ -978,6 +981,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     planned_orders: list[dict[str, object]] = []
     manual_review: list[str] = []
     reduce_or_stop: list[str] = []
+    passive_monitoring: list[str] = []
 
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1])[:12]:
         cat = abc_map.get(name_low) or "A"
@@ -991,10 +995,17 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         contact = supplier.get("supplier_contact", "TBD")
         channel = supplier.get("order_channel", "TBD")
         cutoff = supplier.get("order_cutoff_time", "до 18:00")
+        lead_time = supplier.get("typical_lead_time_days", "TBD")
         product_type = supplier.get("product_type", "другое")
         urgency, deadline = order_urgency(int(qty), cat)
         risk = "стоп продаж по позиции" if int(qty) <= 1 else "риск дефицита в ближайшие дни"
-        reason = f"остаток {qty} шт при целевом уровне {min_target} шт, ABC {cat}"
+        reason = f"остаток {qty} шт при целевом уровне {min_target} шт, ABC {cat}, lead time {lead_time} дн."
+
+        if product_type in {"десерты", "кухня"}:
+            passive_monitoring.append(
+                f"{raw_name}: не выводить в заказ, отслеживать цены поставки и продажи"
+            )
+            continue
 
         order_now.append(
             f"{raw_name}: заказать {to_order} шт · {supplier_name} · {channel} {contact} · {cutoff}"
@@ -1008,6 +1019,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
             "supplier_contact": contact,
             "order_channel": channel,
             "order_cutoff_time": cutoff,
+            "typical_lead_time_days": lead_time,
             "deadline": deadline,
             "risk": risk,
             "reason": reason,
@@ -1060,6 +1072,15 @@ def build_smart_analytics(insights: list[dict]) -> dict:
                 f"{display_name}: C-категория, держать минимальный остаток без доп. закупки"
             )
 
+    for weak_name in sorted(sales_weak_names):
+        product_type = classify_item_product_type(weak_name)
+        if product_type not in {"десерты", "кухня"}:
+            continue
+        display_name = stock_map_raw.get(weak_name) or weak_name.title()
+        reduce_or_stop.append(
+            f"{display_name}: слабая продажа в десертном/кухонном контуре, проверить сокращение или снятие"
+        )
+
     critical_orders = sorted(
         critical_orders,
         key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
@@ -1070,6 +1091,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     )[:8]
     manual_review = list(dict.fromkeys(manual_review))[:8]
     reduce_or_stop = list(dict.fromkeys(reduce_or_stop))[:8]
+    passive_monitoring = list(dict.fromkeys(passive_monitoring))[:8]
 
     return {
         "urgent": urgent[:8],
@@ -1083,6 +1105,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         "planned_orders": planned_orders,
         "manual_review": manual_review,
         "reduce_or_stop": reduce_or_stop,
+        "passive_monitoring": passive_monitoring,
         "stock_total_items": len(stock_map),
         "abc_total_items": len(abc_map),
     }
@@ -1380,6 +1403,7 @@ def build_latest_summary(
     critical_orders = analytics.get("critical_orders") or []
     planned_orders = analytics.get("planned_orders") or []
     reduce_or_stop = analytics.get("reduce_or_stop") or []
+    passive_monitoring = analytics.get("passive_monitoring") or []
     if critical_orders:
         executive.append(f"Срочных позиций к заказу: {len(critical_orders)}.")
     else:
@@ -1446,6 +1470,13 @@ def build_latest_summary(
             lines.append(f"- {item}")
     else:
         lines.append("- Явных позиций под сокращение закупки пока не выявлено.")
+
+    lines.extend(["", "## Десерты и кухня: только аналитика"])
+    if passive_monitoring:
+        for item in passive_monitoring:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- Десертный и кухонный контур не требует отдельной аналитической пометки в этом цикле.")
 
     lines.extend(["", "## Продажи и ассортимент"])
     if sales_top:
