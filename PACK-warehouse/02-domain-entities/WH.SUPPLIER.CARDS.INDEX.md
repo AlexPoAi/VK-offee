@@ -1,6 +1,6 @@
 ---
 type: supplier-index
-updated: 2026-04-19 22:28
+updated: 2026-04-20 19:57
 ---
 
 # Актуальные supplier cards

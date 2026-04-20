@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import time
+from functools import lru_cache
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable
@@ -43,6 +44,8 @@ REGISTRY_FILE = WP_DIR / "WH.REGISTRY.001-documents.csv"
 DLQ_DIR = WAREHOUSE_DIR / "03-quarantine" / "dlq-files"
 DLQ_REPORT = WP_DIR / "WH.DLQ.001-quarantine-report.md"
 BOT_REPORTS_DIR = KB_DIR / "Отчёты для бота" / "Склад"
+SUPPLIER_DIRECTORY_FILE = WAREHOUSE_DIR / "02-domain-entities" / "WH.SUPPLIER.001-directory.md"
+PROCUREMENT_REPORT_FILE = WAREHOUSE_DIR / "04-work-products" / "WH.WP.007-invoice-procurement-supplier-map-2026-04-19 (Карта поставщиков и закупочный контур по PDF-накладным).md"
 
 KEYWORDS = (
     "Остатки по складам",
@@ -580,17 +583,111 @@ def normalize_item_name(value: str) -> str:
     return s.strip()
 
 
-def infer_supplier_for_item(item_name: str) -> str:
+def classify_item_product_type(item_name: str) -> str:
     low = normalize_item_name(item_name)
-    if any(k in low for k in ("дрип", "эспрессо", "зерно", "кофе")):
-        return "ООО Тэйсти Кофе"
+    if any(k in low for k in ("вупи", "чизкейк", "моти", "шу", "десерт", "пирож", "эклер")):
+        return "десерты"
+    if any(k in low for k in ("дрип",)):
+        return "кофе_drip"
+    if any(k in low for k in ("зерно", "эспрессо", "кофе")):
+        return "кофе_зерно"
     if "шоколад" in low:
-        return "Шоколад UNICAVA"
+        return "шоколад"
+    if "чай" in low:
+        return "чай"
     if any(k in low for k in ("сироп",)):
-        return "Барсервис"
-    if any(k in low for k in ("моющ", "хоз", "чист", "салфет", "перчат")):
-        return "Закуп-приход"
-    return "Уточнить у Жанны"
+        return "сиропы"
+    if any(k in low for k in ("моющ", "хоз", "чист", "салфет", "перчат", "крышк", "стакан")):
+        return "расходники"
+    return "другое"
+
+
+@lru_cache(maxsize=1)
+def load_supplier_directory() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    if not SUPPLIER_DIRECTORY_FILE.exists():
+        return rows
+    text = SUPPLIER_DIRECTORY_FILE.read_text(encoding="utf-8", errors="ignore")
+    lines = text.splitlines()
+    header: list[str] | None = None
+    in_table = False
+    for line in lines:
+        ln = line.strip()
+        if not in_table:
+            if ln.startswith("| supplier_name |"):
+                parts = [p.strip() for p in ln.strip("|").split("|")]
+                if parts:
+                    header = parts
+                    in_table = True
+                continue
+            continue
+        if not ln.startswith("|"):
+            break
+        parts = [p.strip() for p in ln.strip("|").split("|")]
+        if not parts:
+            continue
+        if set("".join(parts)) <= {"-", ":"}:
+            continue
+        if header and len(parts) >= len(header):
+            row = {header[i]: parts[i] for i in range(len(header))}
+            rows.append(row)
+    return rows
+
+
+def infer_supplier_for_item(item_name: str) -> dict[str, str]:
+    product_type = classify_item_product_type(item_name)
+    suppliers = load_supplier_directory()
+    type_fragments = {
+        "кофе_drip": ("кофе_drip", "кофе"),
+        "кофе_зерно": ("кофе_зерно", "кофе"),
+        "чай": ("чай",),
+        "шоколад": ("шоколад",),
+        "сиропы": ("сироп",),
+        "расходники": ("расходник", "хоз"),
+        "десерты": ("десерт",),
+    }
+    for row in suppliers:
+        product_types = (row.get("product_types") or "").lower()
+        if product_type and product_type.lower() in product_types:
+            return {
+                "supplier_name": row.get("supplier_name", "Уточнить у Жанны"),
+                "supplier_contact": row.get("supplier_contact", "TBD"),
+                "order_channel": row.get("order_channel", "TBD"),
+                "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "product_type": product_type,
+            }
+        if product_type in type_fragments and any(frag in product_types for frag in type_fragments[product_type]):
+            return {
+                "supplier_name": row.get("supplier_name", "Уточнить у Жанны"),
+                "supplier_contact": row.get("supplier_contact", "TBD"),
+                "order_channel": row.get("order_channel", "TBD"),
+                "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "product_type": product_type,
+            }
+    fallback_by_type = {
+        "кофе_drip": "Тэйсти Кофе",
+        "кофе_зерно": "Тэйсти Кофе",
+        "шоколад": "UNICAVA",
+        "сиропы": "Барсервис",
+        "десерты": "Дмитрий (Десерты)",
+    }
+    fallback_name = fallback_by_type.get(product_type, "Уточнить у Жанны")
+    for row in suppliers:
+        if (row.get("supplier_name") or "").strip().lower() == fallback_name.lower():
+            return {
+                "supplier_name": row.get("supplier_name", fallback_name),
+                "supplier_contact": row.get("supplier_contact", "TBD"),
+                "order_channel": row.get("order_channel", "TBD"),
+                "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                "product_type": product_type,
+            }
+    return {
+        "supplier_name": fallback_name,
+        "supplier_contact": "TBD",
+        "order_channel": "TBD",
+        "order_cutoff_time": "TBD",
+        "product_type": product_type,
+    }
 
 
 def parse_sales_metrics(rows: list[list[str]]) -> dict[str, object]:
@@ -772,6 +869,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
             excess.append(f"{name_low.title()} (C-категория, в реестре)")
 
     order_now: list[str] = []
+    order_by_supplier: dict[str, dict[str, object]] = {}
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1])[:12]:
         cat = abc_map.get(name_low) or "A"
         min_target = 10 if cat == "A" else 6 if cat == "B" else 4
@@ -780,7 +878,35 @@ def build_smart_analytics(insights: list[dict]) -> dict:
             continue
         raw_name = stock_map_raw.get(name_low) or name_low.title()
         supplier = infer_supplier_for_item(raw_name)
-        order_now.append(f"{raw_name}: заказать {to_order} шт у {supplier} (до 18:00)")
+        supplier_name = supplier.get("supplier_name", "Уточнить у Жанны")
+        contact = supplier.get("supplier_contact", "TBD")
+        channel = supplier.get("order_channel", "TBD")
+        cutoff = supplier.get("order_cutoff_time", "до 18:00")
+        product_type = supplier.get("product_type", "другое")
+        order_now.append(
+            f"{raw_name}: заказать {to_order} шт · {supplier_name} · {channel} {contact} · {cutoff}"
+        )
+        bucket = order_by_supplier.setdefault(
+            supplier_name,
+            {
+                "supplier_name": supplier_name,
+                "supplier_contact": contact,
+                "order_channel": channel,
+                "order_cutoff_time": cutoff,
+                "items": [],
+            },
+        )
+        bucket_items = bucket.get("items")
+        if isinstance(bucket_items, list):
+            bucket_items.append(
+                {
+                    "name": raw_name,
+                    "qty_now": int(qty),
+                    "qty_to_order": int(to_order),
+                    "abc": cat,
+                    "product_type": product_type,
+                }
+            )
     order_now = order_now[:8]
 
     return {
@@ -790,6 +916,7 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         "no_abc": no_abc[:5],
         "has_abc": bool(abc_map),
         "order_now": order_now,
+        "order_by_supplier": list(order_by_supplier.values())[:8],
     }
 
 
@@ -1214,6 +1341,21 @@ def replay_insights_from_registry(registry: dict[str, dict[str, str]], limit: in
     return insights
 
 
+def rebuild_insights_from_sources(sources: list[Path], limit: int = 20) -> tuple[list[Path], list[Path], list[dict]]:
+    cards: list[Path] = []
+    bot_cards: list[Path] = []
+    insights: list[dict] = []
+    for src in sources[: max(1, limit)]:
+        try:
+            card, bot_card, insight = make_card(src)
+        except Exception:
+            continue
+        cards.append(card)
+        bot_cards.append(bot_card)
+        insights.append(insight)
+    return cards, bot_cards, insights
+
+
 def append_dlq_entry(source: Path, record_key: str, reason: str) -> str:
     DLQ_DIR.mkdir(parents=True, exist_ok=True)
     DLQ_REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -1273,7 +1415,7 @@ def read_env_from_telegram_bot() -> dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        env[k.strip()] = v.strip()
+        env[k.strip()] = v.strip().strip('"').strip("'")
     return env
 
 
@@ -1286,7 +1428,7 @@ def read_key_value_env(path: Path) -> dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        env[k.strip()] = v.strip()
+        env[k.strip()] = v.strip().strip('"').strip("'")
     return env
 
 
@@ -1380,6 +1522,8 @@ def telegram_text(
     report_url = build_github_link(report_rel)
     queue_rel = DECISION_QUEUE.relative_to(ROOT).as_posix()
     queue_url = build_github_link(queue_rel)
+    procurement_rel = PROCUREMENT_REPORT_FILE.relative_to(ROOT).as_posix()
+    procurement_url = build_github_link(procurement_rel) if PROCUREMENT_REPORT_FILE.exists() else ""
 
     mode = "manual" if manual_run else "auto"
     lines = [
@@ -1425,7 +1569,8 @@ def telegram_text(
         urgent_items.append(f"Заказать: {item}")
     if run_stats["error"] > 0:
         urgent_items.append(f"Разобрать ошибки обработки: {run_stats['error']}")
-    if not urgent_items:
+    has_order_now = bool(analytics.get("order_now"))
+    if (not urgent_items) and (not has_order_now):
         urgent_items.append("Критичных дефицитов на 24ч не выявлено.")
     urgent_items = urgent_items[:5]
 
@@ -1462,10 +1607,33 @@ def telegram_text(
     lines.append("")
     lines.append("<b>Срочно (до 24ч)</b>")
     order_now = analytics.get("order_now") or []
-    for item in order_now[:5]:
+    for item in order_now[:4]:
         lines.append(f"• {escape_html(item)}")
     for item in urgent_items[:3]:
         lines.append(f"• {escape_html(item)}")
+
+    supplier_orders = analytics.get("order_by_supplier") or []
+    if supplier_orders:
+        lines.append("")
+        lines.append("<b>Заказ по поставщикам</b>")
+        for supplier in supplier_orders[:4]:
+            if not isinstance(supplier, dict):
+                continue
+            supplier_name = escape_html(str(supplier.get("supplier_name", "Поставщик")))
+            contact = escape_html(str(supplier.get("supplier_contact", "TBD")))
+            channel = escape_html(str(supplier.get("order_channel", "TBD")))
+            cutoff = escape_html(str(supplier.get("order_cutoff_time", "TBD")))
+            lines.append(f"• {supplier_name} · {channel} · {contact} · cutoff: {cutoff}")
+            items = supplier.get("items") or []
+            if isinstance(items, list):
+                for order_item in items[:2]:
+                    if not isinstance(order_item, dict):
+                        continue
+                    item_name = escape_html(str(order_item.get("name", "SKU")))
+                    qty_to_order = int(order_item.get("qty_to_order", 0) or 0)
+                    qty_now = int(order_item.get("qty_now", 0) or 0)
+                    abc = escape_html(str(order_item.get("abc", "?")))
+                    lines.append(f"•   {item_name}: заказать {qty_to_order} (сейчас {qty_now}, ABC {abc})")
 
     lines.append("")
     lines.append("<b>Планово (2-7 дней)</b>")
@@ -1544,8 +1712,33 @@ def telegram_text(
         lines.append(f"Очередь решений: <a href=\"{queue_url}\">WH.SESSION.001</a>")
     else:
         lines.append(f"Очередь решений: <code>{escape_html(queue_rel)}</code>")
+    if procurement_url:
+        lines.append(f"Закупочный контур: <a href=\"{procurement_url}\">WH.WP.007 supplier-map</a>")
+    elif PROCUREMENT_REPORT_FILE.exists():
+        lines.append(f"Закупочный контур: <code>{escape_html(procurement_rel)}</code>")
 
     return "\n".join(lines)
+
+
+def refresh_procurement_report() -> tuple[bool, str]:
+    script = WAREHOUSE_DIR / "tools" / "warehouse_invoice_procurement_report.py"
+    if not script.exists():
+        return False, "script_missing"
+    try:
+        proc = subprocess.run(
+            ["python3", str(script)],
+            cwd=str(ROOT),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=240,
+            check=False,
+        )
+        if proc.returncode == 0:
+            return True, (proc.stdout or "").strip()[:240]
+        return False, ((proc.stderr or proc.stdout or "").strip()[:240] or f"exit={proc.returncode}")
+    except Exception as exc:
+        return False, str(exc)
 
 
 def main() -> int:
@@ -1639,7 +1832,17 @@ def main() -> int:
         registry[record_key] = row
 
     save_registry(registry)
-    if not insights and args.replay_latest_cards > 0:
+    refresh_ok, refresh_info = refresh_procurement_report()
+    if refresh_ok:
+        print(f"[warehouse] procurement_refresh=ok {refresh_info}")
+    else:
+        print(f"[warehouse] procurement_refresh=warn {refresh_info}")
+    if not insights and args.manual_run and sources:
+        replay_cards, replay_bot_cards, replay_insights = rebuild_insights_from_sources(sources, limit=24)
+        cards.extend(replay_cards)
+        bot_cards.extend(replay_bot_cards)
+        insights = replay_insights
+    elif not insights and args.replay_latest_cards > 0:
         insights = replay_insights_from_registry(registry, limit=args.replay_latest_cards)
 
     build_latest_summary(cards, bot_cards, args.hours, run_stats, insights)
