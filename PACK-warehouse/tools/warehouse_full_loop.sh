@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPTS_DIR="$ROOT_DIR/.github/scripts"
@@ -27,22 +27,35 @@ WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1pHu
 
 {
   echo "========== $(date '+%Y-%m-%d %H:%M:%S') warehouse_full_loop start =========="
+  sync_ok=0
+  pipeline_ok=0
   # Синк папки «Новое» Жанны (ABC-анализ, остатки, заявки)
   echo "[warehouse] syncing Zhanna 'Новое' folder: $WAREHOUSE_DRIVE_FOLDER_ID"
-  GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"
+  if GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"; then
+    sync_ok=1
+    echo "[warehouse] sync status=ok"
+  else
+    echo "[warehouse] sync status=failed (continue with safeguards)"
+  fi
   # Pipeline: создать карточки (Telegram по умолчанию выключен в автоцикле)
   if [[ -f "$PIPELINE_SCRIPT" ]]; then
     PIPELINE_ARGS=(--hours "$PIPELINE_HOURS")
     if [[ "$WAREHOUSE_TELEGRAM_AUTOSEND" == "1" ]]; then
       PIPELINE_ARGS+=(--send-telegram)
     fi
-    "$PYTHON_BIN" "$PIPELINE_SCRIPT" "${PIPELINE_ARGS[@]}"
+    if "$PYTHON_BIN" "$PIPELINE_SCRIPT" "${PIPELINE_ARGS[@]}"; then
+      pipeline_ok=1
+      echo "[warehouse] pipeline status=ok"
+    else
+      echo "[warehouse] pipeline status=failed"
+    fi
   else
     echo "[warehouse] pipeline script not found: $PIPELINE_SCRIPT"
   fi
   # Переместить обработанные файлы из «Новое» в «Обработано»
-  echo "[warehouse] moving processed files to 'Обработано'..."
-  "$PYTHON_BIN" -c "
+  if [[ "$sync_ok" == "1" ]]; then
+    echo "[warehouse] moving processed files to 'Обработано'..."
+    "$PYTHON_BIN" -c "
 import pickle
 from pathlib import Path
 from google.oauth2.credentials import Credentials
@@ -72,5 +85,13 @@ for f in files:
 if not files:
     print('  nothing to move')
 "
+  else
+    echo "[warehouse] move step skipped: sync failed, preventing unsafe moves"
+  fi
+  if [[ "$sync_ok" == "1" && "$pipeline_ok" == "1" ]]; then
+    echo "[warehouse] verdict=ok"
+  else
+    echo "[warehouse] verdict=warning sync_ok=$sync_ok pipeline_ok=$pipeline_ok"
+  fi
   echo "========== $(date '+%Y-%m-%d %H:%M:%S') warehouse_full_loop done =========="
 } >>"$LOG_FILE" 2>>"$ERR_FILE"
