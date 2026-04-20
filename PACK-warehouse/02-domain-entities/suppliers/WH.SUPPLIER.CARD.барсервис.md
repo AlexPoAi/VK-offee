@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: Барсервис
-updated: 2026-04-20 19:57
+updated: 2026-04-20 22:40
 status: active
 ---
 

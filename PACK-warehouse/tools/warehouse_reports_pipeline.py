@@ -277,7 +277,7 @@ def save_registry(rows: dict[str, dict[str, str]]) -> None:
 def find_recent_reports(hours: int) -> list[Path]:
     cutoff = datetime.now() - timedelta(hours=hours)
     items: list[Path] = []
-    for ext in ("*.csv", "*.pdf"):
+    for ext in ("*.csv", "*.pdf", "*.xlsx"):
         for p in KB_DIR.rglob(ext):
             try:
                 mtime = datetime.fromtimestamp(p.stat().st_mtime)
@@ -291,8 +291,27 @@ def find_recent_reports(hours: int) -> list[Path]:
     return sorted(items)
 
 
+def read_text_best_effort(path: Path) -> str:
+    raw = path.read_bytes()
+    candidates = ("utf-8-sig", "utf-8", "cp1251", "windows-1251", "latin-1")
+    best_text = ""
+    best_score = -1
+    for enc in candidates:
+        try:
+            text = raw.decode(enc, errors="strict")
+        except Exception:
+            continue
+        score = sum(1 for ch in text if ("а" <= ch.lower() <= "я")) - text.count("�")
+        if score > best_score:
+            best_text = text
+            best_score = score
+    if best_text:
+        return best_text
+    return raw.decode("utf-8", errors="ignore")
+
+
 def parse_csv_rows(path: Path) -> list[list[str]]:
-    raw = path.read_text(encoding="utf-8", errors="ignore")
+    raw = read_text_best_effort(path)
     sample = raw[:8000]
     delimiter = ","
     try:
@@ -307,6 +326,37 @@ def parse_csv_rows(path: Path) -> list[list[str]]:
     if not rows:
         raise ValueError("empty csv")
     return rows
+
+
+def parse_xlsx_rows(path: Path) -> list[list[str]]:
+    from openpyxl import load_workbook  # type: ignore
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    best_rows: list[list[str]] = []
+    best_score = -1
+    for ws in wb.worksheets:
+        rows: list[list[str]] = []
+        non_empty = 0
+        for row in ws.iter_rows(values_only=True):
+            vals = ["" if v is None else str(v).strip() for v in row]
+            if any(vals):
+                non_empty += 1
+            rows.append(vals)
+        if non_empty > best_score:
+            best_score = non_empty
+            best_rows = rows
+    if not best_rows:
+        raise ValueError("empty xlsx")
+    return best_rows
+
+
+def parse_tabular_rows(path: Path) -> list[list[str]]:
+    suffix = path.suffix.lower()
+    if suffix == ".csv":
+        return parse_csv_rows(path)
+    if suffix == ".xlsx":
+        return parse_xlsx_rows(path)
+    raise ValueError(f"unsupported tabular suffix: {suffix}")
 
 
 def extract_pdf_payload(path: Path) -> dict[str, object]:
@@ -697,6 +747,7 @@ def parse_sales_metrics(rows: list[list[str]]) -> dict[str, object]:
     name_col = -1
     qty_col = -1
     rev_col = -1
+    unit_col = -1
     for ridx in range(min(len(rows), 10)):
         header = [c.strip().lower() for c in rows[ridx]]
         for i, h in enumerate(header):
@@ -706,9 +757,18 @@ def parse_sales_metrics(rows: list[list[str]]) -> dict[str, object]:
                 qty_col = i
             if rev_col == -1 and any(k in h for k in ("выруч", "сумм", "оборот", "sales")):
                 rev_col = i
+            if unit_col == -1 and any(k in h for k in ("ед.", "ед изм", "unit")):
+                unit_col = i
         if name_col != -1 and (qty_col != -1 or rev_col != -1):
             header_idx = ridx
             break
+    if name_col == -1 and len(rows) > 12:
+        probe = rows[9] if len(rows) > 9 else []
+        if len(probe) >= 3 and any("кол" in str(cell).lower() for cell in probe):
+            header_idx = 11
+            name_col = 0
+            qty_col = 2
+            unit_col = 3
     if name_col == -1:
         name_col = 0
     items: list[tuple[str, float, float]] = []
@@ -718,12 +778,21 @@ def parse_sales_metrics(rows: list[list[str]]) -> dict[str, object]:
         name = (r[name_col] or "").strip()
         if not name:
             continue
+        if name.lower().startswith("построен:") or name.lower().startswith("наша компания:"):
+            continue
+        unit = ""
+        if unit_col != -1 and len(r) > unit_col:
+            unit = (r[unit_col] or "").strip().lower()
         qty = 0.0
         rev = 0.0
         if qty_col != -1 and len(r) > qty_col:
             qty = parse_number(r[qty_col] or "") or 0.0
         if rev_col != -1 and len(r) > rev_col:
             rev = parse_number(r[rev_col] or "") or 0.0
+        if rev <= 0 and len(r) > 5:
+            rev = parse_number(r[5] or "") or 0.0
+        if unit_col != -1 and unit not in {"шт", "кг", "л", "порц", "порц.", "упак", "упак."}:
+            continue
         if qty <= 0 and rev <= 0:
             continue
         items.append((name, qty, rev))
@@ -821,6 +890,30 @@ def consumption_alerts(insights: list[dict]) -> list[str]:
     return [f"{n.title()}: расход {d} шт за период" for n, d in alerts[:5]]
 
 
+def target_stock_level(abc: str) -> int:
+    abc_norm = (abc or "").strip().upper()
+    if abc_norm == "A":
+        return 10
+    if abc_norm == "B":
+        return 6
+    return 4
+
+
+def order_urgency(qty_now: int, abc: str) -> tuple[str, str]:
+    abc_norm = (abc or "").strip().upper()
+    if qty_now <= 1:
+        return "critical", "сегодня до 18:00"
+    if abc_norm == "A" and qty_now <= 3:
+        return "critical", "сегодня до 18:00"
+    if abc_norm in {"A", "B"} and qty_now <= 4:
+        return "planned", "в ближайшие 2-3 дня"
+    return "planned", "в течение недели"
+
+
+def format_money(value: float) -> str:
+    return f"{value:,.0f} ₽".replace(",", " ")
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
@@ -845,10 +938,10 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     if not stock_map:
         return {}
 
-    urgent: list[str] = []    # A + мало
-    attention: list[str] = [] # B + мало
-    excess: list[str] = []    # C + много
-    no_abc: list[str] = []    # мало, но ABC нет
+    urgent: list[str] = []
+    attention: list[str] = []
+    excess: list[str] = []
+    no_abc: list[str] = []
 
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
         cat = abc_map.get(name_low)
@@ -868,11 +961,27 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         if cat == "C" and name_low not in stock_map:
             excess.append(f"{name_low.title()} (C-категория, в реестре)")
 
+    sales_top_names: set[str] = set()
+    sales_weak_names: set[str] = set()
+    for item in insights:
+        if item.get("report_type") != "sales":
+            continue
+        sm = item.get("sales_metrics") or {}
+        for name, _, _ in sm.get("top", [])[:10]:
+            sales_top_names.add(normalize_item_name(str(name)))
+        for name, _, _ in sm.get("weak", [])[:10]:
+            sales_weak_names.add(normalize_item_name(str(name)))
+
     order_now: list[str] = []
     order_by_supplier: dict[str, dict[str, object]] = {}
+    critical_orders: list[dict[str, object]] = []
+    planned_orders: list[dict[str, object]] = []
+    manual_review: list[str] = []
+    reduce_or_stop: list[str] = []
+
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1])[:12]:
         cat = abc_map.get(name_low) or "A"
-        min_target = 10 if cat == "A" else 6 if cat == "B" else 4
+        min_target = target_stock_level(cat)
         to_order = max(0, min_target - int(qty))
         if to_order <= 0:
             continue
@@ -883,9 +992,35 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         channel = supplier.get("order_channel", "TBD")
         cutoff = supplier.get("order_cutoff_time", "до 18:00")
         product_type = supplier.get("product_type", "другое")
+        urgency, deadline = order_urgency(int(qty), cat)
+        risk = "стоп продаж по позиции" if int(qty) <= 1 else "риск дефицита в ближайшие дни"
+        reason = f"остаток {qty} шт при целевом уровне {min_target} шт, ABC {cat}"
+
         order_now.append(
             f"{raw_name}: заказать {to_order} шт · {supplier_name} · {channel} {contact} · {cutoff}"
         )
+        order_row = {
+            "name": raw_name,
+            "qty_now": int(qty),
+            "qty_to_order": int(to_order),
+            "abc": cat,
+            "supplier_name": supplier_name,
+            "supplier_contact": contact,
+            "order_channel": channel,
+            "order_cutoff_time": cutoff,
+            "deadline": deadline,
+            "risk": risk,
+            "reason": reason,
+            "product_type": product_type,
+        }
+        if contact == "TBD" or channel == "TBD":
+            manual_review.append(
+                f"{raw_name}: нет подтверждённого контакта/канала поставщика ({supplier_name})"
+            )
+        if urgency == "critical":
+            critical_orders.append(order_row)
+        else:
+            planned_orders.append(order_row)
         bucket = order_by_supplier.setdefault(
             supplier_name,
             {
@@ -905,9 +1040,36 @@ def build_smart_analytics(insights: list[dict]) -> dict:
                     "qty_to_order": int(to_order),
                     "abc": cat,
                     "product_type": product_type,
+                    "deadline": deadline,
                 }
             )
     order_now = order_now[:8]
+
+    for name_low in sorted(abc_map.keys()):
+        if abc_map.get(name_low) != "C":
+            continue
+        if name_low in sales_top_names:
+            continue
+        display_name = stock_map_raw.get(name_low) or name_low.title()
+        if name_low in sales_weak_names:
+            reduce_or_stop.append(
+                f"{display_name}: слабая продажа + C-категория, не расширять закупку до следующего цикла"
+            )
+        elif name_low not in stock_map:
+            reduce_or_stop.append(
+                f"{display_name}: C-категория, держать минимальный остаток без доп. закупки"
+            )
+
+    critical_orders = sorted(
+        critical_orders,
+        key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
+    )[:8]
+    planned_orders = sorted(
+        planned_orders,
+        key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
+    )[:8]
+    manual_review = list(dict.fromkeys(manual_review))[:8]
+    reduce_or_stop = list(dict.fromkeys(reduce_or_stop))[:8]
 
     return {
         "urgent": urgent[:8],
@@ -917,6 +1079,12 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         "has_abc": bool(abc_map),
         "order_now": order_now,
         "order_by_supplier": list(order_by_supplier.values())[:8],
+        "critical_orders": critical_orders,
+        "planned_orders": planned_orders,
+        "manual_review": manual_review,
+        "reduce_or_stop": reduce_or_stop,
+        "stock_total_items": len(stock_map),
+        "abc_total_items": len(abc_map),
     }
 
 
@@ -1026,7 +1194,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
             if payload.get("error"):
                 body_lines.append(f"- Ошибка: `{payload.get('error')}`")
     else:
-        rows = parse_csv_rows(source)
+        rows = parse_tabular_rows(source)
         if ("Комментарий" in source.name) or ("Комментари" in source.name):
             bullets = parse_comment_bullets(rows)
             insight["comment_count"] = len(bullets)
@@ -1192,60 +1360,146 @@ def build_latest_summary(
     insights: list[dict],
 ) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    cards = sorted(set(cards))
-    bot_cards = sorted(set(bot_cards))
+    analytics = build_smart_analytics(insights)
+    price_delta = price_delta_from_catalog(insights)
+    consumption = consumption_alerts(insights)
+    gaps = detect_data_gaps(insights)
+    sales_top: list[str] = []
+    sales_weak: list[str] = []
+    for item in insights:
+        if item.get("report_type") != "sales":
+            continue
+        sm = item.get("sales_metrics") or {}
+        for name, qty, rev in sm.get("top", [])[:5]:
+            sales_top.append(f"{name}: {qty:.0f} шт / {format_money(float(rev))}")
+        for name, qty, rev in sm.get("weak", [])[:5]:
+            sales_weak.append(f"{name}: {qty:.0f} шт / {format_money(float(rev))}")
+    sales_top = list(dict.fromkeys(sales_top))[:5]
+    sales_weak = list(dict.fromkeys(sales_weak))[:5]
+    executive: list[str] = []
+    critical_orders = analytics.get("critical_orders") or []
+    planned_orders = analytics.get("planned_orders") or []
+    reduce_or_stop = analytics.get("reduce_or_stop") or []
+    if critical_orders:
+        executive.append(f"Срочных позиций к заказу: {len(critical_orders)}.")
+    else:
+        executive.append("Критичных дефицитов по текущим остаткам не выявлено.")
+    if planned_orders:
+        executive.append(f"Плановых позиций к дозаказу: {len(planned_orders)}.")
+    if sales_weak:
+        executive.append(f"Есть слабые позиции для пересмотра ассортимента: {len(sales_weak)}.")
+    if price_delta.get("up"):
+        executive.append(f"Зафиксирован рост цен по каталогу: {len(price_delta.get('up', []))} позиций.")
+    if consumption:
+        executive.append("Есть сигналы повышенного расхода по хозтоварам.")
+    if not executive:
+        executive.append("Данных недостаточно для управленческого вывода.")
+
     lines = [
         "---",
-        "type: warehouse-sync-report",
+        "type: warehouse-manager-report",
         f"updated: {now}",
         "---",
         "",
-        "# Warehouse Sync Summary",
+        "# Warehouse Manager Report",
         "",
         f"- Окно анализа: последние `{hours}` ч",
-        f"- Входящих документов: **{run_stats['received']}**",
+        f"- Источников в окне: **{run_stats['received']}**",
         f"- Обработано: **{run_stats['processed']}**",
-        f"- Дубликатов: **{run_stats['duplicate']}**",
-        f"- Ошибок: **{run_stats['error']}**",
-        f"- DLQ: **{run_stats['dlq']}**",
-        f"- Карточек сформировано: **{len(cards)}**",
-        f"- Карточек для бота: **{len(bot_cards)}**",
-        f"- Реестр: `{REGISTRY_FILE.relative_to(ROOT).as_posix()}`",
-        f"- Quarantine report: `{DLQ_REPORT.relative_to(ROOT).as_posix()}`",
+        f"- Ошибок парсинга: **{run_stats['error']}**",
+        f"- SKU с остатками в анализе: **{analytics.get('stock_total_items', 0)}**",
+        f"- SKU с ABC-категорией: **{analytics.get('abc_total_items', 0)}**",
         "",
-        "## Карточки",
+        "## Executive Summary",
     ]
-    if cards:
-        for c in cards:
-            rel = c.relative_to(ROOT).as_posix()
-            lines.append(f"- `{rel}`")
+    for item in executive:
+        lines.append(f"- {item}")
+
+    lines.extend(["", "## Срочно заказать"])
+    if critical_orders:
+        for item in critical_orders:
+            lines.extend(
+                [
+                    f"- {item['name']}: сейчас **{item['qty_now']} шт**, заказать **{item['qty_to_order']} шт**.",
+                    f"  Поставщик: **{item['supplier_name']}** · канал: **{item['order_channel']} {item['supplier_contact']}**.",
+                    f"  Дедлайн: **{item['deadline']}** · риск: **{item['risk']}**.",
+                ]
+            )
     else:
-        lines.append("- Новых складских отчетов в окне не найдено.")
-    lines.extend(["", "## Новые карточки и выжимка (ссылки)"])
-    if insights:
-        for item in insights:
-            card_rel = str(item.get("card_rel", "") or "")
-            source_rel = str(item.get("source_rel", "") or "")
-            card_url = build_github_link(card_rel) if card_rel else ""
-            source_url = build_github_link(source_rel) if source_rel else ""
-            title = telegram_item_title(item)
-            if card_url and source_url:
-                lines.append(f"- [{title}]({card_url}) · [источник]({source_url})")
-            elif card_url:
-                lines.append(f"- [{title}]({card_url}) · источник: `{source_rel or 'n/a'}`")
-            elif source_url:
-                lines.append(f"- {title} · [источник]({source_url})")
-            else:
-                lines.append(f"- {title} · карточка: `{card_rel or 'n/a'}` · источник: `{source_rel or 'n/a'}`")
+        lines.append("- Критичных позиций для заказа сейчас нет.")
+
+    lines.extend(["", "## Планово заказать"])
+    if planned_orders:
+        for item in planned_orders:
+            lines.extend(
+                [
+                    f"- {item['name']}: сейчас **{item['qty_now']} шт**, целевой уровень **{target_stock_level(str(item['abc']))} шт**, дозаказать **{item['qty_to_order']} шт**.",
+                    f"  Поставщик: **{item['supplier_name']}** · дедлайн: **{item['deadline']}** · причина: {item['reason']}.",
+                ]
+            )
     else:
-        lines.append("- Новых карточек в этом цикле нет.")
-    lines.extend(["", "## Карточки для бота"])
-    if bot_cards:
-        for c in bot_cards:
-            rel = c.relative_to(ROOT).as_posix()
-            lines.append(f"- `{rel}`")
+        lines.append("- Плановых позиций к дозаказу не выявлено.")
+
+    lines.extend(["", "## Не заказывать / сократить"])
+    if reduce_or_stop:
+        for item in reduce_or_stop:
+            lines.append(f"- {item}")
     else:
-        lines.append("- Нет.")
+        lines.append("- Явных позиций под сокращение закупки пока не выявлено.")
+
+    lines.extend(["", "## Продажи и ассортимент"])
+    if sales_top:
+        lines.append("- Топ продаж:")
+        for item in sales_top:
+            lines.append(f"  - {item}")
+    if sales_weak:
+        lines.append("- Слабые позиции:")
+        for item in sales_weak:
+            lines.append(f"  - {item}")
+    if (not sales_top) and (not sales_weak):
+        lines.append("- По текущим файлам не удалось уверенно извлечь топ и слабые позиции продаж.")
+
+    lines.extend(["", "## Изменение цен"])
+    if price_delta.get("up"):
+        lines.append("- Подорожали:")
+        for item in price_delta.get("up", [])[:5]:
+            lines.append(f"  - {item}")
+    if price_delta.get("down"):
+        lines.append("- Подешевели:")
+        for item in price_delta.get("down", [])[:5]:
+            lines.append(f"  - {item}")
+    if (not price_delta.get("up")) and (not price_delta.get("down")):
+        lines.append("- Недостаточно сопоставимых каталогов для оценки динамики цен.")
+
+    lines.extend(["", "## Операционные сигналы"])
+    if consumption:
+        for item in consumption:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- Аномальный расход по хозтоварам и моющим не выявлен либо не хватает срезов.")
+
+    lines.extend(["", "## Проверить вручную"])
+    manual_review = analytics.get("manual_review") or []
+    if analytics.get("no_abc"):
+        manual_review.extend(
+            [f"{item}: нет ABC-категории, решение пока по остатку." for item in analytics.get("no_abc", [])[:5]]
+        )
+    manual_review = list(dict.fromkeys(manual_review))[:8]
+    if manual_review:
+        for item in manual_review:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- Критичных ручных проверок не требуется.")
+
+    lines.extend(["", "## Каких данных не хватает"])
+    for item in gaps[:5]:
+        lines.append(f"- {item}")
+
+    lines.extend(["", "## Источники и артефакты"])
+    lines.append(f"- Реестр: `{REGISTRY_FILE.relative_to(ROOT).as_posix()}`")
+    lines.append(f"- Quarantine report: `{DLQ_REPORT.relative_to(ROOT).as_posix()}`")
+    if PROCUREMENT_REPORT_FILE.exists():
+        lines.append(f"- Закупочный контур: `{PROCUREMENT_REPORT_FILE.relative_to(ROOT).as_posix()}`")
     lines.append("")
     text = "\n".join(lines)
     LATEST_REPORT.write_text(text, encoding="utf-8")
@@ -1526,11 +1780,6 @@ def telegram_text(
     procurement_url = build_github_link(procurement_rel) if PROCUREMENT_REPORT_FILE.exists() else ""
 
     mode = "manual" if manual_run else "auto"
-    lines = [
-        "📦 <b>Manager Digest · Склад</b>",
-        f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Окно: <b>{hours}ч</b>",
-    ]
-
     analytics = build_smart_analytics(insights)
     price_delta = price_delta_from_catalog(insights)
     sales_top: list[str] = []
@@ -1545,177 +1794,132 @@ def telegram_text(
     sales_top = list(dict.fromkeys(sales_top))[:5]
     sales_weak = list(dict.fromkeys(sales_weak))[:5]
     consumption = consumption_alerts(insights)
-    if run_stats["error"] > 0:
+    critical_orders = analytics.get("critical_orders") or []
+    planned_orders = analytics.get("planned_orders") or []
+    reduce_items = analytics.get("reduce_or_stop") or []
+    manual_review = list(analytics.get("manual_review") or [])
+    no_abc = analytics.get("no_abc") or []
+    for item in no_abc[:5]:
+        manual_review.append(f"{item}: нет ABC-категории")
+    manual_review = list(dict.fromkeys(manual_review))[:6]
+    data_risks = detect_data_gaps(insights)
+
+    if run_stats["error"] > 0 or manual_review:
         verdict = "🔴 Требует внимания"
-    elif analytics.get("urgent"):
-        verdict = "🟡 Есть риск дефицита"
+    elif critical_orders:
+        verdict = "🟡 Есть срочный заказ"
     else:
         verdict = "🟢 Стабильно"
-    lines.extend(
-        [
-            f"Вердикт: <b>{verdict}</b>",
-            (
-                "Поток: "
-                f"входящих <b>{run_stats['received']}</b> · "
-                f"обработано <b>{run_stats['processed']}</b> · "
-                f"ошибок <b>{run_stats['error']}</b>"
-            ),
-        ]
-    )
+    executive = []
+    if critical_orders:
+        executive.append(f"срочно заказать {len(critical_orders)} позиции")
+    if planned_orders:
+        executive.append(f"планово дозаказать {len(planned_orders)} позиции")
+    if sales_weak:
+        executive.append(f"пересмотреть {len(sales_weak)} слабых позиций")
+    if price_delta.get("up"):
+        executive.append(f"проверить рост цен по {len(price_delta.get('up', []))} SKU")
+    if not executive:
+        executive.append("критичных действий не выявлено")
 
-    # Раздел 1: Срочно (до 24ч)
-    urgent_items: list[str] = []
-    for item in analytics.get("urgent", [])[:5]:
-        urgent_items.append(f"Заказать: {item}")
-    if run_stats["error"] > 0:
-        urgent_items.append(f"Разобрать ошибки обработки: {run_stats['error']}")
-    has_order_now = bool(analytics.get("order_now"))
-    if (not urgent_items) and (not has_order_now):
-        urgent_items.append("Критичных дефицитов на 24ч не выявлено.")
-    urgent_items = urgent_items[:5]
+    lines = [
+        "📦 <b>Склад · управленческий отчёт</b>",
+        f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Окно: <b>{hours}ч</b>",
+        f"Вердикт: <b>{verdict}</b>",
+        f"Итог: {'; '.join(escape_html(x) for x in executive)}.",
+        "",
+        "<b>Срочно заказать</b>",
+    ]
 
-    # Раздел 2: Планово (2-7 дней)
-    planned_items: list[str] = []
-    for item in analytics.get("attention", [])[:5]:
-        planned_items.append(f"Проверить спрос/остаток: {item}")
-    has_invoices = any(str(it.get("report_type", "")) == "invoice" for it in insights)
-    if has_invoices and len(planned_items) < 5:
-        planned_items.append("Сверить закупочные цены из накладных с каталогом (2-7 дней).")
-    if not planned_items:
-        planned_items.append("Плановых действий на 2-7 дней не выявлено.")
-    planned_items = planned_items[:5]
-
-    # Раздел 3: Что не заказывать/сократить
-    reduce_items: list[str] = []
-    for item in analytics.get("excess", [])[:5]:
-        reduce_items.append(f"Сократить дозакупку: {item}")
-    if not reduce_items:
-        reduce_items.append("Явных позиций для сокращения закупки не выявлено.")
-    reduce_items = reduce_items[:5]
-
-    # Раздел 4: Риски данных (чего не хватает)
-    data_risks: list[str] = []
-    gaps = detect_data_gaps(insights)
-    for g in gaps[:5]:
-        data_risks.append(g)
-    if not analytics.get("has_abc"):
-        data_risks.append("Приоритизация A/B/C недоступна, решения приняты по остаткам/движению.")
-    if not data_risks:
-        data_risks.append("Критичных пробелов данных не обнаружено.")
-    data_risks = data_risks[:5]
-
-    lines.append("")
-    lines.append("<b>Срочно (до 24ч)</b>")
-    order_now = analytics.get("order_now") or []
-    for item in order_now[:4]:
-        lines.append(f"• {escape_html(item)}")
-    for item in urgent_items[:3]:
-        lines.append(f"• {escape_html(item)}")
-
-    supplier_orders = analytics.get("order_by_supplier") or []
-    if supplier_orders:
-        lines.append("")
-        lines.append("<b>Заказ по поставщикам</b>")
-        for supplier in supplier_orders[:4]:
-            if not isinstance(supplier, dict):
-                continue
-            supplier_name = escape_html(str(supplier.get("supplier_name", "Поставщик")))
-            contact = escape_html(str(supplier.get("supplier_contact", "TBD")))
-            channel = escape_html(str(supplier.get("order_channel", "TBD")))
-            cutoff = escape_html(str(supplier.get("order_cutoff_time", "TBD")))
-            lines.append(f"• {supplier_name} · {channel} · {contact} · cutoff: {cutoff}")
-            items = supplier.get("items") or []
-            if isinstance(items, list):
-                for order_item in items[:2]:
-                    if not isinstance(order_item, dict):
-                        continue
-                    item_name = escape_html(str(order_item.get("name", "SKU")))
-                    qty_to_order = int(order_item.get("qty_to_order", 0) or 0)
-                    qty_now = int(order_item.get("qty_now", 0) or 0)
-                    abc = escape_html(str(order_item.get("abc", "?")))
-                    lines.append(f"•   {item_name}: заказать {qty_to_order} (сейчас {qty_now}, ABC {abc})")
-
-    lines.append("")
-    lines.append("<b>Планово (2-7 дней)</b>")
-    for item in planned_items:
-        lines.append(f"• {escape_html(item)}")
-
-    lines.append("")
-    lines.append("<b>Что не заказывать/сократить</b>")
-    for item in reduce_items:
-        lines.append(f"• {escape_html(item)}")
-
-    lines.append("")
-    lines.append("<b>Изменение цен (каталог)</b>")
-    if price_delta.get("up") or price_delta.get("down"):
-        if price_delta.get("up"):
-            lines.append("• Рост цен:")
-            for item in price_delta.get("up", [])[:5]:
-                lines.append(f"• {escape_html(item)}")
-        if price_delta.get("down"):
-            lines.append("• Снижение цен:")
-            for item in price_delta.get("down", [])[:5]:
-                lines.append(f"• {escape_html(item)}")
+    if critical_orders:
+        for item in critical_orders[:5]:
+            lines.append(
+                "• "
+                + escape_html(
+                    f"{item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт; "
+                    f"{item['supplier_name']}; {item['order_channel']} {item['supplier_contact']}; "
+                    f"дедлайн {item['deadline']}; риск: {item['risk']}"
+                )
+            )
     else:
-        lines.append("• Недостаточно данных для сравнения цен (нужны 2 каталога с колонкой цены).")
+        lines.append("• Критичных позиций для заказа нет.")
 
     lines.append("")
-    lines.append("<b>ABC и продажи</b>")
+    lines.append("<b>Планово заказать</b>")
+    if planned_orders:
+        for item in planned_orders[:5]:
+            lines.append(
+                "• "
+                + escape_html(
+                    f"{item['name']}: сейчас {item['qty_now']} шт, дозаказать {item['qty_to_order']} шт; "
+                    f"{item['supplier_name']}; срок {item['deadline']}; причина: {item['reason']}"
+                )
+            )
+    else:
+        lines.append("• Плановых дозаказов не выявлено.")
+
+    lines.append("")
+    lines.append("<b>Не заказывать / сократить</b>")
+    if reduce_items:
+        for item in reduce_items[:5]:
+            lines.append(f"• {escape_html(str(item))}")
+    else:
+        lines.append("• Явных позиций под сокращение закупки нет.")
+
+    lines.append("")
+    lines.append("<b>Продажи и ассортимент</b>")
     if sales_top:
         lines.append("• Топ продаж:")
-        for item in sales_top:
+        for item in sales_top[:3]:
             lines.append(f"• {escape_html(item)}")
     if sales_weak:
         lines.append("• Слабые позиции:")
-        for item in sales_weak:
+        for item in sales_weak[:3]:
             lines.append(f"• {escape_html(item)}")
     if (not sales_top) and (not sales_weak):
-        lines.append("• Не удалось извлечь топ/слабые позиции из текущих файлов продаж.")
+        lines.append("• Недостаточно данных, чтобы уверенно показать топ и слабые позиции.")
 
     lines.append("")
-    lines.append("<b>Расход (моющие/хоз)</b>")
+    lines.append("<b>Цены и расход</b>")
+    if price_delta.get("up"):
+        for item in price_delta.get("up", [])[:3]:
+            lines.append(f"• Рост цены: {escape_html(item)}")
+    if price_delta.get("down"):
+        for item in price_delta.get("down", [])[:3]:
+            lines.append(f"• Снижение цены: {escape_html(item)}")
     if consumption:
-        for item in consumption:
-            lines.append(f"• {escape_html(item)}")
-    else:
-        lines.append("• Аномальный расход по моющим/хоз не выявлен или не хватает сопоставимых срезов.")
+        for item in consumption[:3]:
+            lines.append(f"• Расход: {escape_html(item)}")
+    if (not price_delta.get("up")) and (not price_delta.get("down")) and (not consumption):
+        lines.append("• Сильных сигналов по ценам и расходу пока нет.")
 
     lines.append("")
-    lines.append("<b>Риски данных (чего не хватает)</b>")
-    for item in data_risks:
+    lines.append("<b>Проверить вручную</b>")
+    if manual_review:
+        for item in manual_review[:5]:
+            lines.append(f"• {escape_html(str(item))}")
+    else:
+        lines.append("• Критичных ручных проверок нет.")
+
+    lines.append("")
+    lines.append("<b>Каких данных не хватает</b>")
+    for item in data_risks[:4]:
         lines.append(f"• {escape_html(item)}")
 
-    lines.append("")
-    if insights:
-        lines.append("<b>Новые карточки (кликабельно)</b>")
-        for item in insights[:8]:
-            card_rel = str(item.get("card_rel", "") or "")
-            source_rel = str(item.get("source_rel", "") or "")
-            card_url = build_github_link(card_rel) if card_rel else ""
-            source_url = build_github_link(source_rel) if source_rel else ""
-            title = escape_html(telegram_item_title(item))
-            if card_url and source_url:
-                lines.append(f"• <a href=\"{card_url}\">{title}</a> · <a href=\"{source_url}\">источник</a>")
-            elif card_url:
-                lines.append(f"• <a href=\"{card_url}\">{title}</a> · источник: <code>{escape_html(source_rel or 'n/a')}</code>")
-            elif source_url:
-                lines.append(f"• {title} · <a href=\"{source_url}\">источник</a>")
-            else:
-                lines.append(f"• {title} · карточка: <code>{escape_html(card_rel or 'n/a')}</code>")
-        lines.append("")
-
     if report_url:
+        lines.append("")
         lines.append(f"Полный отчёт: <a href=\"{report_url}\">WH.REPORT.002</a>")
     else:
+        lines.append("")
         lines.append(f"Полный отчёт: <code>{escape_html(report_rel)}</code>")
-    if queue_url:
-        lines.append(f"Очередь решений: <a href=\"{queue_url}\">WH.SESSION.001</a>")
-    else:
-        lines.append(f"Очередь решений: <code>{escape_html(queue_rel)}</code>")
     if procurement_url:
         lines.append(f"Закупочный контур: <a href=\"{procurement_url}\">WH.WP.007 supplier-map</a>")
     elif PROCUREMENT_REPORT_FILE.exists():
         lines.append(f"Закупочный контур: <code>{escape_html(procurement_rel)}</code>")
+    if queue_url:
+        lines.append(f"Очередь решений: <a href=\"{queue_url}\">WH.SESSION.001</a>")
+    else:
+        lines.append(f"Очередь решений: <code>{escape_html(queue_rel)}</code>")
 
     return "\n".join(lines)
 
