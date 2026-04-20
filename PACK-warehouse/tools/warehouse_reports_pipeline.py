@@ -456,6 +456,9 @@ def parse_stock_metrics(rows: list[list[str]]) -> dict:
             continue
         row = r + [""] * (5 - len(r))
         name = row[0].strip()
+        if name.count("?") >= 3:
+            # Поврежденная кодировка в legacy CSV не должна попадать в решение руководителя.
+            continue
         total_raw = row[1].strip()
         if not total_raw or not re.fullmatch(r"\d+(\.\d+)?", total_raw):
             continue
@@ -697,6 +700,7 @@ def load_supplier_directory() -> list[dict[str, str]]:
 
 def infer_supplier_for_item(item_name: str) -> dict[str, str]:
     product_type = classify_item_product_type(item_name)
+    item_low = normalize_item_name(item_name)
     suppliers = load_supplier_directory()
     type_fragments = {
         "кофе_drip": ("кофе_drip", "кофе"),
@@ -707,6 +711,21 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
         "расходники": ("расходник", "хоз"),
         "десерты": ("десерт",),
     }
+    supplier_override_by_item = {
+        "субмарина": "Субмарина",
+    }
+    for marker, supplier_name_override in supplier_override_by_item.items():
+        if marker in item_low:
+            for row in suppliers:
+                if (row.get("supplier_name") or "").strip().lower() == supplier_name_override.lower():
+                    return {
+                        "supplier_name": row.get("supplier_name", supplier_name_override),
+                        "supplier_contact": row.get("supplier_contact", "TBD"),
+                        "order_channel": row.get("order_channel", "TBD"),
+                        "order_cutoff_time": row.get("order_cutoff_time", "TBD"),
+                        "typical_lead_time_days": row.get("typical_lead_time_days", "TBD"),
+                        "product_type": product_type,
+                    }
     for row in suppliers:
         product_types = (row.get("product_types") or "").lower()
         if product_type and product_type.lower() in product_types:

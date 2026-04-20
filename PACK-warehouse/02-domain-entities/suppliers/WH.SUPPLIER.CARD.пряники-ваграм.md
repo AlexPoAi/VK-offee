@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: Пряники Ваграм
-updated: 2026-04-20 22:52
+updated: 2026-04-20 23:14
 status: active
 ---
 
