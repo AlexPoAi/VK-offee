@@ -182,6 +182,22 @@ def clean_item_label(text: str) -> str:
     return value[:90].strip(" ,.-") or value[:90]
 
 
+def normalize_invoice_item_name(text: str) -> str:
+    value = normalize_ws(text)
+    # В распознанном тексте УПД часто прилипает шапка колонок "1а 1б 2 2а ... 11"
+    # перед кодом и названием товара. Для price-ledger и supplier cards этот шум вреден.
+    value = re.sub(
+        r"^(?:1а\s+1б\s+2\s+2а\s+3\s+4\s+5\s+6\s+7\s+8\s+9\s+10\s+10а\s+11\s+)+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"^[A-ZА-Я0-9._/-]{2,}\s+1\s+", "", value)
+    value = re.sub(r"^[A-ZА-Я0-9._/-]{2,}\s+", "", value)
+    value = re.sub(r"\s{2,}", " ", value).strip(" ,.-")
+    return value or normalize_ws(text)
+
+
 def slugify(text: str) -> str:
     value = text.lower()
     value = re.sub(r"[^a-zа-я0-9]+", "-", value, flags=re.IGNORECASE)
@@ -261,6 +277,13 @@ def extract_text(pdf: Path) -> str:
     return subprocess.check_output(["pdftotext", "-layout", str(pdf), "-"], text=True)
 
 
+def canonical_pdf_key(pdf: Path) -> str:
+    name = pdf.name.lower()
+    while name.endswith(".pdf"):
+        name = name[:-4]
+    return name.strip()
+
+
 def split_invoices(text: str) -> list[str]:
     parts = re.split(r"(?=передаточный\s+Счет-фактура №)", text, flags=re.IGNORECASE)
     return [p for p in parts if "Счет-фактура №" in p]
@@ -291,7 +314,7 @@ def parse_items(block: str, seller: str) -> list[InvoiceItem]:
     )
     items: list[InvoiceItem] = []
     for match in pattern.finditer(section):
-        name = normalize_ws(match.group("name"))
+        name = normalize_invoice_item_name(match.group("name"))
         qty = money_to_float(match.group("qty"))
         price = money_to_float(match.group("price"))
         amount = money_to_float(match.group("amount"))
@@ -336,8 +359,16 @@ def parse_invoice(block: str, source_file: str) -> InvoiceRecord | None:
 
 def collect_invoice_records() -> list[InvoiceRecord]:
     pdfs = sorted(KB_DIR.rglob("*Накладные*.pdf"))
-    records: list[InvoiceRecord] = []
+    unique_pdfs: list[Path] = []
+    seen_keys: set[str] = set()
     for pdf in pdfs:
+        key = canonical_pdf_key(pdf)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        unique_pdfs.append(pdf)
+    records: list[InvoiceRecord] = []
+    for pdf in unique_pdfs:
         text = extract_text(pdf)
         for block in split_invoices(text):
             record = parse_invoice(block, pdf.relative_to(ROOT).as_posix())
