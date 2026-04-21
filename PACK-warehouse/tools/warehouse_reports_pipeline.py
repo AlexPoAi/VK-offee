@@ -2128,14 +2128,21 @@ def telegram_text(
     lines.append("")
     lines.append("<b>Планово заказать</b>")
     if planned_orders:
-        for item in planned_orders[:5]:
-            lines.append(
-                "• "
-                + escape_html(
-                    f"{item['name']}: сейчас {item['qty_now']} шт, дозаказать {item['qty_to_order']} шт; "
-                    f"{item['supplier_name']}; срок {item['deadline']}; причина: {item['reason']}"
+        for supplier_name, items in bucket_orders_by_supplier(planned_orders[:8]):
+            deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
+            lines.append("• " + escape_html(supplier_name))
+            lines.append("  " + escape_html(f"Базовый дедлайн: {deadline}"))
+            for item in items:
+                item_deadline = str(item.get("deadline", "")).strip() or deadline
+                extra_deadline = ""
+                if item_deadline != deadline:
+                    extra_deadline = f"; дедлайн {item_deadline}"
+                lines.append(
+                    "  - "
+                    + escape_html(
+                        f"{item['name']}: сейчас {item['qty_now']} шт, дозаказать {item['qty_to_order']} шт; причина: {item['reason']}{extra_deadline}"
+                    )
                 )
-            )
     else:
         lines.append("• Плановых дозаказов не выявлено.")
 
