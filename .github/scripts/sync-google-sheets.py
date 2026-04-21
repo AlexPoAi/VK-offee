@@ -261,7 +261,9 @@ def save_xlsx_bytes_as_csvs(raw_bytes, folder_path, base_name):
         return 0
 
     created = 0
-    wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True, read_only=True)
+    # read_only=True у части xlsx-экспортов Жанны режет dimension до первых 10 строк,
+    # поэтому ABC-таблица "исчезает" из CSV. Для warehouse-intake здесь важнее полнота.
+    wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True, read_only=False)
     for ws in wb.worksheets:
         safe_sheet = sanitize_filename(ws.title)
         out = folder_path / f"{base_name} - {safe_sheet}.csv"
