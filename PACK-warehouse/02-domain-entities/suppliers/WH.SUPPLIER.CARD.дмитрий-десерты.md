@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: Дмитрий (Десерты)
-updated: 2026-04-21 18:39
+updated: 2026-04-21 19:31
 status: active
 ---
 

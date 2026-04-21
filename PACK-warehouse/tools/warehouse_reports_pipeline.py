@@ -1061,9 +1061,17 @@ def build_order_bullets(orders: list[dict[str, object]]) -> list[str]:
     for item in orders:
         bullets.append(
             f"{item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт, "
-            f"канал {item['order_channel']} {item['supplier_contact']}, дедлайн {item['deadline']}, риск: {item['risk']}"
+            f"дедлайн {item['deadline']}, риск: {item['risk']}"
         )
     return bullets
+
+
+def bucket_orders_by_supplier(orders: list[dict[str, object]]) -> list[tuple[str, list[dict[str, object]]]]:
+    buckets: dict[str, list[dict[str, object]]] = {}
+    for item in orders:
+        supplier_name = str(item.get("supplier_name", "")).strip() or "Уточнить у Жанны"
+        buckets.setdefault(supplier_name, []).append(item)
+    return sorted(buckets.items(), key=lambda kv: kv[0].lower())
 
 
 def build_smart_analytics(insights: list[dict]) -> dict:
@@ -1629,26 +1637,47 @@ def build_latest_summary(
 
     lines.extend(["", "## Срочно заказать"])
     if critical_orders:
-        for item in critical_orders:
+        for supplier_name, items in bucket_orders_by_supplier(critical_orders):
+            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
+            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            common_deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
             lines.extend(
                 [
-                    f"- {item['name']}: сейчас **{item['qty_now']} шт**, заказать **{item['qty_to_order']} шт**.",
-                    f"  Поставщик: **{item['supplier_name']}** · канал: **{item['order_channel']} {item['supplier_contact']}**.",
-                    f"  Дедлайн: **{item['deadline']}** · риск: **{item['risk']}**.",
+                    f"- **{supplier_name}**",
+                    f"  Канал заказа: **{channel} {contact}**.",
+                    f"  Базовый дедлайн: **{common_deadline}**.",
                 ]
             )
+            for item in items:
+                item_deadline = str(item.get("deadline", "")).strip() or common_deadline
+                deadline_note = ""
+                if item_deadline != common_deadline:
+                    deadline_note = f", дедлайн: **{item_deadline}**"
+                lines.append(
+                    f"  - {item['name']}: сейчас **{item['qty_now']} шт**, заказать **{item['qty_to_order']} шт**, риск: **{item['risk']}**{deadline_note}."
+                )
     else:
         lines.append("- Критичных позиций для заказа сейчас нет.")
 
     lines.extend(["", "## Планово заказать"])
     if planned_orders:
-        for item in planned_orders:
+        for supplier_name, items in bucket_orders_by_supplier(planned_orders):
+            common_deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
             lines.extend(
                 [
-                    f"- {item['name']}: сейчас **{item['qty_now']} шт**, целевой уровень **{target_stock_level(str(item['abc']))} шт**, дозаказать **{item['qty_to_order']} шт**.",
-                    f"  Поставщик: **{item['supplier_name']}** · дедлайн: **{item['deadline']}** · причина: {item['reason']}.",
+                    f"- **{supplier_name}**",
+                    f"  Базовый дедлайн: **{common_deadline}**.",
                 ]
             )
+            for item in items:
+                item_deadline = str(item.get("deadline", "")).strip() or common_deadline
+                deadline_note = ""
+                if item_deadline != common_deadline:
+                    deadline_note = f" Дедлайн по позиции: **{item_deadline}**."
+                lines.append(
+                    f"  - {item['name']}: сейчас **{item['qty_now']} шт**, целевой уровень **{target_stock_level(str(item['abc']))} шт**, дозаказать **{item['qty_to_order']} шт**."
+                )
+                lines.append(f"    Причина: {item['reason']}.{deadline_note}")
     else:
         lines.append("- Плановых позиций к дозаказу не выявлено.")
 
@@ -1754,16 +1783,21 @@ def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual
     critical_orders = analytics.get("critical_orders") or []
     if critical_orders:
         lines.append("- Действие: оформить заказ сегодня.")
-        supplier_buckets: dict[str, list[dict[str, object]]] = {}
-        for item in critical_orders[:8]:
-            supplier_buckets.setdefault(str(item["supplier_name"]), []).append(item)
-        for supplier_name, items in supplier_buckets.items():
+        for supplier_name, items in bucket_orders_by_supplier(critical_orders[:8]):
             channel = str(items[0].get("order_channel", "")).strip() or "TBD"
             contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
             deadline = str(items[0].get("deadline", "")).strip() or "TBD"
-            lines.append(f"  - {supplier_name}: канал {channel} {contact}, дедлайн {deadline}")
-            for bullet in build_order_bullets(items):
-                lines.append(f"    - {bullet}")
+            lines.append(f"  - {supplier_name}")
+            lines.append(f"    - канал: {channel} {contact}")
+            lines.append(f"    - базовый дедлайн: {deadline}")
+            for item in items:
+                item_deadline = str(item.get("deadline", "")).strip() or deadline
+                extra_deadline = ""
+                if item_deadline != deadline:
+                    extra_deadline = f", дедлайн {item_deadline}"
+                lines.append(
+                    f"    - {item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт, риск: {item['risk']}{extra_deadline}"
+                )
     else:
         lines.append("- Срочных позиций к заказу не выявлено.")
 
@@ -2070,15 +2104,24 @@ def telegram_text(
     ]
 
     if critical_orders:
-        for item in critical_orders[:5]:
-            lines.append(
-                "• "
-                + escape_html(
-                    f"{item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт; "
-                    f"{item['supplier_name']}; {item['order_channel']} {item['supplier_contact']}; "
-                    f"дедлайн {item['deadline']}; риск: {item['risk']}"
+        for supplier_name, items in bucket_orders_by_supplier(critical_orders[:8]):
+            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
+            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
+            lines.append("• " + escape_html(supplier_name))
+            lines.append("  " + escape_html(f"Канал заказа: {channel} {contact}"))
+            lines.append("  " + escape_html(f"Базовый дедлайн: {deadline}"))
+            for item in items:
+                item_deadline = str(item.get("deadline", "")).strip() or deadline
+                extra_deadline = ""
+                if item_deadline != deadline:
+                    extra_deadline = f"; дедлайн {item_deadline}"
+                lines.append(
+                    "  - "
+                    + escape_html(
+                        f"{item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт; риск: {item['risk']}{extra_deadline}"
+                    )
                 )
-            )
     else:
         lines.append("• Критичных позиций для заказа нет.")
 
