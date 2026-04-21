@@ -145,11 +145,13 @@ def find_supported_files(drive_service, folder_id):
     Сейчас поддерживаем:
       - text/csv
       - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (.xlsx)
+      - application/pdf (.pdf)
     """
     files = []
     supported_mimes = {
         'text/csv',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/pdf',
     }
 
     def search_folder(current_folder_id, parent_path=""):
@@ -244,6 +246,10 @@ def save_csv_bytes(raw_bytes, file_path):
         text = raw_bytes.decode('utf-8', errors='replace')
     with open(file_path, 'w', encoding='utf-8', newline='') as f:
         f.write(text)
+
+
+def save_binary_bytes(raw_bytes, file_path):
+    file_path.write_bytes(raw_bytes)
 
 
 def save_xlsx_bytes_as_csvs(raw_bytes, folder_path, base_name):
@@ -378,6 +384,12 @@ def main():
                 else:
                     print("  ⚠️ XLSX не конвертирован (см. предупреждения выше)")
                     stats['failed'] += 1
+            elif mime == 'application/pdf':
+                out = folder_path / f"{safe_base}.pdf"
+                save_binary_bytes(raw, out)
+                print(f"  ✅ PDF сохранён: {out.name}")
+                stats['sheets_read'] += 1
+                stats['success'] += 1
             else:
                 print(f"  ⚠️ Неподдерживаемый mime: {mime}")
                 stats['failed'] += 1

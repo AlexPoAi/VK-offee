@@ -22,7 +22,10 @@ WAREHOUSE_TELEGRAM_AUTOSEND="${WAREHOUSE_TELEGRAM_AUTOSEND:-0}"
 
 # Папка Google Drive intake — куда Жанна кладёт новые файлы
 # Рабочая ветка: root `Отчёты для бота` -> intake `Новые документы`.
-WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1Jg1Zgj2_ueTV6-NQamAU8XCPalFNhO8W}"
+# Для sync берём весь root, иначе `ABC`/история в `Обработано` не попадают в локальный контур.
+WAREHOUSE_DRIVE_FOLDER_ID="${WAREHOUSE_DRIVE_FOLDER_ID:-1I_aWEHvGVI5c-aAEM03erNZj7HGXtJPf}"
+# Intake-папка Жанны — только для последующего move-step.
+WAREHOUSE_DRIVE_INTAKE_FOLDER_ID="${WAREHOUSE_DRIVE_INTAKE_FOLDER_ID:-1Jg1Zgj2_ueTV6-NQamAU8XCPalFNhO8W}"
 # Папка Google Drive «Обработано» — куда перемещаем после обработки
 WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1WanukzWeuqJgUQ7N8YkG9oC23-DIRGjT}"
 
@@ -30,8 +33,9 @@ WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID="${WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID:-1Wan
   echo "========== $(date '+%Y-%m-%d %H:%M:%S') warehouse_full_loop start =========="
   sync_ok=0
   pipeline_ok=0
-  # Синк intake-папки Жанны (ABC-анализ, остатки, заявки)
-  echo "[warehouse] syncing Zhanna intake folder: $WAREHOUSE_DRIVE_FOLDER_ID"
+  # Синк всего root-контура склада, чтобы видеть и intake, и уже перемещённые
+  # в `Обработано` файлы вроде ABC/накладных.
+  echo "[warehouse] syncing warehouse root folder: $WAREHOUSE_DRIVE_FOLDER_ID"
   if GOOGLE_DRIVE_FOLDER_ID="$WAREHOUSE_DRIVE_FOLDER_ID" "$PYTHON_BIN" "$SCRIPTS_DIR/sync-google-sheets.py"; then
     sync_ok=1
     echo "[warehouse] sync status=ok"
@@ -70,7 +74,7 @@ if creds and creds.expired and creds.refresh_token:
     creds.refresh(Request())
 drive = build('drive', 'v3', credentials=creds)
 
-src = '$WAREHOUSE_DRIVE_FOLDER_ID'
+src = '$WAREHOUSE_DRIVE_INTAKE_FOLDER_ID'
 dst = '$WAREHOUSE_DRIVE_PROCESSED_FOLDER_ID'
 files = drive.files().list(
     q=f\"'{src}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false\",
