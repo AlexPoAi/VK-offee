@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: МФУД
-updated: 2026-04-21 17:27
+updated: 2026-04-21 18:39
 status: active
 ---
 

@@ -350,6 +350,31 @@ def parse_xlsx_rows(path: Path) -> list[list[str]]:
     return best_rows
 
 
+def parse_xlsx_sheets(path: Path) -> list[dict[str, object]]:
+    from openpyxl import load_workbook  # type: ignore
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    sheets: list[dict[str, object]] = []
+    for ws in wb.worksheets:
+        rows: list[list[str]] = []
+        non_empty = 0
+        for row in ws.iter_rows(values_only=True):
+            vals = ["" if v is None else str(v).strip() for v in row]
+            if any(vals):
+                non_empty += 1
+            rows.append(vals)
+        sheets.append(
+            {
+                "title": ws.title,
+                "rows": rows,
+                "non_empty": non_empty,
+            }
+        )
+    if not sheets:
+        raise ValueError("empty xlsx")
+    return sheets
+
+
 def parse_tabular_rows(path: Path) -> list[list[str]]:
     suffix = path.suffix.lower()
     if suffix == ".csv":
@@ -357,6 +382,93 @@ def parse_tabular_rows(path: Path) -> list[list[str]]:
     if suffix == ".xlsx":
         return parse_xlsx_rows(path)
     raise ValueError(f"unsupported tabular suffix: {suffix}")
+
+
+def normalize_abc_class(value: str) -> str:
+    cat = value.strip().upper()
+    return cat.replace("А", "A").replace("В", "B").replace("С", "C")
+
+
+def parse_abc_payload(rows: list[list[str]], *, sheet_name: str = "") -> dict[str, object]:
+    """Извлечь ABC-категории и метаданные качества разбора."""
+    best_rows: list[list[str]] = []
+    result: dict[str, str] = {}
+    unmatched: list[str] = []
+    payload: dict[str, object] = {
+        "sheet_name": sheet_name,
+        "categories": result,
+        "matched_rows": 0,
+        "unmatched_rows": 0,
+        "total_rows": 0,
+        "header_row_idx": 0,
+        "name_col": -1,
+        "cat_col": -1,
+        "status": "empty",
+        "unmatched_preview": unmatched,
+    }
+    if not rows:
+        return payload
+
+    payload["total_rows"] = len(rows)
+
+    header_row_idx = 0
+    name_col = -1
+    cat_col = -1
+    scan_limit = min(len(rows), 16)
+    for ridx in range(scan_limit):
+        header = [c.strip().lower() for c in rows[ridx]]
+        local_name = -1
+        local_cat = -1
+        for i, h in enumerate(header):
+            if any(kw in h for kw in ("наимен", "товар", "позиц", "продукт", "name", "номенклат")) and local_name == -1:
+                local_name = i
+            if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")) and local_cat == -1:
+                local_cat = i
+        if local_name != -1 and local_cat != -1:
+            header_row_idx = ridx
+            name_col = local_name
+            cat_col = local_cat
+            break
+
+    if name_col == -1:
+        name_col = 0
+    if cat_col == -1:
+        width = max(len(r) for r in rows)
+        for i in range(width):
+            vals = {
+                normalize_abc_class(r[i])
+                for r in rows[header_row_idx + 1 :]
+                if len(r) > i and r[i].strip()
+            }
+            if vals and vals.issubset({"A", "B", "C"}):
+                cat_col = i
+                break
+
+    payload["header_row_idx"] = header_row_idx
+    payload["name_col"] = name_col
+    payload["cat_col"] = cat_col
+
+    if cat_col == -1:
+        payload["status"] = "missing_category_column"
+        return payload
+
+    for r in rows[header_row_idx + 1 :]:
+        if len(r) <= max(name_col, cat_col):
+            continue
+        name = r[name_col].strip()
+        cat = normalize_abc_class(r[cat_col])
+        if not name:
+            continue
+        if cat in ("A", "B", "C"):
+            result[name.lower()] = cat
+        else:
+            unmatched.append(name)
+
+    payload["matched_rows"] = len(result)
+    payload["unmatched_rows"] = len(unmatched)
+    payload["status"] = "ok" if result else "no_valid_categories"
+    payload["unmatched_preview"] = unmatched[:8]
+    return payload
 
 
 def extract_pdf_payload(path: Path) -> dict[str, object]:
@@ -494,50 +606,7 @@ def parse_comment_bullets(rows: list[list[str]], max_lines: int = 12) -> list[st
 
 def parse_abc_categories(rows: list[list[str]]) -> dict[str, str]:
     """Извлечь маппинг {название_позиции: категория A/B/C} из ABC-анализа."""
-    result: dict[str, str] = {}
-    if not rows:
-        return result
-    # Ищем строку-заголовок в первых строках (в ABC часто есть "шапка" перед таблицей).
-    header_row_idx = 0
-    name_col = -1
-    cat_col = -1
-    scan_limit = min(len(rows), 12)
-    for ridx in range(scan_limit):
-        header = [c.strip().lower() for c in rows[ridx]]
-        local_name = -1
-        local_cat = -1
-        for i, h in enumerate(header):
-            if any(kw in h for kw in ("наимен", "товар", "позиц", "продукт", "name", "номенклат")) and local_name == -1:
-                local_name = i
-            if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")) and local_cat == -1:
-                local_cat = i
-        if local_name != -1 and local_cat != -1:
-            header_row_idx = ridx
-            name_col = local_name
-            cat_col = local_cat
-            break
-    if name_col == -1:
-        name_col = 0
-    if cat_col == -1:
-        # Ищем столбец где есть значения A/B/C
-        width = max(len(r) for r in rows)
-        for i in range(width):
-            vals = {r[i].strip().upper() for r in rows[header_row_idx + 1 :] if len(r) > i and r[i].strip()}
-            if vals and vals.issubset({"A", "B", "C", "А", "В", "С"}):
-                cat_col = i
-                break
-    if cat_col == -1:
-        return result
-    for r in rows[header_row_idx + 1 :]:
-        if len(r) <= max(name_col, cat_col):
-            continue
-        name = r[name_col].strip()
-        cat = r[cat_col].strip().upper()
-        # Нормализуем кириллические буквы к латинице
-        cat = cat.replace("А", "A").replace("В", "B").replace("С", "C")
-        if name and cat in ("A", "B", "C"):
-            result[name.lower()] = cat
-    return result
+    return dict(parse_abc_payload(rows).get("categories") or {})
 
 
 def parse_number(value: str) -> float | None:
@@ -1310,14 +1379,48 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                 body_lines.append("- Нет содержимого для выжимки.")
         else:
             if report_type == "abc":
-                categories = parse_abc_categories(rows)
+                abc_payload: dict[str, object]
+                if suffix == ".xlsx":
+                    sheets = parse_xlsx_sheets(source)
+                    parsed = [
+                        parse_abc_payload(
+                            list(sheet.get("rows") or []),
+                            sheet_name=str(sheet.get("title") or ""),
+                        )
+                        for sheet in sheets
+                    ]
+                    abc_payload = max(
+                        parsed,
+                        key=lambda item: (
+                            int(item.get("matched_rows", 0) or 0),
+                            -int(item.get("unmatched_rows", 0) or 0),
+                            int(item.get("total_rows", 0) or 0),
+                        ),
+                    )
+                else:
+                    abc_payload = parse_abc_payload(rows)
+
+                categories = dict(abc_payload.get("categories") or {})
                 insight["abc_categories"] = categories
+                insight["abc_sheet_name"] = str(abc_payload.get("sheet_name") or "")
+                insight["abc_matched_rows"] = int(abc_payload.get("matched_rows", 0) or 0)
+                insight["abc_unmatched_rows"] = int(abc_payload.get("unmatched_rows", 0) or 0)
+                insight["abc_status"] = str(abc_payload.get("status") or "")
+                insight["abc_unmatched_preview"] = list(abc_payload.get("unmatched_preview") or [])
                 counts = {"A": 0, "B": 0, "C": 0}
                 for cat in categories.values():
                     if cat in counts:
                         counts[cat] += 1
                 body_lines.extend([
                     "## ABC Анализ",
+                    f"- Статус разбора: **{insight['abc_status'] or 'n/a'}**",
+                    (
+                        f"- Лист: **{insight['abc_sheet_name']}**"
+                        if insight.get("abc_sheet_name")
+                        else "- Лист: **n/a**"
+                    ),
+                    f"- Matched SKU: **{insight['abc_matched_rows']}**",
+                    f"- Unmatched строк: **{insight['abc_unmatched_rows']}**",
                     f"- Позиций A (приоритет): **{counts['A']}**",
                     f"- Позиций B (средние): **{counts['B']}**",
                     f"- Позиций C (низкий приоритет): **{counts['C']}**",
@@ -1329,6 +1432,11 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                     body_lines.append(f"- {name.title()}")
                 if not a_items:
                     body_lines.append("- Не найдено.")
+                unmatched_preview = list(insight.get("abc_unmatched_preview") or [])
+                if unmatched_preview:
+                    body_lines.extend(["", "## Требуют ручной сверки"])
+                    for name in unmatched_preview[:6]:
+                        body_lines.append(f"- {name}")
             elif report_type in {"stock", "inventory", "beans"}:
                 metrics = parse_stock_metrics(rows)
                 if metrics["rows"] > 0:
