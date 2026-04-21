@@ -945,6 +945,58 @@ def format_money(value: float) -> str:
     return f"{value:,.0f} ₽".replace(",", " ")
 
 
+def executive_summary_lines(
+    critical_orders: list[dict[str, object]],
+    planned_orders: list[dict[str, object]],
+    reduce_or_stop: list[str],
+    manual_review: list[str],
+    price_delta: dict[str, list[str]],
+    consumption: list[str],
+    has_abc: bool,
+) -> list[str]:
+    suppliers = sorted(
+        {
+            str(item.get("supplier_name", "")).strip()
+            for item in [*critical_orders, *planned_orders]
+            if str(item.get("supplier_name", "")).strip()
+        }
+    )
+    if critical_orders:
+        main_risk = "out-of-stock по части ассортиментных позиций"
+    elif manual_review:
+        main_risk = "часть решений пока держится на ручной проверке данных"
+    elif reduce_or_stop:
+        main_risk = "часть денег может застревать в слабых позициях"
+    else:
+        main_risk = "критичных дефицитов по текущим данным не видно"
+
+    lines = [
+        f"Критичных SKU: {len(critical_orders)}; плановых дозаказов: {len(planned_orders)}; поставщиков в цикле: {len(suppliers)}.",
+        f"Главный риск периода: {main_risk}.",
+    ]
+    if suppliers:
+        lines.append(f"Ключевые поставщики цикла: {', '.join(suppliers)}.")
+    if reduce_or_stop:
+        lines.append(f"Позиции на пересмотр закупки/ассортимента: {len(reduce_or_stop)}.")
+    if price_delta.get("up"):
+        lines.append(f"Есть сигнал роста цен по {len(price_delta.get('up', []))} позициям.")
+    if consumption:
+        lines.append("Есть сигнал по повышенному расходу хозтоваров/расходников.")
+    if not has_abc:
+        lines.append("ABC-контур не загружен: приоритеты закупки пока временно опираются на остатки и продажи.")
+    return lines
+
+
+def build_order_bullets(orders: list[dict[str, object]]) -> list[str]:
+    bullets: list[str] = []
+    for item in orders:
+        bullets.append(
+            f"{item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт, "
+            f"канал {item['order_channel']} {item['supplier_contact']}, дедлайн {item['deadline']}, риск: {item['risk']}"
+        )
+    return bullets
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
@@ -1427,25 +1479,25 @@ def build_latest_summary(
             sales_weak.append(f"{name}: {qty:.0f} шт / {format_money(float(rev))}")
     sales_top = list(dict.fromkeys(sales_top))[:5]
     sales_weak = list(dict.fromkeys(sales_weak))[:5]
-    executive: list[str] = []
     critical_orders = analytics.get("critical_orders") or []
     planned_orders = analytics.get("planned_orders") or []
     reduce_or_stop = analytics.get("reduce_or_stop") or []
     passive_monitoring = analytics.get("passive_monitoring") or []
-    if critical_orders:
-        executive.append(f"Срочных позиций к заказу: {len(critical_orders)}.")
-    else:
-        executive.append("Критичных дефицитов по текущим остаткам не выявлено.")
-    if planned_orders:
-        executive.append(f"Плановых позиций к дозаказу: {len(planned_orders)}.")
-    if sales_weak:
-        executive.append(f"Есть слабые позиции для пересмотра ассортимента: {len(sales_weak)}.")
-    if price_delta.get("up"):
-        executive.append(f"Зафиксирован рост цен по каталогу: {len(price_delta.get('up', []))} позиций.")
-    if consumption:
-        executive.append("Есть сигналы повышенного расхода по хозтоварам.")
-    if not executive:
-        executive.append("Данных недостаточно для управленческого вывода.")
+    manual_review = list(analytics.get("manual_review") or [])
+    if analytics.get("no_abc"):
+        manual_review.extend(
+            [f"{item}: нет ABC-категории, решение пока по остатку." for item in analytics.get("no_abc", [])[:5]]
+        )
+    manual_review = list(dict.fromkeys(manual_review))[:8]
+    executive = executive_summary_lines(
+        critical_orders=critical_orders,
+        planned_orders=planned_orders,
+        reduce_or_stop=reduce_or_stop,
+        manual_review=manual_review,
+        price_delta=price_delta,
+        consumption=consumption,
+        has_abc=bool(analytics.get("has_abc")),
+    )
 
     lines = [
         "---",
@@ -1538,12 +1590,6 @@ def build_latest_summary(
         lines.append("- Аномальный расход по хозтоварам и моющим не выявлен либо не хватает срезов.")
 
     lines.extend(["", "## Проверить вручную"])
-    manual_review = analytics.get("manual_review") or []
-    if analytics.get("no_abc"):
-        manual_review.extend(
-            [f"{item}: нет ABC-категории, решение пока по остатку." for item in analytics.get("no_abc", [])[:5]]
-        )
-    manual_review = list(dict.fromkeys(manual_review))[:8]
     if manual_review:
         for item in manual_review:
             lines.append(f"- {item}")
@@ -1599,17 +1645,27 @@ def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual
 
     critical_orders = analytics.get("critical_orders") or []
     if critical_orders:
-        lines.append("- Срочные позиции к заказу:")
+        lines.append("- Действие: оформить заказ сегодня.")
+        supplier_buckets: dict[str, list[dict[str, object]]] = {}
         for item in critical_orders[:8]:
-            lines.append(
-                f"  - {item['name']}: сейчас {item['qty_now']} шт, заказать {item['qty_to_order']} шт, "
-                f"{item['supplier_name']}, дедлайн {item['deadline']}"
-            )
+            supplier_buckets.setdefault(str(item["supplier_name"]), []).append(item)
+        for supplier_name, items in supplier_buckets.items():
+            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
+            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            deadline = str(items[0].get("deadline", "")).strip() or "TBD"
+            lines.append(f"  - {supplier_name}: канал {channel} {contact}, дедлайн {deadline}")
+            for bullet in build_order_bullets(items):
+                lines.append(f"    - {bullet}")
     else:
         lines.append("- Срочных позиций к заказу не выявлено.")
 
     lines.extend(["", "## WH.SESSION.002 — Что проверить вручную"])
-    manual_review = analytics.get("manual_review") or []
+    manual_review = list(analytics.get("manual_review") or [])
+    if analytics.get("no_abc"):
+        manual_review.extend(
+            [f"{item}: нет ABC-категории, решение пока по остатку." for item in analytics.get("no_abc", [])[:5]]
+        )
+    manual_review = list(dict.fromkeys(manual_review))[:8]
     if manual_review:
         for item in manual_review[:8]:
             lines.append(f"- {item}")
@@ -1886,23 +1942,21 @@ def telegram_text(
         verdict = "🟡 Есть срочный заказ"
     else:
         verdict = "🟢 Стабильно"
-    executive = []
-    if critical_orders:
-        executive.append(f"срочно заказать {len(critical_orders)} позиции")
-    if planned_orders:
-        executive.append(f"планово дозаказать {len(planned_orders)} позиции")
-    if sales_weak:
-        executive.append(f"пересмотреть {len(sales_weak)} слабых позиций")
-    if price_delta.get("up"):
-        executive.append(f"проверить рост цен по {len(price_delta.get('up', []))} SKU")
-    if not executive:
-        executive.append("критичных действий не выявлено")
+    executive = executive_summary_lines(
+        critical_orders=critical_orders,
+        planned_orders=planned_orders,
+        reduce_or_stop=reduce_items,
+        manual_review=manual_review,
+        price_delta=price_delta,
+        consumption=consumption,
+        has_abc=bool(analytics.get("has_abc")),
+    )
 
     lines = [
         "📦 <b>Склад · управленческий отчёт</b>",
         f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Окно: <b>{hours}ч</b>",
         f"Вердикт: <b>{verdict}</b>",
-        f"Итог: {'; '.join(escape_html(x) for x in executive)}.",
+        f"Итог: {' '.join(escape_html(x) for x in executive)}",
         "",
         "<b>Срочно заказать</b>",
     ]
