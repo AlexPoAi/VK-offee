@@ -1074,6 +1074,25 @@ def bucket_orders_by_supplier(orders: list[dict[str, object]]) -> list[tuple[str
     return sorted(buckets.items(), key=lambda kv: kv[0].lower())
 
 
+def build_supplier_order_message(supplier_name: str, items: list[dict[str, object]]) -> str:
+    contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+    lines = [
+        f"Здравствуйте. Хотим оформить заказ по поставщику {supplier_name}:",
+        "",
+    ]
+    for idx, item in enumerate(items, start=1):
+        lines.append(f"{idx}. {item['name']} — {item['qty_to_order']} шт.")
+    lines.extend(
+        [
+            "",
+            "Просьба подтвердить наличие, цену и ближайшую дату отгрузки.",
+        ]
+    )
+    if contact and contact != "TBD":
+        lines.extend(["", f"Контакт в контуре: {contact}"])
+    return "\n".join(lines)
+
+
 def build_smart_analytics(insights: list[dict]) -> dict:
     """Кросс-анализ остатков + ABC категорий."""
     # Собираем все остатки (позиция -> остаток)
@@ -1659,6 +1678,18 @@ def build_latest_summary(
     else:
         lines.append("- Критичных позиций для заказа сейчас нет.")
 
+    lines.extend(["", "## Готовые заявки поставщикам"])
+    if critical_orders:
+        for supplier_name, items in bucket_orders_by_supplier(critical_orders):
+            lines.append(f"- **{supplier_name}**")
+            for msg_line in build_supplier_order_message(supplier_name, items).splitlines():
+                if msg_line:
+                    lines.append(f"  {msg_line}")
+                else:
+                    lines.append("  ")
+    else:
+        lines.append("- Готовых срочных заявок поставщикам в этом цикле нет.")
+
     lines.extend(["", "## Планово заказать"])
     if planned_orders:
         for supplier_name, items in bucket_orders_by_supplier(planned_orders):
@@ -1800,6 +1831,18 @@ def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual
                 )
     else:
         lines.append("- Срочных позиций к заказу не выявлено.")
+
+    lines.extend(["", "## WH.SESSION.001A — Готовая заявка поставщику"])
+    if critical_orders:
+        for supplier_name, items in bucket_orders_by_supplier(critical_orders[:8]):
+            lines.append(f"- {supplier_name}")
+            for msg_line in build_supplier_order_message(supplier_name, items).splitlines():
+                if msg_line:
+                    lines.append(f"  - {msg_line}")
+                else:
+                    lines.append("  -")
+    else:
+        lines.append("- Готовых срочных заявок в этом цикле нет.")
 
     lines.extend(["", "## WH.SESSION.002 — Что проверить вручную"])
     manual_review = list(analytics.get("manual_review") or [])
