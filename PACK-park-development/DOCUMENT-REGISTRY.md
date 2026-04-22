@@ -84,6 +84,7 @@
 | PARK.DOC.029 | 2026-04-11 | Google Doc заявления на АГО | Google Doc: `19kceQ7z7xRDJ-asfcqhh9ma-HO-VkrmCO3-GiYlJYTs` | `06-documents/.../administrative/PARK.DOC.029-ago-application-google-doc (...).md` | active |
 | PARK.DOC.033 | 2026-04-16 | **Заявление на АГО финальное** | Google Doc: `1_7KGTFFi6tDw_S4Bf-FGmbEsfLQIhkHP3LHMHTZPC2A` | `06-documents/.../administrative/PARK.DOC.033-ago-application-final (...).md` | submitted |
 | PARK.DOC.034 | 2026-04-16 | **Сопроводительное письмо АГО финальное** | Google Doc: `1iREjRjFoKq1CEUKJDZTqHBVlYpodX1uMh11VVXQkPyM` | `06-documents/.../administrative/PARK.DOC.034-ago-cover-letter-final (...).md` | submitted |
+| PARK.DOC.035 | 2026-04-22 | **Фиксация регистрации АГО: входящий `02-124/6973`, ответственный Меметов Артур Заферович** | источник: телефонный звонок | `04-communications/PARK.COMM.025-bahchisaray-ago-registration-status-april22 (...).md` | active |
 
 ## Финансовые документы (счета, платежи)
 
@@ -110,6 +111,7 @@
 | ID | Дата | Тема | Оригинал | Карточка | Статус |
 |---|---|---|---|---|---|
 | PARK.WP.041 | 2026-04-19 | Канализационная труба — статус, официальный verdict, следующий шаг | — | `04-work-products/.../PARK.WP.041-sewage-pipe-status-and-expert-next-step (...).md` | active |
+| PARK.WP.042 | 2026-04-22 | Канализационная труба — пакет официальных запросов | — | `04-work-products/.../PARK.WP.042-sewage-pipe-official-request-pack (...).md` | active |
 
 ## Внешние и не-нормализованные оригиналы
 

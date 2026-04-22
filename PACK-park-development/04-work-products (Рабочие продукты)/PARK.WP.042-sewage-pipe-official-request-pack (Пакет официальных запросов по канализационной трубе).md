@@ -10,6 +10,8 @@ related:
   - PARK.DOC.031
   - PARK.COMM.026
   - PARK.COMM.027
+primary-agent: park-permitting-infrastructure-coordinator
+primary-skill: park-official-document-cycle
 ---
 
 # PARK.WP.042 — Пакет официальных запросов по канализационной трубе
@@ -38,6 +40,12 @@ related:
 
 1. `ГУП РК "Вода Крыма"`
 2. `Администрация Бахчисарайского района`
+
+## Исполнитель
+
+- **Primary agent:** `Park Permitting & Infrastructure Coordinator`
+- **Primary skill:** `park-official-document-cycle`
+- **Support:** `Strategist`, `Park Architect`
 
 ## Что должно выйти из этого цикла
 
