@@ -1529,6 +1529,48 @@ def build_order_bullets(orders: list[dict[str, object]]) -> list[str]:
     return bullets
 
 
+def product_type_label(product_type: str) -> str:
+    return {
+        "кофе_drip": "дрипы",
+        "кофе_зерно": "зерно",
+        "чай": "чай",
+        "шоколад": "шоколад",
+        "сиропы": "сиропы",
+        "десерты": "десерты",
+        "кухня": "кухня",
+        "расходники": "расходники",
+        "другое": "прочее",
+    }.get((product_type or "").strip(), "прочее")
+
+
+def summarize_supplier_items(items: list[dict[str, object]]) -> list[str]:
+    buckets: dict[str, dict[str, object]] = {}
+    for item in items:
+        product_type = str(item.get("product_type", "")).strip() or "другое"
+        bucket = buckets.setdefault(
+            product_type,
+            {"count": 0, "qty": 0, "examples": []},
+        )
+        bucket["count"] = int(bucket["count"]) + 1
+        bucket["qty"] = int(bucket["qty"]) + int(item.get("qty_to_order", 0) or 0)
+        examples = bucket["examples"]
+        if isinstance(examples, list) and len(examples) < 3:
+            examples.append(str(item.get("name", "")).strip())
+
+    ordered = sorted(
+        buckets.items(),
+        key=lambda kv: (-int(kv[1]["count"]), product_type_label(kv[0])),
+    )
+    out: list[str] = []
+    for product_type, payload in ordered:
+        examples = ", ".join(str(x) for x in payload["examples"][:3])
+        out.append(
+            f"{product_type_label(product_type)}: {payload['count']} поз., дозаказать {payload['qty']} шт"
+            + (f" (например: {examples})" if examples else "")
+        )
+    return out
+
+
 def bucket_orders_by_supplier(orders: list[dict[str, object]]) -> list[tuple[str, list[dict[str, object]]]]:
     buckets: dict[str, list[dict[str, object]]] = {}
     for item in orders:
@@ -2157,14 +2199,8 @@ def build_latest_summary(
                     f"  Базовый дедлайн: **{common_deadline}**.",
                 ]
             )
-            for item in items:
-                item_deadline = str(item.get("deadline", "")).strip() or common_deadline
-                deadline_note = ""
-                if item_deadline != common_deadline:
-                    deadline_note = f", дедлайн: **{item_deadline}**"
-                lines.append(
-                    f"  - {item['name']}: сейчас **{item['qty_now']} шт**, заказать **{item['qty_to_order']} шт**, риск: **{item['risk']}**{deadline_note}."
-                )
+            for summary in summarize_supplier_items(items):
+                lines.append(f"  - {summary}.")
     else:
         lines.append("- Критичных позиций для заказа сейчас нет.")
 
@@ -2190,15 +2226,8 @@ def build_latest_summary(
                     f"  Базовый дедлайн: **{common_deadline}**.",
                 ]
             )
-            for item in items:
-                item_deadline = str(item.get("deadline", "")).strip() or common_deadline
-                deadline_note = ""
-                if item_deadline != common_deadline:
-                    deadline_note = f" Дедлайн по позиции: **{item_deadline}**."
-                lines.append(
-                    f"  - {item['name']}: сейчас **{item['qty_now']} шт**, целевой уровень **{target_stock_level(str(item['abc']))} шт**, дозаказать **{item['qty_to_order']} шт**."
-                )
-                lines.append(f"    Причина: {item['reason']}.{deadline_note}")
+            for summary in summarize_supplier_items(items):
+                lines.append(f"  - {summary}.")
     else:
         lines.append("- Плановых позиций к дозаказу не выявлено.")
 
