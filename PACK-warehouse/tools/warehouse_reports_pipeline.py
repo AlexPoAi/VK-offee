@@ -815,6 +815,41 @@ def extract_period_from_text(text: str) -> str:
     return "n/a"
 
 
+def extract_dates_from_period_text(text: str) -> list[datetime]:
+    found: list[datetime] = []
+    for raw in re.findall(r"\d{2}\.\d{2}\.\d{4}", text or ""):
+        try:
+            found.append(datetime.strptime(raw, "%d.%m.%Y"))
+        except ValueError:
+            pass
+    for raw in re.findall(r"\d{4}-\d{2}-\d{2}", text or ""):
+        try:
+            found.append(datetime.strptime(raw, "%Y-%m-%d"))
+        except ValueError:
+            pass
+    return found
+
+
+def manager_period_label(insights: list[dict], hours: int) -> str:
+    dates: list[datetime] = []
+    for item in insights:
+        period = str(item.get("period") or "").strip()
+        if period and period != "n/a":
+            dates.extend(extract_dates_from_period_text(period))
+        source_rel = str(item.get("source_rel") or "").strip()
+        if source_rel:
+            path = ROOT / source_rel
+            if path.exists():
+                try:
+                    dates.append(datetime.fromtimestamp(path.stat().st_mtime))
+                except OSError:
+                    pass
+    if not dates:
+        cutoff = datetime.now() - timedelta(hours=hours)
+        return f"{cutoff.strftime('%d.%m.%Y')} — {datetime.now().strftime('%d.%m.%Y')}"
+    return f"{min(dates).strftime('%d.%m.%Y')} — {max(dates).strftime('%d.%m.%Y')}"
+
+
 def parse_table_profile(rows: list[list[str]]) -> dict[str, object]:
     max_cols = max((len(r) for r in rows), default=0)
     data_rows = rows[1:] if len(rows) > 1 else []
@@ -943,6 +978,8 @@ def classify_item_product_type(item_name: str) -> str:
         return "кухня"
     if any(k in low for k in ("дрип",)):
         return "кофе_drip"
+    if "ristora" in low:
+        return "горячий_шоколад_ristora"
     if any(k in low for k in ("плитка", "unicava", "какао классический")):
         return "шоколад"
     if any(k in low for k in ("зерно", "эспрессо", "кофе")):
@@ -1010,11 +1047,13 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
         "кофе_зерно": ("кофе_зерно", "кофе"),
         "чай": ("чай",),
         "шоколад": ("шоколад",),
+        "горячий_шоколад_ristora": ("ristora", "горячий_шоколад_ristora", "горячий шоколад"),
         "сиропы": ("сироп",),
         "расходники": ("расходник", "хоз"),
         "десерты": ("десерт",),
     }
     supplier_override_by_item = {
+        "ristora": "Ristora",
         "субмарина": "Субмарина",
         "unicava": "UNICAVA",
         "плитка": "UNICAVA",
@@ -1067,6 +1106,7 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
         "кофе_зерно": "Тэйсти Кофе",
         "чай": "Тэйсти Кофе",
         "шоколад": "UNICAVA",
+        "горячий_шоколад_ristora": "Ristora",
         "сиропы": "Барсервис",
         "десерты": "Дмитрий (Десерты)",
         "кухня": "Уточнить у Жанны",
@@ -1535,6 +1575,7 @@ def product_type_label(product_type: str) -> str:
         "кофе_зерно": "зерно",
         "чай": "чай",
         "шоколад": "шоколад",
+        "горячий_шоколад_ristora": "горячий шоколад Ristora",
         "сиропы": "сиропы",
         "десерты": "десерты",
         "кухня": "кухня",
@@ -2130,6 +2171,7 @@ def build_latest_summary(
 ) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     analytics = build_smart_analytics(insights)
+    period_label = manager_period_label(insights, hours)
     price_delta = price_delta_from_invoices()
     if (not price_delta.get("up")) and (not price_delta.get("down")):
         price_delta = price_delta_from_catalog(insights)
@@ -2176,7 +2218,7 @@ def build_latest_summary(
         "",
         "# Управленческий отчёт по складу",
         "",
-        f"- Окно анализа: последние `{hours}` ч",
+        f"- Период данных: **{period_label}**",
         f"- SKU с остатками в анализе: **{analytics.get('stock_total_items', 0)}**",
         f"- SKU с ABC-категорией: **{analytics.get('abc_total_items', 0)}**",
         "",
@@ -2624,6 +2666,7 @@ def telegram_text(
     manual_run: bool,
 ) -> str:
     ts = datetime.now().strftime("%d.%m.%Y %H:%M")
+    period_label = manager_period_label(insights, hours)
     report_rel = LATEST_REPORT.relative_to(ROOT).as_posix()
     report_url = build_github_link(report_rel)
     queue_rel = DECISION_QUEUE.relative_to(ROOT).as_posix()
@@ -2676,7 +2719,7 @@ def telegram_text(
 
     lines = [
         "📦 <b>Склад · управленческий отчёт</b>",
-        f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Окно: <b>{hours}ч</b>",
+        f"Время: <code>{ts}</code> · Режим: <b>{mode}</b> · Период данных: <b>{period_label}</b>",
         f"Вердикт: <b>{verdict}</b>",
         f"Итог: {' '.join(escape_html(x) for x in executive)}",
         "",
