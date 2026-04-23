@@ -760,8 +760,21 @@ def classify_item_product_type(item_name: str) -> str:
         return "кухня"
     if any(k in low for k in ("дрип",)):
         return "кофе_drip"
+    if any(k in low for k in ("плитка", "unicava", "какао классический")):
+        return "шоколад"
     if any(k in low for k in ("зерно", "эспрессо", "кофе")):
         return "кофе_зерно"
+    if re.search(r"\b(250|1000)\b", low) or "1кг" in low or "1 кг" in low:
+        if any(
+            marker in low
+            for marker in (
+                "бэрри", "фрутти", "колумбия", "эфиопия", "руанда", "коста рика",
+                "гватемала", "бразилия", "богота", "гуджи", "кигали", "мукера",
+                "декаф", "уила", "сидамо", "киву", "сан хосе", "сантьяго",
+                "каранави", "маунт", "иргачефф", "оромия", "челбеса", "гейша",
+            )
+        ):
+            return "кофе_зерно"
     if "шоколад" in low:
         return "шоколад"
     if "чай" in low:
@@ -820,6 +833,19 @@ def infer_supplier_for_item(item_name: str) -> dict[str, str]:
     }
     supplier_override_by_item = {
         "субмарина": "Субмарина",
+        "unicava": "UNICAVA",
+        "плитка": "UNICAVA",
+        "бэрри 250": "Тэйсти Кофе",
+        "фрутти 250": "Тэйсти Кофе",
+        "фрутти 1кг": "Тэйсти Кофе",
+        "бэрри 1кг": "Тэйсти Кофе",
+        "колумбия декаф": "Тэйсти Кофе",
+        "руанда кигали": "Тэйсти Кофе",
+        "коста рика сан хосе": "Тэйсти Кофе",
+        "эфиопия мукера": "Тэйсти Кофе",
+        "эфиопия гуджи": "Тэйсти Кофе",
+        "колумбия богота": "Тэйсти Кофе",
+        "компетишн колумбия": "Тэйсти Кофе",
     }
     for marker, supplier_name_override in supplier_override_by_item.items():
         if marker in item_low:
@@ -1129,6 +1155,18 @@ def build_supplier_order_message(supplier_name: str, items: list[dict[str, objec
     if contact and contact != "TBD":
         lines.extend(["", f"Контакт в контуре: {contact}"])
     return "\n".join(lines)
+
+
+def format_supplier_channel(channel: str, contact: str) -> str:
+    channel = (channel or "").strip()
+    contact = (contact or "").strip()
+    if channel in {"", "TBD"} and contact in {"", "TBD"}:
+        return "TBD"
+    if channel in {"", "TBD"}:
+        return contact
+    if contact in {"", "TBD"}:
+        return channel
+    return f"{channel} {contact}"
 
 
 def build_smart_analytics(insights: list[dict]) -> dict:
@@ -1704,13 +1742,14 @@ def build_latest_summary(
     lines.extend(["", "## Срочно заказать"])
     if critical_orders:
         for supplier_name, items in bucket_orders_by_supplier(critical_orders):
-            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
-            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            channel = str(items[0].get("order_channel", "")).strip()
+            contact = str(items[0].get("supplier_contact", "")).strip()
+            channel_text = format_supplier_channel(channel, contact)
             common_deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
             lines.extend(
                 [
                     f"- **{supplier_name}**",
-                    f"  Канал заказа: **{channel} {contact}**.",
+                    f"  Канал заказа: **{channel_text}**.",
                     f"  Базовый дедлайн: **{common_deadline}**.",
                 ]
             )
@@ -1862,11 +1901,12 @@ def build_decision_queue(insights: list[dict], run_stats: dict[str, int], manual
     if critical_orders:
         lines.append("- Действие: оформить заказ сегодня.")
         for supplier_name, items in bucket_orders_by_supplier(critical_orders[:8]):
-            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
-            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            channel = str(items[0].get("order_channel", "")).strip()
+            contact = str(items[0].get("supplier_contact", "")).strip()
+            channel_text = format_supplier_channel(channel, contact)
             deadline = str(items[0].get("deadline", "")).strip() or "TBD"
             lines.append(f"  - {supplier_name}")
-            lines.append(f"    - канал: {channel} {contact}")
+            lines.append(f"    - канал: {channel_text}")
             lines.append(f"    - базовый дедлайн: {deadline}")
             for item in items:
                 item_deadline = str(item.get("deadline", "")).strip() or deadline
@@ -2195,11 +2235,12 @@ def telegram_text(
 
     if critical_orders:
         for supplier_name, items in bucket_orders_by_supplier(critical_orders[:8]):
-            channel = str(items[0].get("order_channel", "")).strip() or "TBD"
-            contact = str(items[0].get("supplier_contact", "")).strip() or "TBD"
+            channel = str(items[0].get("order_channel", "")).strip()
+            contact = str(items[0].get("supplier_contact", "")).strip()
+            channel_text = format_supplier_channel(channel, contact)
             deadline = str(items[0].get("deadline", "")).strip() or "уточнить"
             lines.append("• " + escape_html(supplier_name))
-            lines.append("  " + escape_html(f"Канал заказа: {channel} {contact}"))
+            lines.append("  " + escape_html(f"Канал заказа: {channel_text}"))
             lines.append("  " + escape_html(f"Базовый дедлайн: {deadline}"))
             for item in items:
                 item_deadline = str(item.get("deadline", "")).strip() or deadline
