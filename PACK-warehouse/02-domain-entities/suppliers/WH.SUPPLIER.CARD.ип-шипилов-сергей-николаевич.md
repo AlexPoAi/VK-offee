@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: ИП Шипилов Сергей Николаевич
-updated: 2026-04-21 22:20
+updated: 2026-04-23 15:07
 status: active
 ---
 

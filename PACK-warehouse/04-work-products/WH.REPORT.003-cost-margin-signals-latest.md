@@ -1,6 +1,6 @@
 ---
 type: warehouse-cost-margin-report
-updated: 2026-04-23 13:12
+updated: 2026-04-23 15:07
 ---
 
 # Warehouse Cost & Margin Signals
