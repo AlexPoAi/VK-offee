@@ -39,6 +39,7 @@ WAREHOUSE_DIR = ROOT / "PACK-warehouse"
 CARDS_DIR = WAREHOUSE_DIR / "02-domain-entities" / "report-cards"
 WP_DIR = WAREHOUSE_DIR / "04-work-products"
 LATEST_REPORT = WP_DIR / "WH.REPORT.002-warehouse-sync-summary-latest.md"
+LATEST_COST_MARGIN_REPORT = WP_DIR / "WH.REPORT.003-cost-margin-signals-latest.md"
 DECISION_QUEUE = WP_DIR / "WH.SESSION.001-decision-queue-latest.md"
 REGISTRY_FILE = WP_DIR / "WH.REGISTRY.001-documents.csv"
 DLQ_DIR = WAREHOUSE_DIR / "03-quarantine" / "dlq-files"
@@ -1312,6 +1313,35 @@ def format_money(value: float) -> str:
     return f"{value:,.0f} ₽".replace(",", " ")
 
 
+def format_margin_pct(value: float) -> str:
+    return f"{value:.1f}%"
+
+
+def is_internal_abc_position(name: str) -> bool:
+    low = normalize_item_name(name)
+    markers = (
+        "персонал",
+        "staff",
+        "внутрен",
+        "служеб",
+        "тест",
+        "пробн",
+        "бесплат",
+        "компл",
+    )
+    return any(marker in low for marker in markers)
+
+
+def is_manager_relevant_abc_row(row: dict[str, object]) -> bool:
+    name = str(row.get("name") or "").strip()
+    if not name or is_internal_abc_position(name):
+        return False
+    product_type = classify_item_product_type(name)
+    if product_type in {"расходники"}:
+        return False
+    return True
+
+
 def executive_summary_lines(
     critical_orders: list[dict[str, object]],
     planned_orders: list[dict[str, object]],
@@ -1357,7 +1387,7 @@ def executive_summary_lines(
 def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
     abc_insights = [i for i in insights if i.get("report_type") == "abc" and i.get("abc_row_metrics")]
     if not abc_insights:
-        return {"top_a": [], "cost_heavy": [], "c_watch": []}
+        return {"top_a": [], "cost_heavy": [], "c_watch": [], "margin_watch": []}
     abc_insight = max(
         abc_insights,
         key=lambda i: (
@@ -1367,7 +1397,7 @@ def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
     )
     rows = list(abc_insight.get("abc_row_metrics") or [])
     if not rows:
-        return {"top_a": [], "cost_heavy": [], "c_watch": []}
+        return {"top_a": [], "cost_heavy": [], "c_watch": [], "margin_watch": []}
 
     def is_leaf_row(row: dict[str, object]) -> bool:
         unit = str(row.get("unit") or "").strip().lower()
@@ -1378,15 +1408,18 @@ def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
             return False
         return True
 
+    def is_manager_row(row: dict[str, object]) -> bool:
+        return is_leaf_row(row) and is_manager_relevant_abc_row(row)
+
     top_a_rows = sorted(
-        [r for r in rows if r.get("abc") == "A" and (r.get("revenue") or 0) > 0 and is_leaf_row(r)],
+        [r for r in rows if r.get("abc") == "A" and (r.get("revenue") or 0) > 0 and is_manager_row(r)],
         key=lambda r: float(r.get("revenue") or 0),
         reverse=True,
     )[:5]
     cost_heavy_rows = sorted(
         [
             r for r in rows
-            if (r.get("cost_share") or 0) >= 60 and (r.get("revenue") or 0) > 0 and is_leaf_row(r)
+            if (r.get("cost_share") or 0) >= 60 and (r.get("revenue") or 0) > 0 and is_manager_row(r)
         ],
         key=lambda r: (float(r.get("cost_share") or 0), float(r.get("revenue") or 0)),
         reverse=True,
@@ -1394,10 +1427,24 @@ def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
     c_watch_rows = sorted(
         [
             r for r in rows
-            if r.get("abc") == "C" and (r.get("qty") or 0) <= 3 and (r.get("revenue") or 0) > 0 and is_leaf_row(r)
+            if r.get("abc") == "C" and (r.get("qty") or 0) <= 3 and (r.get("revenue") or 0) > 0 and is_manager_row(r)
         ],
         key=lambda r: float(r.get("revenue") or 0),
         reverse=True,
+    )[:5]
+    margin_watch_rows = sorted(
+        [
+            r for r in rows
+            if (
+                (r.get("revenue") or 0) > 0
+                and (r.get("cost_total") or 0) > 0
+                and is_manager_row(r)
+            )
+        ],
+        key=lambda r: (
+            float(r.get("revenue") or 0) - float(r.get("cost_total") or 0),
+            -(float(r.get("revenue") or 0)),
+        ),
     )[:5]
 
     def fmt_top(row: dict[str, object]) -> str:
@@ -1416,11 +1463,60 @@ def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
         revenue = float(row.get("revenue") or 0)
         return f"{row.get('name')}: C-категория, {qty} шт / {format_money(revenue)}"
 
+    def fmt_margin(row: dict[str, object]) -> str:
+        revenue = float(row.get("revenue") or 0)
+        cost_total = float(row.get("cost_total") or 0)
+        margin = revenue - cost_total
+        margin_pct = (margin / revenue * 100.0) if revenue > 0 else 0.0
+        return (
+            f"{row.get('name')}: выручка {format_money(revenue)} / "
+            f"себестоимость {format_money(cost_total)} / "
+            f"валовая маржа {format_money(margin)} ({format_margin_pct(margin_pct)})"
+        )
+
     return {
         "top_a": [fmt_top(r) for r in top_a_rows],
         "cost_heavy": [fmt_cost(r) for r in cost_heavy_rows],
         "c_watch": [fmt_c(r) for r in c_watch_rows],
+        "margin_watch": [fmt_margin(r) for r in margin_watch_rows],
     }
+
+
+def build_cost_margin_report(insights: list[dict]) -> str:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    abc_signals = abc_manager_signals(insights)
+    lines = [
+        "---",
+        "type: warehouse-cost-margin-report",
+        f"updated: {now}",
+        "---",
+        "",
+        "# Warehouse Cost & Margin Signals",
+        "",
+        "## Что это",
+        "- Отдельный слой кладовщика по себестоимости и валовой марже.",
+        "- Используется как supporting artifact для управленческого отчёта руководителя.",
+        "",
+        "## Тяжёлые по себестоимости позиции",
+    ]
+    if abc_signals.get("cost_heavy"):
+        for item in abc_signals.get("cost_heavy", [])[:8]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- По текущему ABC не найдено позиций с критичной долей себестоимости.")
+
+    lines.extend(["", "## Маржа под давлением"])
+    if abc_signals.get("margin_watch"):
+        for item in abc_signals.get("margin_watch", [])[:8]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- По текущему ABC не найдено явных товарных позиций с прижатой валовой маржей.")
+
+    lines.extend(["", "## Примечание"])
+    lines.append("- Служебные и внутренние позиции (`персонал`, внутренние строки, расходники) исключены из этого слоя.")
+    text = "\n".join(lines)
+    LATEST_COST_MARGIN_REPORT.write_text(text, encoding="utf-8")
+    return text
 
 
 def build_order_bullets(orders: list[dict[str, object]]) -> list[str]:
@@ -2144,11 +2240,15 @@ def build_latest_summary(
         lines.append("- Тяжёлые по себестоимости позиции:")
         for item in abc_signals.get("cost_heavy", [])[:5]:
             lines.append(f"  - {item}")
+    if abc_signals.get("margin_watch"):
+        lines.append("- Маржа под давлением:")
+        for item in abc_signals.get("margin_watch", [])[:5]:
+            lines.append(f"  - {item}")
     if abc_signals.get("c_watch"):
         lines.append("- Позиции C-категории под пересмотр:")
         for item in abc_signals.get("c_watch", [])[:5]:
             lines.append(f"  - {item}")
-    if (not abc_signals.get("top_a")) and (not abc_signals.get("cost_heavy")) and (not abc_signals.get("c_watch")):
+    if (not abc_signals.get("top_a")) and (not abc_signals.get("cost_heavy")) and (not abc_signals.get("margin_watch")) and (not abc_signals.get("c_watch")):
         lines.append("- Управленческие сигналы из ABC пока не собраны.")
 
     lines.extend(["", "## Изменение цен"])
@@ -2186,6 +2286,8 @@ def build_latest_summary(
     lines.append(f"- Quarantine report: `{DLQ_REPORT.relative_to(ROOT).as_posix()}`")
     if PROCUREMENT_REPORT_FILE.exists():
         lines.append(f"- Закупочный контур: `{PROCUREMENT_REPORT_FILE.relative_to(ROOT).as_posix()}`")
+    if LATEST_COST_MARGIN_REPORT.exists():
+        lines.append(f"- Себестоимость и маржа: `{LATEST_COST_MARGIN_REPORT.relative_to(ROOT).as_posix()}`")
     lines.append("")
     text = "\n".join(lines)
     LATEST_REPORT.write_text(text, encoding="utf-8")
@@ -2797,6 +2899,7 @@ def main() -> int:
     elif not insights and args.replay_latest_cards > 0:
         insights = replay_insights_from_registry(registry, limit=args.replay_latest_cards)
 
+    build_cost_margin_report(insights)
     build_latest_summary(cards, bot_cards, args.hours, run_stats, insights)
     build_decision_queue(insights, run_stats, args.manual_run)
     print(

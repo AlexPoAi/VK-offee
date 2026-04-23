@@ -36,8 +36,9 @@ status: active
 
 - [x] из PDF-накладных строится блок `Изменение цен`
 - [x] аномальные `price delta` выводятся в `Проверить вручную`
+- [x] materialized отдельный supporting artifact по себестоимости и валовой марже: `WH.REPORT.003`
 - [ ] price-layer калиброван для manager-ready качества
-- [ ] есть карточки себестоимости по SKU / товарным группам
+- [x] есть первый живой слой `cost / margin cards`
 - [ ] есть связка `закупочная цена -> цена продажи -> базовая маржа`
 
 ## Manager report
@@ -59,6 +60,6 @@ status: active
 
 ## Truthful next focus
 
-1. Formalize `document -> extracted fields -> derived metrics -> manager output`.
-2. Build `cost / margin cards`.
-3. Finish supplier channels for `UNICAVA` and `Субмарина`.
+1. Убрать из `ABC/cost` manager-layer модификаторы и внутренние полуслужебные SKU вроде `Молоко / 50 гр`, если они не должны жить в руководительском слое.
+2. Finish supplier channels for `UNICAVA` and `Субмарина`.
+3. Дожать связку `закупочная цена -> цена продажи -> базовая маржа`.
