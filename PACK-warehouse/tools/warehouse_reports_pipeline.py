@@ -2132,16 +2132,13 @@ def build_latest_summary(
         f"updated: {now}",
         "---",
         "",
-        "# Warehouse Manager Report",
+        "# Управленческий отчёт по складу",
         "",
         f"- Окно анализа: последние `{hours}` ч",
-        f"- Источников в окне: **{run_stats['received']}**",
-        f"- Обработано: **{run_stats['processed']}**",
-        f"- Ошибок парсинга: **{run_stats['error']}**",
         f"- SKU с остатками в анализе: **{analytics.get('stock_total_items', 0)}**",
         f"- SKU с ABC-категорией: **{analytics.get('abc_total_items', 0)}**",
         "",
-        "## Executive Summary",
+        "## Короткий вывод",
     ]
     for item in executive:
         lines.append(f"- {item}")
@@ -2231,7 +2228,7 @@ def build_latest_summary(
     if (not sales_top) and (not sales_weak):
         lines.append("- По текущим файлам не удалось уверенно извлечь топ и слабые позиции продаж.")
 
-    lines.extend(["", "## ABC и себестоимость"])
+    lines.extend(["", "## ABC и экономика"])
     if abc_signals.get("top_a"):
         lines.append("- Лидеры ABC:")
         for item in abc_signals.get("top_a", [])[:5]:
@@ -2241,7 +2238,8 @@ def build_latest_summary(
         for item in abc_signals.get("cost_heavy", [])[:5]:
             lines.append(f"  - {item}")
     if abc_signals.get("margin_watch"):
-        lines.append("- Маржа под давлением:")
+        lines.append("- Позиции со слабой маржой:")
+        lines.append("  - Это товары, где себестоимость съедает слишком большую часть выручки и прибыль проседает.")
         for item in abc_signals.get("margin_watch", [])[:5]:
             lines.append(f"  - {item}")
     if abc_signals.get("c_watch"):
@@ -2280,14 +2278,6 @@ def build_latest_summary(
     lines.extend(["", "## Каких данных не хватает"])
     for item in gaps[:5]:
         lines.append(f"- {item}")
-
-    lines.extend(["", "## Источники и артефакты"])
-    lines.append(f"- Реестр: `{REGISTRY_FILE.relative_to(ROOT).as_posix()}`")
-    lines.append(f"- Quarantine report: `{DLQ_REPORT.relative_to(ROOT).as_posix()}`")
-    if PROCUREMENT_REPORT_FILE.exists():
-        lines.append(f"- Закупочный контур: `{PROCUREMENT_REPORT_FILE.relative_to(ROOT).as_posix()}`")
-    if LATEST_COST_MARGIN_REPORT.exists():
-        lines.append(f"- Себестоимость и маржа: `{LATEST_COST_MARGIN_REPORT.relative_to(ROOT).as_posix()}`")
     lines.append("")
     text = "\n".join(lines)
     LATEST_REPORT.write_text(text, encoding="utf-8")
@@ -2758,18 +2748,18 @@ def telegram_text(
 
     if report_url:
         lines.append("")
-        lines.append(f"Полный отчёт: <a href=\"{report_url}\">WH.REPORT.002</a>")
+        lines.append(f"Подробный отчёт: <a href=\"{report_url}\">открыть</a>")
     else:
         lines.append("")
-        lines.append(f"Полный отчёт: <code>{escape_html(report_rel)}</code>")
+        lines.append("Подробный отчёт: сохранён во внутреннем контуре склада")
     if procurement_url:
-        lines.append(f"Закупочный контур: <a href=\"{procurement_url}\">WH.WP.007 supplier-map</a>")
+        lines.append(f"Карта поставщиков: <a href=\"{procurement_url}\">открыть</a>")
     elif PROCUREMENT_REPORT_FILE.exists():
-        lines.append(f"Закупочный контур: <code>{escape_html(procurement_rel)}</code>")
+        lines.append("Карта поставщиков: сохранена во внутреннем контуре склада")
     if queue_url:
-        lines.append(f"Очередь решений: <a href=\"{queue_url}\">WH.SESSION.001</a>")
+        lines.append(f"Очередь решений: <a href=\"{queue_url}\">открыть</a>")
     else:
-        lines.append(f"Очередь решений: <code>{escape_html(queue_rel)}</code>")
+        lines.append("Очередь решений: сохранена во внутреннем контуре склада")
 
     return "\n".join(lines)
 
