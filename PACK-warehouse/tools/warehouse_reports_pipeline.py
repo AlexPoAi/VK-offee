@@ -540,9 +540,11 @@ def parse_abc_payload(rows: list[list[str]], *, sheet_name: str = "") -> dict[st
     best_rows: list[list[str]] = []
     result: dict[str, str] = {}
     unmatched: list[str] = []
+    row_metrics: list[dict[str, object]] = []
     payload: dict[str, object] = {
         "sheet_name": sheet_name,
         "categories": result,
+        "row_metrics": row_metrics,
         "matched_rows": 0,
         "unmatched_rows": 0,
         "total_rows": 0,
@@ -560,6 +562,13 @@ def parse_abc_payload(rows: list[list[str]], *, sheet_name: str = "") -> dict[st
     header_row_idx = 0
     name_col = -1
     cat_col = -1
+    revenue_col = -1
+    qty_col = -1
+    unit_col = -1
+    price_col = -1
+    cost_unit_col = -1
+    cost_total_col = -1
+    cost_share_col = -1
     scan_limit = min(len(rows), 16)
     for ridx in range(scan_limit):
         header = [c.strip().lower() for c in rows[ridx]]
@@ -570,6 +579,20 @@ def parse_abc_payload(rows: list[list[str]], *, sheet_name: str = "") -> dict[st
                 local_name = i
             if any(kw in h for kw in ("категор", "класс", "abc", "абс", "group")) and local_cat == -1:
                 local_cat = i
+            if revenue_col == -1 and "сумма" in h and "себест" not in h:
+                revenue_col = i
+            if qty_col == -1 and "колич" in h:
+                qty_col = i
+            if unit_col == -1 and any(kw in h for kw in ("ед. изм", "ед изм", "unit")):
+                unit_col = i
+            if price_col == -1 and h == "цена":
+                price_col = i
+            if cost_unit_col == -1 and "себест" in h and "сумма" not in h and "доля" not in h:
+                cost_unit_col = i
+            if cost_total_col == -1 and "сумма себест" in h:
+                cost_total_col = i
+            if cost_share_col == -1 and "доля себест" in h:
+                cost_share_col = i
         if local_name != -1 and local_cat != -1:
             header_row_idx = ridx
             name_col = local_name
@@ -607,6 +630,19 @@ def parse_abc_payload(rows: list[list[str]], *, sheet_name: str = "") -> dict[st
             continue
         if cat in ("A", "B", "C"):
             result[name.lower()] = cat
+            row_metrics.append(
+                {
+                    "name": name,
+                    "abc": cat,
+                    "revenue": parse_number(r[revenue_col]) if revenue_col != -1 and len(r) > revenue_col else None,
+                    "qty": parse_number(r[qty_col]) if qty_col != -1 and len(r) > qty_col else None,
+                    "unit": (r[unit_col].strip() if unit_col != -1 and len(r) > unit_col else ""),
+                    "price": parse_number(r[price_col]) if price_col != -1 and len(r) > price_col else None,
+                    "cost_unit": parse_number(r[cost_unit_col]) if cost_unit_col != -1 and len(r) > cost_unit_col else None,
+                    "cost_total": parse_number(r[cost_total_col]) if cost_total_col != -1 and len(r) > cost_total_col else None,
+                    "cost_share": parse_number(r[cost_share_col]) if cost_share_col != -1 and len(r) > cost_share_col else None,
+                }
+            )
         else:
             unmatched.append(name)
 
@@ -1318,6 +1354,75 @@ def executive_summary_lines(
     return lines
 
 
+def abc_manager_signals(insights: list[dict]) -> dict[str, list[str]]:
+    abc_insights = [i for i in insights if i.get("report_type") == "abc" and i.get("abc_row_metrics")]
+    if not abc_insights:
+        return {"top_a": [], "cost_heavy": [], "c_watch": []}
+    abc_insight = max(
+        abc_insights,
+        key=lambda i: (
+            int(i.get("abc_matched_rows", 0) or 0),
+            len(i.get("abc_row_metrics") or []),
+        ),
+    )
+    rows = list(abc_insight.get("abc_row_metrics") or [])
+    if not rows:
+        return {"top_a": [], "cost_heavy": [], "c_watch": []}
+
+    def is_leaf_row(row: dict[str, object]) -> bool:
+        unit = str(row.get("unit") or "").strip().lower()
+        name = str(row.get("name") or "").strip()
+        if unit not in {"шт", "кг", "л", "порц", "порц.", "упак", "упак.", "гр"}:
+            return False
+        if name.isupper() and len(name.split()) <= 3:
+            return False
+        return True
+
+    top_a_rows = sorted(
+        [r for r in rows if r.get("abc") == "A" and (r.get("revenue") or 0) > 0 and is_leaf_row(r)],
+        key=lambda r: float(r.get("revenue") or 0),
+        reverse=True,
+    )[:5]
+    cost_heavy_rows = sorted(
+        [
+            r for r in rows
+            if (r.get("cost_share") or 0) >= 60 and (r.get("revenue") or 0) > 0 and is_leaf_row(r)
+        ],
+        key=lambda r: (float(r.get("cost_share") or 0), float(r.get("revenue") or 0)),
+        reverse=True,
+    )[:5]
+    c_watch_rows = sorted(
+        [
+            r for r in rows
+            if r.get("abc") == "C" and (r.get("qty") or 0) <= 3 and (r.get("revenue") or 0) > 0 and is_leaf_row(r)
+        ],
+        key=lambda r: float(r.get("revenue") or 0),
+        reverse=True,
+    )[:5]
+
+    def fmt_top(row: dict[str, object]) -> str:
+        qty = int(float(row.get("qty") or 0))
+        revenue = float(row.get("revenue") or 0)
+        return f"{row.get('name')}: {qty} шт / {format_money(revenue)}"
+
+    def fmt_cost(row: dict[str, object]) -> str:
+        cost_share = float(row.get("cost_share") or 0)
+        revenue = float(row.get("revenue") or 0)
+        cost_total = float(row.get("cost_total") or 0)
+        return f"{row.get('name')}: доля себестоимости {cost_share:.0f}% / выручка {format_money(revenue)} / себестоимость {format_money(cost_total)}"
+
+    def fmt_c(row: dict[str, object]) -> str:
+        qty = int(float(row.get("qty") or 0))
+        revenue = float(row.get("revenue") or 0)
+        return f"{row.get('name')}: C-категория, {qty} шт / {format_money(revenue)}"
+
+    return {
+        "top_a": [fmt_top(r) for r in top_a_rows],
+        "cost_heavy": [fmt_cost(r) for r in cost_heavy_rows],
+        "c_watch": [fmt_c(r) for r in c_watch_rows],
+    }
+
+
 def build_order_bullets(orders: list[dict[str, object]]) -> list[str]:
     bullets: list[str] = []
     for item in orders:
@@ -1716,6 +1821,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
 
                 categories = dict(abc_payload.get("categories") or {})
                 insight["abc_categories"] = categories
+                insight["abc_row_metrics"] = list(abc_payload.get("row_metrics") or [])
                 insight["abc_sheet_name"] = str(abc_payload.get("sheet_name") or "")
                 insight["abc_matched_rows"] = int(abc_payload.get("matched_rows", 0) or 0)
                 insight["abc_unmatched_rows"] = int(abc_payload.get("unmatched_rows", 0) or 0)
@@ -1890,6 +1996,7 @@ def build_latest_summary(
     if (not price_delta.get("up")) and (not price_delta.get("down")):
         price_delta = price_delta_from_catalog(insights)
     consumption = consumption_alerts(insights)
+    abc_signals = abc_manager_signals(insights)
     gaps = detect_data_gaps(insights)
     sales_top: list[str] = []
     sales_weak: list[str] = []
@@ -2027,6 +2134,22 @@ def build_latest_summary(
             lines.append(f"  - {item}")
     if (not sales_top) and (not sales_weak):
         lines.append("- По текущим файлам не удалось уверенно извлечь топ и слабые позиции продаж.")
+
+    lines.extend(["", "## ABC и себестоимость"])
+    if abc_signals.get("top_a"):
+        lines.append("- Лидеры ABC:")
+        for item in abc_signals.get("top_a", [])[:5]:
+            lines.append(f"  - {item}")
+    if abc_signals.get("cost_heavy"):
+        lines.append("- Тяжёлые по себестоимости позиции:")
+        for item in abc_signals.get("cost_heavy", [])[:5]:
+            lines.append(f"  - {item}")
+    if abc_signals.get("c_watch"):
+        lines.append("- Позиции C-категории под пересмотр:")
+        for item in abc_signals.get("c_watch", [])[:5]:
+            lines.append(f"  - {item}")
+    if (not abc_signals.get("top_a")) and (not abc_signals.get("cost_heavy")) and (not abc_signals.get("c_watch")):
+        lines.append("- Управленческие сигналы из ABC пока не собраны.")
 
     lines.extend(["", "## Изменение цен"])
     if price_delta.get("up"):
