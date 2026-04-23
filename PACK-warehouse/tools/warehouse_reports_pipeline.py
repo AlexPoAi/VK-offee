@@ -1183,7 +1183,7 @@ def price_delta_from_catalog(insights: list[dict]) -> dict[str, list[str]]:
 def price_delta_from_invoices() -> dict[str, list[str]]:
     items = collect_invoice_line_items()
     if not items:
-        return {"up": [], "down": []}
+        return {"up": [], "down": [], "review": []}
 
     by_sku: dict[tuple[str, str], list[dict[str, object]]] = {}
     for item in items:
@@ -1198,6 +1198,7 @@ def price_delta_from_invoices() -> dict[str, list[str]]:
 
     up: list[tuple[str, float]] = []
     down: list[tuple[str, float]] = []
+    review: list[str] = []
     for (seller, _), rows in by_sku.items():
         rows = [r for r in rows if r.get("invoice_dt") is not None]
         if len(rows) < 2:
@@ -1214,6 +1215,9 @@ def price_delta_from_invoices() -> dict[str, list[str]]:
             continue
         item_name = str(curr.get("name") or "").strip()
         label = f"{seller}: {item_name} ({old_price:.2f} -> {new_price:.2f})"
+        if abs(delta_pct) >= 40:
+            review.append(f"{label} ({delta_pct:+.1f}%)")
+            continue
         if delta_pct > 0:
             up.append((label, delta_pct))
         else:
@@ -1224,6 +1228,7 @@ def price_delta_from_invoices() -> dict[str, list[str]]:
     return {
         "up": [f"{label} (+{delta:.1f}%)" for label, delta in up[:5]],
         "down": [f"{label} ({delta:.1f}%)" for label, delta in down[:5]],
+        "review": review[:5],
     }
 
 
@@ -1543,7 +1548,11 @@ def build_smart_analytics(insights: list[dict]) -> dict:
         planned_orders,
         key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
     )
-    manual_review = list(dict.fromkeys(manual_review))[:8]
+    invoice_price_review = [
+        f"Аномалия price delta по накладным: {item}"
+        for item in (price_delta_from_invoices().get("review") or [])
+    ]
+    manual_review = list(dict.fromkeys(invoice_price_review + manual_review))[:12]
     reduce_or_stop = list(dict.fromkeys(reduce_or_stop))[:8]
     passive_monitoring = list(dict.fromkeys(passive_monitoring))[:8]
 
