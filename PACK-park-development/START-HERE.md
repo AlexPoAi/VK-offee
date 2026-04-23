@@ -62,14 +62,28 @@
 
 ## Google Drive — постоянная директория проекта
 
-> **БЛОКИРУЮЩЕЕ для агентов:** все документы, создаваемые по проекту Парк, сохранять ТОЛЬКО сюда.
+> **БЛОКИРУЮЩЕЕ для агентов:** не путать корень проекта Парк и фактическую рабочую папку документов.
 
 | Что | Ссылка |
 |-----|--------|
 | **Корневая папка проекта Парк** | https://drive.google.com/drive/folders/1-E-pWBQni6Bv2TFAgLOOl3lWMXU9l9lk |
-| Folder ID | `1-E-pWBQni6Bv2TFAgLOOl3lWMXU9l9lk` |
+| Root Folder ID | `1-E-pWBQni6Bv2TFAgLOOl3lWMXU9l9lk` |
+| **Рабочая папка документов `Парк`** | https://drive.google.com/drive/folders/12GgllpEOiRnGviQhivVm_bcAzX53E2wK |
+| Document Folder ID | `12GgllpEOiRnGviQhivVm_bcAzX53E2wK` |
 
-**Правило:** при создании любого Google Doc или загрузке PDF по проекту Парк — указывать `parents: ['1-E-pWBQni6Bv2TFAgLOOl3lWMXU9l9lk']`. Создавать подпапки внутри при необходимости. Никогда не сохранять в корень Drive или другие директории.
+**Правило:** при создании любого Google Doc для проекта Парк использовать как `parents` именно рабочую папку документов:
+
+```python
+parents = ['12GgllpEOiRnGviQhivVm_bcAzX53E2wK']
+```
+
+Root-папка проекта `1-E-pWBQni6Bv2TFAgLOOl3lWMXU9l9lk` остаётся верхним контейнером домена, но не должна использоваться как write-target для Park Google Docs.
+
+Никогда не сохранять Park-документы:
+
+- в корень Drive;
+- в другой случайный container;
+- только в root-папку проекта без захода в рабочую папку `Парк`.
 
 ---
 
