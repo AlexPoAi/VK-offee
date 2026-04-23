@@ -1399,7 +1399,7 @@ def executive_summary_lines(
         }
     )
     if critical_orders:
-        main_risk = "out-of-stock по части ассортиментных позиций"
+        main_risk = "по части позиций возможна остановка продаж из-за низких остатков"
     elif manual_review:
         main_risk = "часть решений пока держится на ручной проверке данных"
     elif reduce_or_stop:
@@ -1643,7 +1643,7 @@ def format_supplier_channel(channel: str, contact: str) -> str:
     channel = (channel or "").strip()
     contact = (contact or "").strip()
     if channel in {"", "TBD"} and contact in {"", "TBD"}:
-        return "TBD"
+        return "не подтверждён"
     if channel in {"", "TBD"}:
         return contact
     if contact in {"", "TBD"}:
@@ -2245,18 +2245,6 @@ def build_latest_summary(
                 lines.append(f"  - {summary}.")
     else:
         lines.append("- Критичных позиций для заказа сейчас нет.")
-
-    lines.extend(["", "## Готовые заявки поставщикам"])
-    if critical_orders:
-        for supplier_name, items in bucket_orders_by_supplier(critical_orders):
-            lines.append(f"- **{supplier_name}**")
-            for msg_line in build_supplier_order_message(supplier_name, items).splitlines():
-                if msg_line:
-                    lines.append(f"  {msg_line}")
-                else:
-                    lines.append("  ")
-    else:
-        lines.append("- Готовых срочных заявок поставщикам в этом цикле нет.")
 
     lines.extend(["", "## Планово заказать"])
     if planned_orders:
