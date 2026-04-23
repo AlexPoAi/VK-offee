@@ -331,7 +331,7 @@ def parse_csv_rows(path: Path) -> list[list[str]]:
 def parse_xlsx_rows(path: Path) -> list[list[str]]:
     from openpyxl import load_workbook  # type: ignore
 
-    wb = load_workbook(path, read_only=True, data_only=True)
+    wb = load_workbook(path, read_only=False, data_only=True)
     best_rows: list[list[str]] = []
     best_score = -1
     for ws in wb.worksheets:
@@ -353,7 +353,7 @@ def parse_xlsx_rows(path: Path) -> list[list[str]]:
 def parse_xlsx_sheets(path: Path) -> list[dict[str, object]]:
     from openpyxl import load_workbook  # type: ignore
 
-    wb = load_workbook(path, read_only=True, data_only=True)
+    wb = load_workbook(path, read_only=False, data_only=True)
     sheets: list[dict[str, object]] = []
     for ws in wb.worksheets:
         rows: list[list[str]] = []
@@ -705,6 +705,24 @@ def normalize_item_name(value: str) -> str:
     return s.strip()
 
 
+def normalize_item_family(value: str) -> str:
+    s = normalize_item_name(value)
+    s = s.replace("капельница", "дрип")
+    s = s.replace("капельный пакет", "дрип")
+    s = s.replace("дрип пакеты", "дрип")
+    s = s.replace("дриппакеты", "дрип")
+    s = s.replace("дрип пакет", "дрип")
+    s = s.replace("субмарина дрипы", "")
+    s = re.sub(r"\bдрип\b", "", s)
+    s = re.sub(r"\b(10|12|16|30|50|100|200)\s*шт\b", "", s)
+    s = re.sub(r"\b(100|200|250|500|1000)\s*гр\b", "", s)
+    s = re.sub(r"\b1\s*кг\b", "", s)
+    s = re.sub(r"\b1кг\b", "", s)
+    s = re.sub(r"\b250\b", "", s)
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
+
+
 def canonical_item_label(value: str) -> str:
     text = (value or "").strip()
     low = text.lower()
@@ -712,6 +730,26 @@ def canonical_item_label(value: str) -> str:
     low = low.replace("капельный пакет", "дрип")
     low = re.sub(r"\s+", " ", low).strip()
     return low.title()
+
+
+def resolve_abc_category(item_name: str, abc_map: dict[str, str]) -> tuple[str | None, str]:
+    direct = abc_map.get(normalize_item_name(item_name))
+    if direct:
+        return direct, "direct"
+
+    family = normalize_item_family(item_name)
+    if not family:
+        return None, "missing"
+
+    family_matches = {
+        cat for name_norm, cat in abc_map.items()
+        if normalize_item_family(name_norm) == family
+    }
+    if len(family_matches) == 1:
+        return next(iter(family_matches)), "family"
+    if len(family_matches) > 1:
+        return None, "ambiguous_family"
+    return None, "missing"
 
 
 def classify_item_product_type(item_name: str) -> str:
@@ -1123,8 +1161,8 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     no_abc: list[str] = []
 
     for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
-        cat = abc_map.get(name_low)
         display_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
+        cat, _ = resolve_abc_category(display_name, abc_map)
         display = f"{display_name}: {qty} шт"
         if cat == "A":
             urgent.append(display)
@@ -1159,13 +1197,22 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     reduce_or_stop: list[str] = []
     passive_monitoring: list[str] = []
 
-    for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1])[:12]:
-        cat = abc_map.get(name_low) or "A"
+    for name_low, qty in sorted(stock_map.items(), key=lambda x: x[1]):
+        raw_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
+        cat, cat_mode = resolve_abc_category(raw_name, abc_map)
+        if not cat:
+            manual_review.append(
+                f"{raw_name}: {qty} шт: нет ABC-категории, решение пока по остатку."
+            )
+            cat = "A"
+        elif cat_mode == "family":
+            manual_review.append(
+                f"{raw_name}: ABC-категория {cat} подтянута по семейству SKU, проверить совпадение с weekly ABC."
+            )
         min_target = target_stock_level(cat)
         to_order = max(0, min_target - int(qty))
         if to_order <= 0:
             continue
-        raw_name = canonical_item_label(stock_map_raw.get(name_low) or name_low.title())
         supplier = infer_supplier_for_item(raw_name)
         supplier_name = supplier.get("supplier_name", "Уточнить у Жанны")
         contact = supplier.get("supplier_contact", "TBD")
@@ -1260,11 +1307,11 @@ def build_smart_analytics(insights: list[dict]) -> dict:
     critical_orders = sorted(
         critical_orders,
         key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
-    )[:8]
+    )
     planned_orders = sorted(
         planned_orders,
         key=lambda x: (int(x.get("qty_now", 0)), str(x.get("name", ""))),
-    )[:8]
+    )
     manual_review = list(dict.fromkeys(manual_review))[:8]
     reduce_or_stop = list(dict.fromkeys(reduce_or_stop))[:8]
     passive_monitoring = list(dict.fromkeys(passive_monitoring))[:8]
@@ -1469,7 +1516,7 @@ def make_card(source: Path) -> tuple[Path, Path, dict]:
                 if metrics["rows"] > 0:
                     insight["rows"] = metrics["rows"]
                     insight["low_stock_count"] = metrics["low_stock_count"]
-                    insight["top_low_items"] = metrics["low_stock_items"][:3]
+                    insight["top_low_items"] = metrics["low_stock_items"]
                     insight["stock_items"] = metrics.get("item_totals") or {}
                     body_lines.extend(
                         [
