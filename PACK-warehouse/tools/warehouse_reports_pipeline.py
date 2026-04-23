@@ -121,6 +121,152 @@ def escape_html(text: str) -> str:
     )
 
 
+def normalize_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "")).strip()
+
+
+def money_to_float(raw: str) -> float:
+    return float((raw or "").replace("\u00a0", "").replace(" ", "").replace(",", "."))
+
+
+def normalize_invoice_item_name(text: str) -> str:
+    value = normalize_ws(text)
+    value = re.sub(
+        r"^(?:1а\s+1б\s+2\s+2а\s+3\s+4\s+5\s+6\s+7\s+8\s+9\s+10\s+10а\s+11\s+)+",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"^[A-ZА-Я0-9._/-]{2,}\s+1\s+", "", value)
+    value = re.sub(r"^[A-ZА-Я0-9._/-]{2,}\s+", "", value)
+    value = re.sub(r"\s{2,}", " ", value).strip(" ,.-")
+    return value or normalize_ws(text)
+
+
+def canonical_invoice_supplier_name(seller: str) -> str:
+    seller_low = normalize_ws(seller).lower()
+    if "барсервис" in seller_low:
+        return "Барсервис"
+    if "мфуд" in seller_low:
+        return "МФУД"
+    if "тейсти кофе" in seller_low or "тэйсти кофе" in seller_low or "tasty coffee" in seller_low:
+        return "Тэйсти Кофе"
+    if "unicava" in seller_low:
+        return "UNICAVA"
+    if "шипилов" in seller_low:
+        return "ИП Шипилов Сергей Николаевич"
+    if "камелот" in seller_low:
+        return "КАМЕЛОТ"
+    if "ритейл проперти 6" in seller_low:
+        return "Ритейл Проперти 6"
+    if "премиум-сегмент" in seller_low:
+        return "Премиум-Сегмент"
+    if "новая жизнь" in seller_low:
+        return "Новая Жизнь"
+    return normalize_ws(seller)
+
+
+def parse_ru_date(raw: str) -> datetime | None:
+    raw = normalize_ws(raw)
+    months = {
+        "января": "01", "февраля": "02", "марта": "03", "апреля": "04",
+        "мая": "05", "июня": "06", "июля": "07", "августа": "08",
+        "сентября": "09", "октября": "10", "ноября": "11", "декабря": "12",
+    }
+    word_date = re.search(r"(\d{1,2})\s+([а-я]+)\s+(\d{4})", raw.lower())
+    if word_date and word_date.group(2) in months:
+        raw = f"{int(word_date.group(1)):02d}.{months[word_date.group(2)]}.{word_date.group(3)}"
+    for fmt in ("%d.%m.%Y", "%d.%m.%y"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def canonical_pdf_key(pdf: Path) -> str:
+    name = pdf.name.lower()
+    while name.endswith(".pdf"):
+        name = name[:-4]
+    return name.strip()
+
+
+def split_invoice_blocks(text: str) -> list[str]:
+    parts = re.split(r"(?=передаточный\s+Счет-фактура №)", text, flags=re.IGNORECASE)
+    return [p for p in parts if "Счет-фактура №" in p]
+
+
+def parse_invoice_line_items(block: str, seller: str) -> list[dict[str, object]]:
+    section_match = re.search(r"Наименование товара.*?Всего к оплате", block, flags=re.S)
+    if not section_match:
+        return []
+    section = section_match.group(0)
+    pattern = re.compile(
+        r"^\s*(?P<code>\S+)\s+(?P<idx>\d+)\s+(?P<name>.+?)\s+-\s+\d+\s+\S+\s+"
+        r"(?P<qty>\d+(?:[.,]\d+)?)\s+(?P<price>\d[\d \u00a0]*[.,]\d{2})\s+"
+        r"(?P<amount>\d[\d \u00a0]*[.,]\d{2})",
+        flags=re.M | re.S,
+    )
+    items: list[dict[str, object]] = []
+    for match in pattern.finditer(section):
+        name = normalize_invoice_item_name(match.group("name"))
+        if len(name) < 3:
+            continue
+        try:
+            qty = money_to_float(match.group("qty"))
+            price = money_to_float(match.group("price"))
+            amount = money_to_float(match.group("amount"))
+        except ValueError:
+            continue
+        items.append(
+            {
+                "seller": seller,
+                "code": match.group("code"),
+                "name": name,
+                "qty": qty,
+                "price": price,
+                "amount": amount,
+            }
+        )
+    return items
+
+
+@lru_cache(maxsize=1)
+def collect_invoice_line_items() -> list[dict[str, object]]:
+    pdfs = sorted(KB_DIR.rglob("*Накладные*.pdf"))
+    unique_pdfs: list[Path] = []
+    seen_keys: set[str] = set()
+    for pdf in pdfs:
+        key = canonical_pdf_key(pdf)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        unique_pdfs.append(pdf)
+
+    rows: list[dict[str, object]] = []
+    for pdf in unique_pdfs:
+        try:
+            text = subprocess.check_output(["pdftotext", "-layout", str(pdf), "-"], text=True)
+        except Exception:
+            continue
+        for block in split_invoice_blocks(text):
+            no_date = re.search(r"Счет-фактура №\s*([^\s]+)\s+от\s+([^\n]+)", block)
+            seller = re.search(r"Продавец\s+(.+)", block)
+            if not (no_date and seller):
+                continue
+            seller_name = canonical_invoice_supplier_name(re.sub(r"\(\d+\)\s*$", "", seller.group(1)))
+            invoice_no = no_date.group(1).strip()
+            invoice_date_raw = normalize_ws(re.sub(r"\s+\(.*$", "", no_date.group(2)))
+            invoice_date_dt = parse_ru_date(invoice_date_raw)
+            for item in parse_invoice_line_items(block, seller_name):
+                item["invoice_no"] = invoice_no
+                item["invoice_date"] = invoice_date_raw
+                item["invoice_dt"] = invoice_date_dt
+                item["source_file"] = pdf.relative_to(ROOT).as_posix()
+                rows.append(item)
+    return rows
+
+
 def detect_github_repo_web_url() -> str:
     try:
         remote = (
@@ -1034,6 +1180,53 @@ def price_delta_from_catalog(insights: list[dict]) -> dict[str, list[str]]:
     }
 
 
+def price_delta_from_invoices() -> dict[str, list[str]]:
+    items = collect_invoice_line_items()
+    if not items:
+        return {"up": [], "down": []}
+
+    by_sku: dict[tuple[str, str], list[dict[str, object]]] = {}
+    for item in items:
+        price = float(item.get("price") or 0)
+        if price <= 0 or price == 0.01:
+            continue
+        key = (
+            str(item.get("seller") or "").strip(),
+            normalize_item_name(str(item.get("name") or "")),
+        )
+        by_sku.setdefault(key, []).append(item)
+
+    up: list[tuple[str, float]] = []
+    down: list[tuple[str, float]] = []
+    for (seller, _), rows in by_sku.items():
+        rows = [r for r in rows if r.get("invoice_dt") is not None]
+        if len(rows) < 2:
+            continue
+        rows.sort(key=lambda r: r.get("invoice_dt"))
+        prev = rows[-2]
+        curr = rows[-1]
+        old_price = float(prev.get("price") or 0)
+        new_price = float(curr.get("price") or 0)
+        if old_price <= 0 or new_price <= 0:
+            continue
+        delta_pct = ((new_price - old_price) / old_price) * 100.0
+        if abs(delta_pct) < 0.5:
+            continue
+        item_name = str(curr.get("name") or "").strip()
+        label = f"{seller}: {item_name} ({old_price:.2f} -> {new_price:.2f})"
+        if delta_pct > 0:
+            up.append((label, delta_pct))
+        else:
+            down.append((label, delta_pct))
+
+    up.sort(key=lambda x: x[1], reverse=True)
+    down.sort(key=lambda x: x[1])
+    return {
+        "up": [f"{label} (+{delta:.1f}%)" for label, delta in up[:5]],
+        "down": [f"{label} ({delta:.1f}%)" for label, delta in down[:5]],
+    }
+
+
 def consumption_alerts(insights: list[dict]) -> list[str]:
     stocks = [i for i in insights if i.get("report_type") in {"stock", "inventory", "beans"} and i.get("stock_items")]
     if len(stocks) < 2:
@@ -1380,7 +1573,7 @@ def detect_data_gaps(insights: list[dict]) -> list[str]:
     if "invoice" not in types:
         gaps.append("Нет накладных в структурированном виде: не считаем точную закупочную себестоимость по SKU.")
     else:
-        gaps.append("Накладные PDF требуют OCR-разбора до SKU-уровня (цена, поставщик, дата).")
+        gaps.append("Накладные PDF уже частично разобраны до SKU-уровня, но extraction coverage и качество price-ledger ещё нужно усиливать.")
 
     if "sales" not in types:
         gaps.append("Нет отчёта продаж по SKU за период: нельзя считать спрос и оборачиваемость по позициям.")
@@ -1684,7 +1877,9 @@ def build_latest_summary(
 ) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     analytics = build_smart_analytics(insights)
-    price_delta = price_delta_from_catalog(insights)
+    price_delta = price_delta_from_invoices()
+    if (not price_delta.get("up")) and (not price_delta.get("down")):
+        price_delta = price_delta_from_catalog(insights)
     consumption = consumption_alerts(insights)
     gaps = detect_data_gaps(insights)
     sales_top: list[str] = []
@@ -2185,7 +2380,9 @@ def telegram_text(
 
     mode = "manual" if manual_run else "auto"
     analytics = build_smart_analytics(insights)
-    price_delta = price_delta_from_catalog(insights)
+    price_delta = price_delta_from_invoices()
+    if (not price_delta.get("up")) and (not price_delta.get("down")):
+        price_delta = price_delta_from_catalog(insights)
     sales_top: list[str] = []
     sales_weak: list[str] = []
     for item in insights:
