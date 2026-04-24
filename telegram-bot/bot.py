@@ -16,6 +16,22 @@ from rag_client import get_rag_client
 
 load_dotenv()
 
+
+class SecretRedactionFilter(logging.Filter):
+    """Keep bot tokens out of local files, stdout, and systemd journal."""
+
+    def filter(self, record):
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        if token:
+            record.msg = str(record.msg).replace(token, "<TELEGRAM_BOT_TOKEN>")
+            if record.args:
+                record.args = tuple(
+                    str(arg).replace(token, "<TELEGRAM_BOT_TOKEN>")
+                    for arg in record.args
+                )
+        return True
+
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -24,6 +40,12 @@ logging.basicConfig(
         logging.StreamHandler(),
     ],
 )
+for handler in logging.getLogger().handlers:
+    handler.addFilter(SecretRedactionFilter())
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
