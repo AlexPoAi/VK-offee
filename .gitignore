@@ -1,5 +1,6 @@
 # Quint Code dynamic data (recommended by quint-code repo)
 .quint/
+.DS_Store
 
 # Cloned dependencies
 quint-code/
