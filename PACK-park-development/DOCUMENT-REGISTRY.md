@@ -86,6 +86,7 @@
 | PARK.DOC.034 | 2026-04-16 | **Сопроводительное письмо АГО финальное** | Google Doc: `1iREjRjFoKq1CEUKJDZTqHBVlYpodX1uMh11VVXQkPyM` | `06-documents/.../administrative/PARK.DOC.034-ago-cover-letter-final (...).md` | submitted |
 | PARK.DOC.035 | 2026-04-22 | **Фиксация регистрации АГО: входящий `02-124/6973`, ответственный Меметов Артур Заферович** | источник: телефонный звонок | `04-communications/PARK.COMM.025-bahchisaray-ago-registration-status-april22 (...).md` | active |
 | PARK.DOC.037 | 2026-04-23 | **Письмо в Администрацию Бахчисарайского района по канализационной трубе** | Google Doc: `1S3gw5OHQJvWdQvV36TsOgxfnxfgk9M5OoW43f9BQG54`; PDF для печати в submission-pack | `06-documents/.../administrative/PARK.DOC.037-bahchisaray-pipe-letter-print-ready (...).md` | active |
+| PARK.DOC.038 | 2026-04-24 | **Письмо в Воду Крыма по канализационной трубе для ручной подачи** | print-ready markdown / подача через канцелярию | `06-documents/.../administrative/PARK.DOC.038-water-crimea-pipe-letter-print-ready (...).md` | ready-for-manual-submission |
 
 ## Финансовые документы (счета, платежи)
 
