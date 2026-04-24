@@ -10,6 +10,7 @@ import os
 import logging
 from pathlib import Path
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, BotCommand
+from telegram.error import NetworkError, RetryAfter, TimedOut
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
 from rag_client import get_rag_client
@@ -77,24 +78,39 @@ BUTTON_QUERIES = {
 
 # ─── Хелпер ──────────────────────────────────────────────────────────────────
 
+async def safe_reply(message, text: str, **kwargs) -> bool:
+    """Send a Telegram reply without breaking handler state on transient network errors."""
+    for attempt in range(1, 4):
+        try:
+            await message.reply_text(text, **kwargs)
+            return True
+        except RetryAfter as exc:
+            logger.warning("Telegram rate limit on reply attempt %s: retry_after=%s", attempt, exc.retry_after)
+        except (TimedOut, NetworkError) as exc:
+            logger.warning("Telegram reply failed on attempt %s: %s", attempt, exc)
+    return False
+
+
 async def rag_reply(update: Update, query: str) -> None:
     """Запрос к RAG и отправка ответа пользователю."""
-    await update.message.reply_text("🔍 Ищу в базе знаний...")
+    await safe_reply(update.message, "🔍 Ищу в базе знаний...")
     result = rag.query(query)
     if result is None:
-        await update.message.reply_text(
+        await safe_reply(
+            update.message,
             "⚠️ RAG API недоступен.\n"
             "Попросите администратора запустить: cd VK-offee-rag && python src/api.py"
         )
         return
     answer = rag.format_answer(result, show_sources=True)
-    await update.message.reply_text(answer, parse_mode="Markdown")
+    await safe_reply(update.message, answer, parse_mode="Markdown")
 
 # ─── Команды ─────────────────────────────────────────────────────────────────
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/start — приветствие и меню."""
-    await update.message.reply_text(
+    await safe_reply(
+        update.message,
         "☕ *VK-offee бот*\n\n"
         "Задайте любой вопрос или выберите раздел ниже.",
         reply_markup=MAIN_KEYBOARD,
@@ -104,7 +120,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/help — что умеет бот."""
-    await update.message.reply_text(
+    await safe_reply(
+        update.message,
         "📚 *Что умею:*\n\n"
         "• Отвечать на любые вопросы по базе знаний кофейни\n"
         "• Показывать рецептуры напитков и блюд\n"
@@ -127,16 +144,18 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         try:
             data = requests.get("http://127.0.0.1:8000/health", timeout=5).json()
             docs = data.get("documents_indexed", "?")
-            await update.message.reply_text(
+            await safe_reply(
+                update.message,
                 f"🟢 *RAG API работает*\n"
                 f"📚 Документов в индексе: {docs}\n"
                 f"🗂️ Pack: bar, kitchen, service, hr, management, cafe-ops, park",
                 parse_mode="Markdown",
             )
         except Exception:
-            await update.message.reply_text("🟢 RAG API работает")
+            await safe_reply(update.message, "🟢 RAG API работает")
     else:
-        await update.message.reply_text(
+        await safe_reply(
+            update.message,
             "🔴 *RAG API недоступен*\n\n"
             "Запустите: `cd VK-offee-rag && python src/api.py`",
             parse_mode="Markdown",
@@ -145,7 +164,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def reindex_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/reindex — переиндексация базы знаний (только для администраторов)."""
-    await update.message.reply_text("⏳ Запускаю переиндексацию базы знаний...")
+    await safe_reply(update.message, "⏳ Запускаю переиндексацию базы знаний...")
     import subprocess, sys
     result = subprocess.run(
         [sys.executable, "src/indexer.py",
@@ -158,9 +177,9 @@ async def reindex_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if result.returncode == 0:
         # Последняя строка содержит итог
         last_line = [l for l in result.stdout.strip().split("\n") if l][-1]
-        await update.message.reply_text(f"✅ {last_line}")
+        await safe_reply(update.message, f"✅ {last_line}")
     else:
-        await update.message.reply_text(f"❌ Ошибка переиндексации:\n{result.stderr[:500]}")
+        await safe_reply(update.message, f"❌ Ошибка переиндексации:\n{result.stderr[:500]}")
 
 
 def resolve_ds_strategy_path() -> Path | None:
@@ -189,13 +208,13 @@ async def note_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     text = " ".join(context.args) if context.args else context.user_data.get("note_text", "")
     if not text.strip():
-        await update.message.reply_text("Напишите текст заметки:")
         context.user_data["waiting_for_note"] = True
+        await safe_reply(update.message, "Напишите текст заметки:")
         return
 
     ds_strategy_path = resolve_ds_strategy_path()
     if ds_strategy_path is None:
-        await update.message.reply_text("⚠️ Не найден DS-strategy для сохранения заметки.")
+        await safe_reply(update.message, "⚠️ Не найден DS-strategy для сохранения заметки.")
         return
 
     user = update.message.from_user
@@ -229,12 +248,12 @@ async def note_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=ds_strategy_path, capture_output=True)
         subprocess.run(["git", "push", "origin", "main"], cwd=ds_strategy_path, capture_output=True)
 
-        await update.message.reply_text("✅ Заметка сохранена")
         context.user_data.pop("waiting_for_note", None)
         context.user_data.pop("note_text", None)
+        await safe_reply(update.message, "✅ Заметка сохранена")
     except Exception as e:
         logger.error("Ошибка заметки: %s", e)
-        await update.message.reply_text("✅ Заметка сохранена локально.")
+        await safe_reply(update.message, "✅ Заметка сохранена локально.")
 
 
 # ─── Обработчик сообщений ─────────────────────────────────────────────────────
@@ -255,8 +274,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Заметка через кнопку
     if text == "📝 Заметка":
-        await update.message.reply_text("Напишите текст заметки:")
         context.user_data["waiting_for_note"] = True
+        await safe_reply(update.message, "Напишите текст заметки:")
         return
 
     # Если ждём текст заметки
@@ -268,7 +287,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Приветствия
     if any(w in text.lower() for w in ["привет", "здравствуй", "hi", "hello"]):
-        await update.message.reply_text(
+        await safe_reply(
+            update.message,
             "Привет! 👋 Задайте вопрос по базе знаний кофейни.",
             reply_markup=MAIN_KEYBOARD,
         )
