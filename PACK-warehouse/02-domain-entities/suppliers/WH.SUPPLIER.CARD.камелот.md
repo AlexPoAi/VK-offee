@@ -1,7 +1,7 @@
 ---
 type: supplier-card
 supplier: КАМЕЛОТ
-updated: 2026-04-23 15:07
+updated: 2026-04-26 19:37
 status: active
 ---
 

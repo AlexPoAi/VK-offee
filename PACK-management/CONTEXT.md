@@ -2,9 +2,9 @@
 
 > Рабочий контекст для быстрого входа в домен управления кофейней VK-offee.
 
-**Последнее обновление:** 2026-04-23  
+**Последнее обновление:** 2026-04-26
 **Статус:** active  
-**Текущий фокус:** домен различён как management-layer кофейни; роль `управляющего кофейней` materialized и готова принимать factual updates типа `repair / readiness / relocation / launch`.
+**Текущий фокус:** домен различён как management-layer кофейни; роль `управляющего кофейней` materialized и готова принимать factual updates типа `repair / readiness / relocation / launch`, а также training/SOP материалы для управленческой роли.
 
 ---
 
@@ -37,6 +37,9 @@
 3. [DOMAIN-MODEL-v1](/Users/alexander/Github/VK-offee/PACK-management/01-domain-contract%20%28%D0%9A%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%20%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD%D0%B0%29/DOMAIN-MODEL-v1%20%28%D0%9E%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%D0%BD%D0%B0%D1%8F%20%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C%20PACK-management%20v1%29.md:1)
 4. [MGMT.ROLE.001](/Users/alexander/Github/VK-offee/PACK-management/02-domain-entities%20%28%D0%A1%D1%83%D1%89%D0%BD%D0%BE%D1%81%D1%82%D0%B8%20%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD%D0%B0%29/MGMT.ROLE.001-cafe-manager%20%28%D0%A0%D0%BE%D0%BB%D1%8C%20%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D1%8F%D1%8E%D1%89%D0%B5%D0%B3%D0%BE%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B9%D0%BD%D0%B5%D0%B9%29.md:1)
 5. [MGMT.WP.018](/Users/alexander/Github/VK-offee/PACK-management/04-work-products%20%28%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B5%20%D0%BF%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B%29/MGMT.WP.018-management-domain-fpf-srt-spf-pass%20%28FPF-SRT-SPF%20pass%20%D0%BF%D0%BE%20PACK-management%20%D0%B8%20%D1%80%D0%BE%D0%BB%D0%B8%20%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D1%8F%D1%8E%D1%89%D0%B5%D0%B3%D0%BE%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B9%D0%BD%D0%B5%D0%B9%29.md:1)
+6. [MGMT.TRAIN.001](/Users/alexander/Github/VK-offee/PACK-management/03-methods%20%28%D0%9C%D0%B5%D1%82%D0%BE%D0%B4%D1%8B%29/MGMT.TRAIN.001-sales-report-screencast%20%28%D0%A1%D0%BA%D1%80%D0%B8%D0%BD%D0%BA%D0%B0%D1%81%D1%82%20%D0%9E%D1%82%D1%87%D0%B5%D1%82%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B4%D0%B0%D0%B6%D0%B0%D0%BC%29.md:1)
+7. [MGMT.TRAIN.002](/Users/alexander/Github/VK-offee/PACK-management/03-methods%20%28%D0%9C%D0%B5%D1%82%D0%BE%D0%B4%D1%8B%29/MGMT.TRAIN.002-catalog-export-screencast%20%28%D0%A1%D0%BA%D1%80%D0%B8%D0%BD%D0%BA%D0%B0%D1%81%D1%82%20%D0%92%D1%8B%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B0%20%D0%9A%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0%29.md:1)
+8. [MGMT.TRAIN.003](/Users/alexander/Github/VK-offee/PACK-management/03-methods%20%28%D0%9C%D0%B5%D1%82%D0%BE%D0%B4%D1%8B%29/MGMT.TRAIN.003-revenue-screencast%20%28%D0%A1%D0%BA%D1%80%D0%B8%D0%BD%D0%BA%D0%B0%D1%81%D1%82%20%D0%92%D1%8B%D1%80%D1%83%D1%87%D0%BA%D0%B0%29.md:1)
 
 ## Что считать primary source-of-truth
 
@@ -48,6 +51,8 @@
 - запуск новой лаборатории / учебной зоны;
 - покупку крупного оборудования, если это не просто локальная замена, а change
   management уровня кофейни.
+- обучающие материалы и SOP для роли руководителя/управляющего, если они нужны
+  как резервный контур выполнения управленческой функции.
 
 Примеры secondary echo:
 
@@ -70,3 +75,4 @@
 
 1. срок плиточных работ по кухне;
 2. покупка `Victoria Arduino Eagle One` как management-level equipment fact с эхом в `barista class`.
+3. извлечь короткие SOP из `MGMT.TRAIN.001-003`, чтобы руководитель мог выполнить отчётность без полного просмотра скринкастов.
