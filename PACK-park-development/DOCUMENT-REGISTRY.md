@@ -85,7 +85,7 @@
 | PARK.DOC.033 | 2026-04-16 | **Заявление на АГО финальное** | Google Doc: `1_7KGTFFi6tDw_S4Bf-FGmbEsfLQIhkHP3LHMHTZPC2A` | `06-documents/.../administrative/PARK.DOC.033-ago-application-final (...).md` | submitted |
 | PARK.DOC.034 | 2026-04-16 | **Сопроводительное письмо АГО финальное** | Google Doc: `1iREjRjFoKq1CEUKJDZTqHBVlYpodX1uMh11VVXQkPyM` | `06-documents/.../administrative/PARK.DOC.034-ago-cover-letter-final (...).md` | submitted |
 | PARK.DOC.035 | 2026-04-22 | **Фиксация регистрации АГО: входящий `02-124/6973`, ответственный Меметов Артур Заферович** | источник: телефонный звонок | `04-communications/PARK.COMM.025-bahchisaray-ago-registration-status-april22 (...).md` | active |
-| PARK.DOC.037 | 2026-04-23 | **Письмо в Администрацию Бахчисарайского района по канализационной трубе** | Google Doc: `1S3gw5OHQJvWdQvV36TsOgxfnxfgk9M5OoW43f9BQG54`; PDF для печати в submission-pack | `06-documents/.../administrative/PARK.DOC.037-bahchisaray-pipe-letter-print-ready (...).md` | active |
+| PARK.DOC.037 | 2026-04-23 | **Письмо в Администрацию Бахчисарайского района по канализационной трубе** | Google Doc: `1S3gw5OHQJvWdQvV36TsOgxfnxfgk9M5OoW43f9BQG54`; PDF для печати в submission-pack | `06-documents/.../administrative/PARK.DOC.037-bahchisaray-pipe-letter-print-ready (...).md` | submitted |
 | PARK.DOC.038 | 2026-04-24 | **Письмо в Воду Крыма по канализационной трубе для ручной подачи** | print-ready markdown / подача через канцелярию | `06-documents/.../administrative/PARK.DOC.038-water-crimea-pipe-letter-print-ready (...).md` | ready-for-manual-submission |
 
 ## Финансовые документы (счета, платежи)
@@ -104,6 +104,7 @@
 |---|---|---|---|---|
 | PARK.DOC.005 | Геологические изыскания | `06-documents/.../technical/PARK.WP.011-geology-survey (Геологические изыскания).pdf` | `06-documents/.../technical/PARK.DOC.005-geology-survey (...).md` | ok |
 | PARK.DOC.006 | Электропроект | `06-documents/.../technical/PARK.WP.009-electrical-project (Электропроект).pdf` | `06-documents/.../technical/PARK.DOC.006-electrical-project (...).md` | ok |
+| PARK.DOC.039 | Подписанный договор Крымэнерго | physical-original, нужно добавить скан/фото | `06-documents/.../technical/PARK.DOC.039-crimea-energy-signed-contract (...).md` | physical-original-received |
 | PARK.WP.008 | ТЗ на кухню | `06-documents/.../technical/PARK.WP.008-kitchen-specification (ТЗ на кухню).docx` | нет | original-only |
 | PARK.WP.015 | Отчёт по геологии | `06-documents/.../technical/PARK.WP.015-geology-report.pdf` | `06-documents/.../technical/PARK.WP.015-geology-report (Отчёт по геологии).md` | ok |
 | PARK.WP.016 | Акт геологических изысканий | `06-documents/.../technical/PARK.WP.016-geology-act.docx` | `06-documents/.../technical/PARK.WP.016-geology-act (Акт геологических изысканий).md` | ok |
