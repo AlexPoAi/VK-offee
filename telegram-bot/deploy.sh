@@ -82,6 +82,9 @@ WAREHOUSE_REPORT_CHAT_ID=ВСТАВЬ_СЮДА
 RAG_API_URL=http://127.0.0.1:8000
 RAG_TIMEOUT=30
 BOT_RUNTIME_MODE=cloud
+TELEGRAM_ALLOWED_CHAT_ID=
+TELEGRAM_TASK_INBOX=/opt/vk-offee/VK-offee/telegram-bot/inbox
+CODEX_RUNTIME_ROOT=/opt/vk-offee/VK-offee/PACK-codex-runtime/runtime
 ENVFILE
     echo "  ⚠️  Заполни /opt/vk-offee/VK-offee/telegram-bot/.env"
 fi
