@@ -7,7 +7,7 @@ participants:
   - constantnine
   - ValerON
   - Александр
-status: draft-response
+status: sent
 topic: Вопрос по скамейкам и урнам в благоустройстве для СПОЗУ
 related:
   - PARK.DOC.010
@@ -64,4 +64,4 @@ related:
 
 ## Статус
 
-Ждёт подтверждения / отправки Александром.
+Ответ отправлен Александром 27.04.2026.
