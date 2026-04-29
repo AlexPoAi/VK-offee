@@ -10,6 +10,7 @@ telegram-bot/.env
 telegram-bot/venv/
 telegram-bot/*.log
 telegram-bot/token.pickle
+token.pickle
 
 # Root runtime logs
 *.log
