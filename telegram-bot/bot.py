@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 BOT_RUNTIME_MODE = os.getenv("BOT_RUNTIME_MODE", "local-debug")
+DS_STRATEGY_GIT_SYNC = os.getenv("DS_STRATEGY_GIT_SYNC", "auto")
 ALLOWED_CHAT_ID = str(os.getenv("TELEGRAM_ALLOWED_CHAT_ID") or os.getenv("TELEGRAM_CHAT_ID") or "").strip()
 TASK_INBOX = Path(
     os.getenv("TELEGRAM_TASK_INBOX")
@@ -565,7 +566,11 @@ async def note_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     marker = "<!-- Captures добавляются ниже этой строки -->"
 
     try:
-        run_git(["git", "pull", "--rebase", "--autostash", "origin", "main"], ds_strategy_path)
+        git_sync_enabled = DS_STRATEGY_GIT_SYNC == "1" or (
+            DS_STRATEGY_GIT_SYNC == "auto" and BOT_RUNTIME_MODE != "cloud"
+        )
+        if git_sync_enabled:
+            run_git(["git", "pull", "--rebase", "--autostash", "origin", "main"], ds_strategy_path)
         content = captures_file.read_text(encoding="utf-8")
         if f"**Контент:**\n{note_text}\n" in content:
             context.user_data.pop("waiting_for_note", None)
@@ -585,13 +590,16 @@ async def note_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             ds_strategy_path,
         )
         commit_output = f"{commit_result.stdout}\n{commit_result.stderr}"
-        if commit_result.returncode == 0 or "nothing to commit" in commit_output:
+        if git_sync_enabled and (commit_result.returncode == 0 or "nothing to commit" in commit_output):
             run_git(["git", "pull", "--rebase", "--autostash", "origin", "main"], ds_strategy_path)
             run_git(["git", "push", "origin", "main"], ds_strategy_path)
 
         context.user_data.pop("waiting_for_note", None)
         context.user_data.pop("note_text", None)
-        await safe_reply(update.message, "✅ Заметка сохранена")
+        if git_sync_enabled:
+            await safe_reply(update.message, "✅ Заметка сохранена")
+        else:
+            await safe_reply(update.message, "✅ Заметка сохранена (cloud local mode)")
     except Exception as error:
         logger.error("Ошибка заметки: %s", error)
         await safe_reply(update.message, "✅ Заметка сохранена локально.")
@@ -858,8 +866,9 @@ async def post_init(application: Application) -> None:
 
 def main() -> None:
     logger.info(
-        "🤖 VK-offee AI Bot v3.1 запущен (mode=%s, RAG + Codex menu)",
+        "🤖 VK-offee AI Bot v3.1 запущен (mode=%s, ds_git_sync=%s, RAG + Codex menu)",
         BOT_RUNTIME_MODE,
+        DS_STRATEGY_GIT_SYNC,
     )
 
     application = (
