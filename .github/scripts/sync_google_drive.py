@@ -22,7 +22,9 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
 REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
-REPORT_PATH = KNOWLEDGE_BASE_PATH / f"Отчет синхронизации {datetime.now().strftime('%d.%m.%Y')}.md"
+REPORTS_PATH = Path(__file__).parent / "reports"
+REPORT_PATH = REPORTS_PATH / f"Отчет синхронизации {datetime.now().strftime('%d.%m.%Y')}.md"
+SYNC_REPORTS_ENABLED = os.getenv('SYNC_REPORTS_ENABLED', '0') == '1'
 
 # Статистика
 stats = {
@@ -31,6 +33,14 @@ stats = {
     'errors': 0,
     'error_files': []
 }
+
+IGNORED_ROOT_PREFIXES = (
+    "Отчет синхронизации ",
+    "Отчёт синхронизации ",
+)
+IGNORED_PATH_PREFIXES = (
+    "sync-reports/",
+)
 
 def get_credentials():
     """Получение учетных данных Google Drive API"""
@@ -82,6 +92,14 @@ def list_files(service, folder_id, path=""):
 
     for item in items:
         file_path = f"{path}/{item['name']}" if path else item['name']
+
+        if any(file_path.startswith(prefix) for prefix in IGNORED_PATH_PREFIXES):
+            stats['skipped'] += 1
+            continue
+
+        if not path and item['name'].startswith(IGNORED_ROOT_PREFIXES):
+            stats['skipped'] += 1
+            continue
 
         if item['mimeType'] == 'application/vnd.google-apps.folder':
             # Рекурсивно обработать подпапку
@@ -163,7 +181,7 @@ def generate_report():
             report += f"- {error}\n"
 
     # Сохранение отчета
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORTS_PATH.mkdir(parents=True, exist_ok=True)
     with open(REPORT_PATH, 'w', encoding='utf-8') as f:
         f.write(report)
 
@@ -196,8 +214,10 @@ def main():
         file_path = KNOWLEDGE_BASE_PATH / file['path']
         download_file(service, file['id'], file_path, file['mimeType'])
 
-    # Генерация отчета
-    generate_report()
+    if SYNC_REPORTS_ENABLED:
+        generate_report()
+    else:
+        print("\n📊 Локальный sync-report отключен (SYNC_REPORTS_ENABLED=1 чтобы включить)")
 
     # Итоговая статистика
     print(f"\n✅ Синхронизация завершена!")

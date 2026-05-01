@@ -9,7 +9,10 @@ Telegram бот с RAG-поиском по базе знаний VK-offee.
 import json
 import logging
 import os
+import signal
 import subprocess
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -891,12 +894,27 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     application.add_error_handler(error_handler)
 
-    application.run_polling(
-        drop_pending_updates=True,
-        allowed_updates=Update.ALL_TYPES,
-        timeout=30,
-        bootstrap_retries=-1,
-    )
+    def signal_handler(sig, frame):
+        logger.info("⏹️  Получен сигнал, завершаю работу бота...")
+        application.stop()
+        logger.info("✅ Бот остановлен")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    try:
+        application.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=Update.ALL_TYPES,
+            timeout=30,
+            bootstrap_retries=-1,
+        )
+    except Exception as e:
+        logger.error(f"❌ Ошибка при запуске бота: {e}")
+        sys.exit(1)
+    finally:
+        logger.info("🛑 Завершение работы бота")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+[Unit]
+Description=VK-offee Telegram Bot with RAG
+Documentation=https://github.com/AlexPoAi/VK-offee/wiki/telegram-bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alexander
+WorkingDirectory=/Users/alexander/Github/VK-offee/telegram-bot
+
+# Environment
+EnvironmentFile=/Users/alexander/Github/VK-offee/telegram-bot/.env
+
+# Start command
+ExecStart=/usr/bin/python3 /Users/alexander/Github/VK-offee/telegram-bot/bot.py
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Resource limits
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vk-bot
+
+[Install]
+WantedBy=multi-user.target

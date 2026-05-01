@@ -24,11 +24,12 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '120x7kqYeV0Vb4TLbdCC0esv0WkF5JROC')
 REPO_PATH = Path(__file__).parent.parent.parent
 KNOWLEDGE_BASE_PATH = REPO_PATH / "knowledge-base"
-SYNC_REPORTS_PATH = KNOWLEDGE_BASE_PATH / "sync-reports"
+SYNC_REPORTS_PATH = Path(__file__).parent / "reports"
 REPORT_PATH = SYNC_REPORTS_PATH / f"sync-{datetime.now().strftime('%Y-%m-%d')}.md"
+SYNC_REPORTS_ENABLED = os.getenv('SYNC_REPORTS_ENABLED', '0') == '1'
 
-# Создаём папку для отчётов
-SYNC_REPORTS_PATH.mkdir(parents=True, exist_ok=True)
+if SYNC_REPORTS_ENABLED:
+    SYNC_REPORTS_PATH.mkdir(parents=True, exist_ok=True)
 
 # Статистика
 stats = {
@@ -40,6 +41,14 @@ stats = {
     'encoding_fixed': 0,
     'total_size': 0
 }
+
+IGNORED_ROOT_PREFIXES = (
+    "Отчет синхронизации ",
+    "Отчёт синхронизации ",
+)
+IGNORED_PATH_PREFIXES = (
+    "sync-reports/",
+)
 
 def get_credentials():
     """Получение учетных данных Google Drive API"""
@@ -110,6 +119,14 @@ def list_files(service, folder_id, path=""):
 
     for item in items:
         item_path = f"{path}/{item['name']}" if path else item['name']
+
+        if any(item_path.startswith(prefix) for prefix in IGNORED_PATH_PREFIXES):
+            stats['skipped'] += 1
+            continue
+
+        if not path and item['name'].startswith(IGNORED_ROOT_PREFIXES):
+            stats['skipped'] += 1
+            continue
 
         # Если это папка, рекурсивно обходим
         if item['mimeType'] == 'application/vnd.google-apps.folder':
@@ -272,8 +289,10 @@ def main():
         file_path = KNOWLEDGE_BASE_PATH / file['path']
         download_file(service, file['id'], file_path, file['mimeType'])
 
-    # Генерация отчета
-    generate_report()
+    if SYNC_REPORTS_ENABLED:
+        generate_report()
+    else:
+        print("\n📄 Локальный sync-report отключён (SYNC_REPORTS_ENABLED=1 чтобы включить)")
 
     # Итоговая статистика
     print(f"\n" + "="*60)
