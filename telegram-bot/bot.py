@@ -120,22 +120,39 @@ def rag_start_hint() -> str:
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("☕ Напитки"), KeyboardButton("🍽️ Еда")],
-        [KeyboardButton("📋 Стандарты"), KeyboardButton("💰 Цены")],
-        [KeyboardButton("👤 Персонал"), KeyboardButton("📊 Статус")],
-        [KeyboardButton("🤖 Codex"), KeyboardButton("📚 База знаний")],
-        [KeyboardButton("📝 Заметка"), KeyboardButton("🧠 Задача")],
-        [KeyboardButton("🎨 Дизайн")],
+        # Block 1: Beverages & Food
+        [KeyboardButton("☕ Напитки"), KeyboardButton("🍽️ Блюда")],
+        # Block 2: Standards & Menu
+        [KeyboardButton("📋 Стандарты"), KeyboardButton("💰 Меню")],
+        # Block 3: Personnel & Schedules
+        [KeyboardButton("👤 Персонал"), KeyboardButton("⏰ Графики")],
+        # Block 4: Reports & Search
+        [KeyboardButton("📊 Отчёты"), KeyboardButton("🔍 Поиск")],
+        # Block 5: AI & Notes
+        [KeyboardButton("🧠 Вопрос AI"), KeyboardButton("📝 Заметка")],
+        # Block 6: Admin & Help
+        [KeyboardButton("⚙️ Статус"), KeyboardButton("❓ Помощь")],
     ],
     resize_keyboard=True,
 )
 
 BUTTON_QUERIES = {
+    # Block 1
     "☕ Напитки": "Список напитков и рецептуры бара VK-offee",
-    "🍽️ Еда": "Список блюд и заготовки кухни VK-offee",
+    "🍽️ Блюда": "Список блюд и заготовки кухни VK-offee",
+    # Block 2
     "📋 Стандарты": "Стандарты обслуживания и чек-листы смены",
-    "💰 Цены": "Прайс-лист напитков и еды VK-offee",
+    "💰 Меню": "Прайс-лист напитков и еды VK-offee",
+    # Block 3
     "👤 Персонал": "Ставки оплаты труда бариста официант повар раннер",
+    "⏰ Графики": "График работы графики смен расписание персонала",
+    # Block 4
+    "📊 Отчёты": "Отчёты финансовые продажи выручка по точкам VK-offee",
+    "🔍 Поиск": "Поиск информации в базе знаний VK-offee",
+    # Block 5
+    "🧠 Вопрос AI": "Задать вопрос на естественном языке к базе знаний",
+    "📝 Заметка": "Сохранить заметку для обработки",
+    # Block 6 handled separately below
 }
 
 TASK_KIND_LABELS = {
@@ -727,10 +744,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await rag_reply(update, BUTTON_QUERIES[text])
         return
 
-    if text == "📊 Статус":
+    # Block 6: Admin buttons
+    if text == "⚙️ Статус":
         await status_command(update, context)
         return
 
+    if text == "❓ Помощь":
+        await help_command(update, context)
+        return
+
+    # Legacy button mappings (for backwards compatibility)
     if text == "📝 Заметка":
         context.user_data["waiting_for_note"] = True
         await safe_reply(update.message, "Напишите текст заметки:")
@@ -750,6 +773,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if text == "📚 База знаний":
         await rag_mode_command(update, context)
+        return
+
+    # New button: direct search mode (v3.2+)
+    if text == "🔍 Поиск":
+        context.user_data["search_mode"] = True
+        await safe_reply(update.message, "🔍 *Режим поиска активирован*\n\nЧто искать в базе знаний?", parse_mode="Markdown")
+        return
+
+    # New button: free-form AI question (v3.2+)
+    if text == "🧠 Вопрос AI":
+        context.user_data["waiting_for_question"] = True
+        await safe_reply(update.message, "🧠 *Задайте вопрос*\n\nЧто вы хотели бы узнать?", parse_mode="Markdown")
         return
 
     if context.user_data.get("waiting_for_note"):
@@ -772,6 +807,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if get_chat_mode(context) == "codex":
         await accept_codex_input(update, context, "codex", text)
+        return
+
+    # Check for search mode (user pressed 🔍 Поиск)
+    if context.user_data.get("search_mode"):
+        context.user_data["search_mode"] = False
+        await rag_reply(update, text)
+        return
+
+    # Check for waiting for question (user pressed 🧠 Вопрос AI)
+    if context.user_data.get("waiting_for_question"):
+        context.user_data["waiting_for_question"] = False
+        await rag_reply(update, text)
         return
 
     if any(word in text.lower() for word in ["привет", "здравствуй", "hi", "hello"]):
